@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>메이플 일일 재화 관리</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Malgun Gothic', -apple-system, sans-serif; background: #121212; color: #e0e0e0; min-height: 100vh; }
+
+.app { max-width: 100%; margin: 0 auto; padding: 10px 16px; }
+.header-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+h1 { color: #f5a623; font-size: 1.3em; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+.cloud-bar { display: flex; gap: 6px; }
+.cloud-btn { padding: 6px 16px; border: 1px solid #333; border-radius: 6px; background: #1e1e1e; color: #666; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+.cloud-btn.unsaved { background: #f5a623; color: #000; border-color: #f5a623; font-weight: 700; animation: pulse 1.5s infinite; }
+.cloud-btn-load { color: #888; }
+.cloud-btn:hover { background: #333; color: #fff; }
+.cloud-btn.unsaved:hover { background: #e09510; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+.user-tabs { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 2px; }
+.user-tab { padding: 8px 18px; border: 1px solid #333; border-radius: 8px; background: #1e1e1e; color: #888; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap; transition: all 0.15s; position: relative; }
+.user-tab:hover { background: #2a2a2a; color: #ccc; }
+.user-tab.active { background: #f5a623; color: #000; font-weight: 700; border-color: #f5a623; }
+.user-tab .user-tab-x { display: none; margin-left: 6px; font-size: 11px; opacity: 0.6; }
+.user-tab.active .user-tab-x { display: inline; }
+.user-tab .user-tab-x:hover { opacity: 1; }
+.user-tab-add { padding: 8px 14px; border: 1px dashed #444; border-radius: 8px; background: transparent; color: #666; cursor: pointer; font-size: 14px; }
+.user-tab-add:hover { border-color: #f5a623; color: #f5a623; }
+
+/* Tabs */
+.tabs { display: flex; gap: 2px; margin-bottom: 0; }
+.tab { flex: 1; padding: 12px; text-align: center; background: #1e1e1e; border: none; color: #777; cursor: pointer; border-radius: 10px 10px 0 0; font-size: 1em; transition: all 0.15s; border-bottom: 2px solid transparent; }
+.tab.active { background: #2a2a2a; color: #f5a623; font-weight: 600; border-bottom: 2px solid #f5a623; }
+.tab:hover { background: #252525; color: #aaa; }
+
+.panel { display: none; background: #2a2a2a; border-radius: 0 0 10px 10px; padding: 14px; }
+.panel.active { display: block; }
+
+/* Spreadsheet */
+.sheet-wrap { overflow: hidden; border: 1px solid #3a3a3a; border-radius: 8px; }
+.sheet { border-collapse: collapse; font-size: 14px; width: 100%; table-layout: fixed; }
+.sheet th, .sheet td { border: 1px solid #333; padding: 0; white-space: nowrap; }
+.sheet th { background: #1e1e1e; color: #aaa; font-weight: 600; text-align: center; padding: 8px 10px; font-size: 13px; user-select: none; }
+.sheet th.corner { background: #1a1a1a; width: 72px; }
+.sheet td.row-header { background: #1e1e1e; color: #ddd; padding: 0 8px; font-size: 13px; font-weight: 700; width: 72px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.sheet td.cell { padding: 0; position: relative; background: #232323; vertical-align: top; overflow: hidden; }
+.sheet td.cell .cell-stack { display: flex; flex-direction: column; }
+.sheet td.cell .cell-input-row { display: flex; align-items: center; }
+.sheet td.cell .cell-label { font-size: 11px; color: #666; padding-left: 4px; width: 20px; flex-shrink: 0; text-align: center; font-weight: 500; }
+.sheet td.cell input {
+  flex: 1; border: none; outline: none;
+  background: transparent; color: #e0e0e0; text-align: right;
+  padding: 4px 8px; font-size: 14px; font-family: 'Consolas', 'Courier New', monospace;
+  height: 26px; min-width: 0;
+}
+.sheet td.cell input:focus { background: #333; }
+.sheet td.cell input::selection { background: #555; }
+.sheet td.cell input::placeholder { color: #555; font-size: 12px; }
+.sheet td.cell .cell-divider { height: 1px; background: #333; }
+.sheet td.cell .cell-earned { text-align: right; padding: 3px 8px; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace; color: #f5a623; font-weight: 700; background: #2a2510; border-top: 1px solid #3a3018; height: 22px; line-height: 22px; }
+.sheet tr.sum-row td { background: #1e1e1e; color: #f5a623; font-weight: 700; text-align: right; padding: 6px 8px; font-size: 14px; font-family: 'Consolas', 'Courier New', monospace; border-top: 2px solid #444; }
+.sheet tr.sum-row td.row-header { color: #f5a623; border-top: 2px solid #444; }
+.sheet tr.add-row td { background: transparent; border: none; }
+.sheet td.add-cell { padding: 0; border: none; }
+.sheet td.add-cell input {
+  width: 100%; border: none; outline: none; background: transparent;
+  color: #777; padding: 6px 8px; font-size: 13px; height: 30px;
+}
+.sheet td.add-cell input::placeholder { color: #555; }
+.sheet td.add-cell input:focus { color: #ccc; }
+
+/* Calendar */
+.cal-and-sheet { display: flex; flex-direction: column; gap: 10px; }
+.cal-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 10px 14px; }
+.cal-header { display: flex; align-items: center; gap: 6px; }
+.cal-title { font-weight: 700; font-size: 15px; color: #e0e0e0; min-width: 110px; text-align: center; }
+.cal-nav { width: 30px; height: 30px; border: none; background: none; font-size: 20px; color: #888; cursor: pointer; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.cal-nav:hover { background: #333; color: #fff; }
+.cal-days-wrap { display: flex; flex-direction: column; gap: 1px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 34px); gap: 2px; }
+.cal-dow { text-align: center; font-size: 11px; color: #666; padding: 3px 0; font-weight: 600; }
+.cal-day { text-align: center; padding: 5px 0; font-size: 13px; border-radius: 6px; cursor: pointer; color: #bbb; position: relative; line-height: 1.4; }
+.cal-day:hover { background: #333; color: #fff; }
+.cal-day.today { font-weight: 700; color: #5bc0fa; }
+.cal-day.selected { background: #f5a623; color: #000; font-weight: 700; }
+.cal-day.selected:hover { background: #e09510; }
+.cal-day.other-month { color: #444; }
+.cal-day.has-data::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: #f5a623; border-radius: 50%; }
+.cal-day.selected.has-data::after { background: #000; }
+.cal-day.sun { color: #ff6b6b; }
+.cal-day.sat { color: #5bc0fa; }
+.cal-day.selected.sun, .cal-day.selected.sat { color: #000; }
+.cal-today-btn { padding: 5px 16px; border: 1px solid #444; background: #2a2a2a; border-radius: 6px; font-size: 13px; color: #bbb; cursor: pointer; font-weight: 500; }
+.cal-today-btn:hover { background: #333; color: #fff; }
+.sheet-area { flex: 1; min-width: 0; }
+
+/* Settled */
+.sheet tr.settled-row td { background: #1a2030; }
+.sheet tr.settled-row td.cell { background: #1a2030; }
+.sheet tr.settled-row td.cell input { color: #556680; }
+.sheet tr.settled-row .cell-earned { color: #556680; background: #182030; }
+.sheet tr.settled-row .cell-label { color: #3a4a60; }
+.sheet tr.settled-row .cell-divider { background: #253040; }
+.sheet tr.settled-row td.row-header { position: relative; }
+.settled-overlay { position: absolute; top: 0; left: 0; width: calc(100vw - 40px); height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 3; background: rgba(20,30,50,0.6); }
+.settled-overlay span { background: #3a5a8a; color: #b0c8e8; font-size: 15px; font-weight: 800; padding: 6px 32px; letter-spacing: 8px; border-radius: 4px; }
+
+/* View tabs */
+.view-tabs { display: flex; gap: 0; }
+.view-tab { padding: 6px 16px; border: 1px solid #444; background: #1e1e1e; color: #888; cursor: pointer; font-size: 13px; font-weight: 500; }
+.view-tab:first-child { border-radius: 6px 0 0 6px; }
+.view-tab:last-child { border-radius: 0 6px 6px 0; }
+.view-tab:not(:first-child) { border-left: none; }
+.view-tab.active { background: #f5a623; color: #000; border-color: #f5a623; font-weight: 700; }
+
+.no-data { color: #666; text-align: center; padding: 20px; font-size: 13px; }
+
+/* History */
+.history-controls { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.history-controls label { color: #888; }
+.history-controls input, .history-controls select { padding: 7px 12px; border-radius: 6px; border: 1px solid #444; background: #1e1e1e; color: #ddd; font-size: 14px; }
+.view-btn { padding: 5px 14px; border: none; border-radius: 6px; background: #f5a623; color: #000; cursor: pointer; font-size: 13px; font-weight: 600; }
+.view-btn:hover { background: #ffbb44; }
+
+/* Settings */
+.setting-section { margin-bottom: 24px; }
+.setting-section h3 { color: #f5a623; margin-bottom: 12px; font-size: 1.1em; }
+.item-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.item-row { display: flex; align-items: center; gap: 8px; background: #1e1e1e; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; }
+.item-row span { flex: 1; color: #ddd; cursor: pointer; border-bottom: 1px dashed #555; }
+.item-row span:hover { color: #f5a623; border-color: #f5a623; }
+.rename-input { flex: 1; padding: 4px 8px; border: 2px solid #f5a623; border-radius: 4px; font-size: 14px; outline: none; background: #1e1e1e; color: #fff; }
+.item-row button { padding: 5px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.btn-del { background: #c0392b; color: #fff; }
+.btn-del:hover { background: #e74c3c; }
+.btn-move { background: #333; color: #aaa; }
+.btn-move:hover { background: #444; color: #fff; }
+.add-row { display: flex; gap: 8px; }
+.add-row input { flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #444; background: #1e1e1e; color: #ddd; font-size: 14px; }
+.btn-add { padding: 8px 18px; border: none; border-radius: 8px; background: #27ae60; color: #fff; cursor: pointer; font-size: 14px; font-weight: 600; }
+.btn-add:hover { background: #2ecc71; }
+
+.data-section { display: flex; gap: 10px; flex-wrap: wrap; }
+.data-section button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; }
+.btn-export { background: #2980b9; color: #fff; }
+.btn-import { background: #8e44ad; color: #fff; }
+.btn-reset { background: #c0392b; color: #fff; }
+.btn-export:hover { background: #3498db; }
+.btn-import:hover { background: #9b59b6; }
+.btn-reset:hover { background: #e74c3c; }
+input[type="file"] { display: none; }
+
+.toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: #fff; font-size: 0.9em; opacity: 0; transition: opacity 0.3s; z-index: 100; }
+.toast.show { opacity: 1; }
+.toast.success { background: #34a853; }
+.toast.error { background: #e74c3c; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header-bar">
+    <h1>메이플 일일 재화 관리</h1>
+    <div class="cloud-bar">
+      <button id="cloudSaveBtn" class="cloud-btn" onclick="manualCloudSave()">저장됨</button>
+      <button id="cloudLoadBtn" class="cloud-btn cloud-btn-load" onclick="manualCloudLoad()">불러오기</button>
+    </div>
+  </div>
+  <div class="user-tabs" id="userTabs"></div>
+  <div class="tabs">
+    <button class="tab active" data-tab="input">일일 입력</button>
+    <button class="tab" data-tab="history">정산</button>
+    <button class="tab" data-tab="settings">설정</button>
+  </div>
+
+  <!-- 일일 입력 -->
+  <div id="input" class="panel active">
+    <input type="date" id="inputDate" style="display:none">
+    <div class="cal-and-sheet">
+      <div class="cal-wrap">
+        <div class="cal-header">
+          <button class="cal-nav" onclick="calMove(-1)">&lsaquo;</button>
+          <span id="calTitle" class="cal-title"></span>
+          <button class="cal-nav" onclick="calMove(1)">&rsaquo;</button>
+        </div>
+        <div class="cal-days-wrap">
+          <div class="cal-grid">
+            <div class="cal-dow">일</div><div class="cal-dow">월</div><div class="cal-dow">화</div><div class="cal-dow">수</div><div class="cal-dow">목</div><div class="cal-dow">금</div><div class="cal-dow">토</div>
+          </div>
+          <div class="cal-grid" id="calDays"></div>
+        </div>
+        <button class="cal-today-btn" onclick="calToday()">오늘</button>
+      </div>
+      <div class="sheet-wrap" id="inputTableWrap"></div>
+    </div>
+  </div>
+
+  <!-- 정산 -->
+  <div id="history" class="panel">
+    <h3 style="margin:0 0 12px;color:#e67e00;font-size:1em;">캐릭터별 누적 정산</h3>
+    <div class="sheet-wrap" id="settlementWrap"></div>
+    <div style="margin:20px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <div class="view-tabs">
+        <button class="view-tab active" data-view="daily" onclick="switchView('daily')">일별</button>
+        <button class="view-tab" data-view="weekly" onclick="switchView('weekly')">주간별</button>
+        <button class="view-tab" data-view="monthly" onclick="switchView('monthly')">월별</button>
+      </div>
+      <div class="history-controls" id="dailyControls">
+        <label>기간:</label>
+        <input type="date" id="histStart">
+        <span style="color:#aaa">~</span>
+        <input type="date" id="histEnd">
+      </div>
+      <div class="history-controls" id="yearControl" style="display:none;">
+        <label>연도:</label>
+        <select id="yearSelect" onchange="renderHistoryView()" style="padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#333;font-size:14px;"></select>
+      </div>
+    </div>
+    <div class="sheet-wrap" id="historyTableWrap"></div>
+  </div>
+
+  <!-- 설정 -->
+  <div id="settings" class="panel">
+    <div class="setting-section">
+      <h3>캐릭터 관리</h3>
+      <div class="item-list" id="charList"></div>
+      <div class="add-row">
+        <input type="text" id="newCharName" placeholder="캐릭터 이름">
+        <button class="btn-add" onclick="addCharacter()">+ 추가</button>
+      </div>
+    </div>
+    <div class="setting-section">
+      <h3>재화 항목 관리</h3>
+      <div class="item-list" id="resList"></div>
+      <div class="add-row">
+        <input type="text" id="newResName" placeholder="재화 항목명">
+        <button class="btn-add" onclick="addResource()">+ 추가</button>
+      </div>
+    </div>
+    <div class="setting-section">
+      <h3>데이터 관리</h3>
+      <div class="data-section">
+        <button class="btn-export" onclick="exportData()">JSON 내보내기</button>
+        <button class="btn-import" onclick="document.getElementById('importFile').click()">JSON 가져오기</button>
+        <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+        <button class="btn-reset" onclick="resetData()">전체 초기화</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// --- GitHub Gist ---
+const GIST_API = 'https://api.github.com/gists';
+function getGistToken() {
+  let token = localStorage.getItem('maple_gist_token') || '';
+  if (!token) {
+    token = prompt('GitHub Personal Access Token을 입력하세요.\n(gist 권한 필요, 최초 1회만 입력)');
+    if (token) localStorage.setItem('maple_gist_token', token);
+  }
+  return token;
+}
+const GIST_FILE = 'maple-tracker-data.json';
+let _gistId = localStorage.getItem('maple_gist_id') || '';
+let _cloudData = null;
+let _saving = false;
+let _saveQueued = false;
+
+const DEFAULT_RESOURCES = ['매소', '조각', '경험치', '기운', '상주정', '우유', '이슬', '코젬', '달라심볼'];
+
+function getCurrentUser() {
+  return localStorage.getItem('maple_current_user') || '기본';
+}
+function setCurrentUser(name) {
+  localStorage.setItem('maple_current_user', name);
+}
+
+function getEmptyCloud() {
+  return { users: ['기본'], profiles: { '기본': { characters: [], resources: [...DEFAULT_RESOURCES], records: {}, settlements: {} } } };
+}
+
+// --- Gist 저장/로드 ---
+async function cloudSave() {
+  if (_saving) { _saveQueued = true; return; }
+  if (!_cloudData) return;
+  _saving = true;
+  try {
+    localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
+    const body = { files: { [GIST_FILE]: { content: JSON.stringify(_cloudData) } } };
+    if (_gistId) {
+      await fetch(GIST_API + '/' + _gistId, {
+        method: 'PATCH',
+        headers: { 'Authorization': 'token ' + getGistToken(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    } else {
+      body.description = '메이플 일일 재화 관리 데이터';
+      body.public = false;
+      const res = await fetch(GIST_API, {
+        method: 'POST',
+        headers: { 'Authorization': 'token ' + getGistToken(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const json = await res.json();
+      _gistId = json.id;
+      localStorage.setItem('maple_gist_id', _gistId);
+    }
+  } catch (e) {
+    console.error('Gist 저장 실패:', e);
+  }
+  _saving = false;
+  if (_saveQueued) { _saveQueued = false; cloudSave(); }
+}
+
+async function cloudLoad() {
+  if (!_gistId) return null;
+  try {
+    const res = await fetch(GIST_API + '/' + _gistId, {
+      headers: { 'Authorization': 'token ' + getGistToken() }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const content = json.files?.[GIST_FILE]?.content;
+      if (content) return JSON.parse(content);
+    }
+  } catch (e) {
+    console.error('Gist 로드 실패:', e);
+  }
+  return null;
+}
+
+async function initCloud() {
+  const cached = localStorage.getItem('maple_cloud_cache');
+  if (cached) _cloudData = JSON.parse(cached);
+
+  if (_gistId) {
+    const cloud = await cloudLoad();
+    if (cloud && cloud.users) {
+      _cloudData = cloud;
+      localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
+    }
+  }
+
+  if (!_cloudData || !_cloudData.users) {
+    _cloudData = getEmptyCloud();
+    const usersRaw = localStorage.getItem('maple_tracker_users');
+    const oldData = localStorage.getItem('maple_daily_tracker');
+    if (usersRaw) {
+      const users = JSON.parse(usersRaw);
+      _cloudData.users = users.list || ['기본'];
+      _cloudData.profiles = {};
+      _cloudData.users.forEach(name => {
+        const raw = localStorage.getItem('maple_tracker_' + name);
+        _cloudData.profiles[name] = raw ? JSON.parse(raw) : { characters: [], resources: [...DEFAULT_RESOURCES], records: {}, settlements: {} };
+      });
+      if (users.current) setCurrentUser(users.current);
+    } else if (oldData) {
+      _cloudData.profiles['기본'] = JSON.parse(oldData);
+    }
+    await cloudSave();
+  }
+
+  if (!_cloudData.users.includes(getCurrentUser())) {
+    setCurrentUser(_cloudData.users[0] || '기본');
+  }
+
+  renderUserSelect();
+  refreshAll();
+}
+
+// --- 유저 관리 ---
+function loadUsers() {
+  return { list: _cloudData?.users || ['기본'] };
+}
+
+function renderUserSelect() {
+  const users = loadUsers();
+  const current = getCurrentUser();
+  const wrap = document.getElementById('userTabs');
+  let html = '';
+  users.list.forEach(name => {
+    const active = name === current ? ' active' : '';
+    html += `<div class="user-tab${active}" onclick="switchUser('${name}')" ondblclick="renameUserTab('${name}')">`;
+    html += name;
+    if (active && users.list.length > 1) html += `<span class="user-tab-x" onclick="event.stopPropagation();deleteUserTab('${name}')">✕</span>`;
+    html += `</div>`;
+  });
+  html += `<div class="user-tab-add" onclick="addUser()">+</div>`;
+  wrap.innerHTML = html;
+}
+
+function switchUser(name) {
+  setCurrentUser(name);
+  renderUserSelect();
+  refreshAll();
+}
+
+function addUser() {
+  const name = prompt('새 유저 이름:');
+  if (!name || !name.trim()) return;
+  if (_cloudData.users.includes(name.trim())) { toast('이미 존재하는 유저입니다.', 'error'); return; }
+  _cloudData.users.push(name.trim());
+  _cloudData.profiles[name.trim()] = { characters: [], resources: [...DEFAULT_RESOURCES], records: {}, settlements: {} };
+  setCurrentUser(name.trim());
+  localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
+  markUnsaved();
+  renderUserSelect();
+  refreshAll();
+  toast(`"${name.trim()}" 유저 추가됨`);
+}
+
+function deleteUserTab(name) {
+  if (_cloudData.users.length <= 1) { toast('유저가 1명이면 삭제할 수 없습니다.', 'error'); return; }
+  if (!confirm(`"${name}" 유저와 모든 데이터를 삭제하시겠습니까?`)) return;
+  _cloudData.users = _cloudData.users.filter(n => n !== name);
+  delete _cloudData.profiles[name];
+  setCurrentUser(_cloudData.users[0]);
+  localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
+  markUnsaved();
+  renderUserSelect();
+  refreshAll();
+  toast('유저 삭제 완료');
+}
+
+function renameUserTab(oldName) {
+  const newName = prompt('새 이름:', oldName);
+  if (!newName || !newName.trim() || newName.trim() === oldName) return;
+  if (_cloudData.users.includes(newName.trim())) { toast('이미 존재하는 이름입니다.', 'error'); return; }
+  _cloudData.users = _cloudData.users.map(n => n === oldName ? newName.trim() : n);
+  _cloudData.profiles[newName.trim()] = _cloudData.profiles[oldName];
+  delete _cloudData.profiles[oldName];
+  if (getCurrentUser() === oldName) setCurrentUser(newName.trim());
+  localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
+  markUnsaved();
+  renderUserSelect();
+  toast(`"${oldName}" → "${newName.trim()}" 변경됨`);
+}
+
+function refreshAll() {
+  renderCal();
+  renderInputTable();
+  renderSettings();
+}
+
+// --- 데이터 로드/저장 ---
+function loadData() {
+  const username = getCurrentUser();
+  const profile = _cloudData?.profiles?.[username];
+  if (profile) return profile;
+  return { characters: [], resources: [...DEFAULT_RESOURCES], records: {}, settlements: {} };
+}
+
+function saveData(data) {
+  const username = getCurrentUser();
+  if (!_cloudData) _cloudData = getEmptyCloud();
+  _cloudData.profiles[username] = data;
+  localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
+  markUnsaved();
+}
+
+let _unsaved = false;
+function markUnsaved() {
+  _unsaved = true;
+  const btn = document.getElementById('cloudSaveBtn');
+  if (btn) { btn.classList.add('unsaved'); btn.textContent = '저장하기'; }
+}
+function markSaved() {
+  _unsaved = false;
+  const btn = document.getElementById('cloudSaveBtn');
+  if (btn) { btn.classList.remove('unsaved'); btn.textContent = '저장됨'; }
+}
+
+async function manualCloudSave() {
+  const btn = document.getElementById('cloudSaveBtn');
+  if (btn) { btn.textContent = '저장 중...'; btn.disabled = true; }
+  await cloudSave();
+  markSaved();
+  if (btn) btn.disabled = false;
+  toast('클라우드 저장 완료');
+}
+
+async function manualCloudLoad() {
+  if (_unsaved && !confirm('저장하지 않은 변경사항이 있습니다. 클라우드에서 덮어쓰시겠습니까?')) return;
+  const btn = document.getElementById('cloudLoadBtn');
+  if (btn) { btn.textContent = '불러오는 중...'; btn.disabled = true; }
+  const cloud = await cloudLoad();
+  if (cloud && cloud.users) {
+    _cloudData = cloud;
+    localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
+    renderUserSelect();
+    refreshAll();
+    markSaved();
+    toast('클라우드에서 불러옴');
+  } else {
+    toast('클라우드 데이터가 없습니다.', 'error');
+  }
+  if (btn) { btn.textContent = '불러오기'; btn.disabled = false; }
+}
+
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => el.className = 'toast', 2000);
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatNum(n) {
+  if (n === 0 || n === '' || n === null || n === undefined) return '';
+  return Number(n).toLocaleString();
+}
+
+// --- Tabs ---
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'input') renderInputTable();
+    if (tab.dataset.tab === 'history') renderHistory();
+    if (tab.dataset.tab === 'settings') renderSettings();
+  });
+});
+
+// --- Input Tab ---
+const dateInput = document.getElementById('inputDate');
+dateInput.value = todayStr();
+
+// --- Calendar ---
+let calYear, calMonth;
+(function() {
+  const d = new Date();
+  calYear = d.getFullYear();
+  calMonth = d.getMonth();
+})();
+
+function calMove(offset) {
+  calMonth += offset;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCal();
+}
+
+function calToday() {
+  const d = new Date();
+  calYear = d.getFullYear();
+  calMonth = d.getMonth();
+  dateInput.value = todayStr();
+  renderCal();
+  renderInputTable();
+}
+
+function calSelect(dateStr) {
+  dateInput.value = dateStr;
+  renderCal();
+  renderInputTable();
+}
+
+function renderCal() {
+  const data = loadData();
+  const selected = dateInput.value;
+  const today = todayStr();
+
+  document.getElementById('calTitle').textContent = calYear + '년 ' + (calMonth + 1) + '월';
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+  const prevLastDate = new Date(calYear, calMonth, 0).getDate();
+
+  let html = '';
+
+  // 이전 달
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const d = prevLastDate - i;
+    const m = calMonth === 0 ? 12 : calMonth;
+    const y = calMonth === 0 ? calYear - 1 : calYear;
+    const ds = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = (firstDay - 1 - i) % 7;
+    html += `<div class="cal-day other-month${dow===0?' sun':''}${dow===6?' sat':''}" onclick="calSelect('${ds}')">${d}</div>`;
+  }
+
+  // 이번 달
+  for (let d = 1; d <= lastDate; d++) {
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = new Date(calYear, calMonth, d).getDay();
+    let cls = 'cal-day';
+    if (ds === today) cls += ' today';
+    if (ds === selected) cls += ' selected';
+    if (data.records[ds]) cls += ' has-data';
+    if (dow === 0) cls += ' sun';
+    if (dow === 6) cls += ' sat';
+    html += `<div class="${cls}" onclick="calSelect('${ds}')">${d}</div>`;
+  }
+
+  // 다음 달 (6줄 채우기)
+  const totalCells = firstDay + lastDate;
+  const remaining = (7 - totalCells % 7) % 7;
+  for (let d = 1; d <= remaining; d++) {
+    const m = calMonth === 11 ? 1 : calMonth + 2;
+    const y = calMonth === 11 ? calYear + 1 : calYear;
+    const ds = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = (totalCells + d - 1) % 7;
+    html += `<div class="cal-day other-month${dow===0?' sun':''}${dow===6?' sat':''}" onclick="calSelect('${ds}')">${d}</div>`;
+  }
+
+  document.getElementById('calDays').innerHTML = html;
+}
+
+// 레코드에서 획득량 계산 (after - before)
+function getEarned(rec) {
+  if (typeof rec === 'number') return rec;
+  if (typeof rec === 'object' && rec !== null) {
+    if (rec.before !== '' && rec.before !== undefined && rec.after !== '' && rec.after !== undefined) {
+      return (Number(rec.after) || 0) - (Number(rec.before) || 0);
+    }
+  }
+  return 0;
+}
+
+function renderInputTable() {
+  const data = loadData();
+  const wrap = document.getElementById('inputTableWrap');
+  const date = dateInput.value;
+
+  if (!data.resources.length) {
+    wrap.innerHTML = '<div class="no-data">설정 탭에서 재화 항목을 먼저 추가해주세요.</div>';
+    return;
+  }
+
+  if (!data.records[date]) data.records[date] = {};
+
+  let html = '<table class="sheet"><thead><tr><th class="corner"></th>';
+  data.resources.forEach(r => html += `<th>${r}</th>`);
+  html += '</tr></thead><tbody>';
+
+  data.characters.forEach(ch => {
+    if (!data.records[date][ch]) data.records[date][ch] = {};
+    // 이 날짜가 이 캐릭터의 정산 범위에 포함되는지
+    const settledDate = data.settlements?.[ch]?.lastDate || '';
+    const isSettled = settledDate && date <= settledDate;
+
+    html += `<tr${isSettled ? ' class="settled-row"' : ''}><td class="row-header" style="position:relative">${ch}${isSettled ? '<div class="settled-overlay"><span>정 산 완 료</span></div>' : ''}</td>`;
+    data.resources.forEach(r => {
+      let rec = data.records[date][ch][r];
+      if (typeof rec === 'number') rec = { before: 0, after: rec };
+      if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
+      const bv = rec.before ?? '';
+      const av = rec.after ?? '';
+      const earned = (bv !== '' && av !== '') ? (Number(av) || 0) - (Number(bv) || 0) : '';
+      html += `<td class="cell"><div class="cell-stack">`;
+      const ro = isSettled ? ' readonly' : '';
+      html += `<div class="cell-input-row"><span class="cell-label">전</span><input type="text" value="${bv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="before" placeholder="시작 전"${ro}></div>`;
+      html += `<div class="cell-divider"></div>`;
+      html += `<div class="cell-input-row"><span class="cell-label">후</span><input type="text" value="${av}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="after" placeholder="종료 후"${ro}></div>`;
+      html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}">${earned !== '' ? formatNum(earned) : ''}</div>`;
+      html += `</div></td>`;
+    });
+    html += '</tr>';
+  });
+
+  // 합계 행
+  html += '<tr class="sum-row"><td class="row-header">합계</td>';
+  data.resources.forEach(r => {
+    let sum = 0;
+    data.characters.forEach(ch => { sum += getEarned(data.records[date][ch]?.[r]); });
+    html += `<td data-sum-res="${r}">${formatNum(sum)}</td>`;
+  });
+  html += '</tr>';
+
+  // 캐릭터 추가 행
+  const totalCols = data.resources.length + 1;
+  html += `<tr class="add-row"><td class="add-cell" colspan="${totalCols}">`;
+  html += '<input type="text" id="inlineAddChar" placeholder="+ 캐릭터 추가 (이름 입력 후 Enter)">';
+  html += '</td></tr>';
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+
+  document.getElementById('inlineAddChar').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      const name = this.value.trim();
+      if (!name) return;
+      const d = loadData();
+      if (d.characters.includes(name)) { toast('이미 존재하는 캐릭터입니다.', 'error'); return; }
+      d.characters.push(name);
+      saveData(d);
+      toast(`"${name}" 추가됨`);
+      renderInputTable();
+    }
+  });
+}
+
+function updateValue(el) {
+  const data = loadData();
+  const { date, char: ch, res, field } = el.dataset;
+  if (!data.records[date]) data.records[date] = {};
+  if (!data.records[date][ch]) data.records[date][ch] = {};
+  let rec = data.records[date][ch][res];
+  if (typeof rec === 'number') rec = { before: 0, after: rec };
+  if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
+  const num = el.value.replace(/[^0-9.\-]/g, '');
+  rec[field] = num !== '' ? Number(num) : '';
+  data.records[date][ch][res] = rec;
+  saveData(data);
+}
+
+function updateSums() {
+  const data = loadData();
+  const date = dateInput.value;
+
+  // 개별 획득 셀 업데이트
+  document.querySelectorAll('.cell-earned[data-earned-char]').forEach(el => {
+    const ch = el.dataset.earnedChar;
+    const r = el.dataset.earnedRes;
+    const rec = data.records[date]?.[ch]?.[r];
+    if (typeof rec === 'object' && rec !== null) {
+      const bEmpty = rec.before === '' || rec.before === undefined;
+      const aEmpty = rec.after === '' || rec.after === undefined;
+      el.textContent = (!bEmpty && !aEmpty) ? formatNum((Number(rec.after)||0) - (Number(rec.before)||0)) : '';
+    } else {
+      el.textContent = '';
+    }
+  });
+
+  // 합계
+  data.resources.forEach(r => {
+    let sum = 0;
+    data.characters.forEach(ch => { sum += getEarned(data.records[date]?.[ch]?.[r]); });
+    const el = document.querySelector(`[data-sum-res="${r}"]`);
+    if (el) el.textContent = formatNum(sum);
+  });
+}
+
+// --- Spreadsheet 키보드 & 이벤트 ---
+const inputWrap = document.getElementById('inputTableWrap');
+
+inputWrap.addEventListener('input', function(e) {
+  const el = e.target;
+  if (!el.dataset.res) return;
+  // 숫자만 허용 (마이너스, 소수점 포함)
+  el.value = el.value.replace(/[^0-9.\-]/g, '');
+  updateValue(el);
+  updateSums();
+});
+
+inputWrap.addEventListener('focusin', function(e) {
+  if (e.target.dataset.res) e.target.select();
+});
+
+inputWrap.addEventListener('keydown', function(e) {
+  const el = e.target;
+  if (!el.dataset.res) return;
+
+  const field = el.dataset.field; // 'before' or 'after'
+  const table = el.closest('table');
+  const td = el.closest('td');
+  const tr = td.parentElement;
+  const dataRows = Array.from(table.querySelectorAll('tbody tr:not(.sum-row):not(.add-row)'));
+  const rowIdx = dataRows.indexOf(tr);
+  const cells = Array.from(tr.querySelectorAll('td.cell'));
+  const colIdx = cells.indexOf(td);
+
+  let target = null;
+
+  function getInput(r, c, f) {
+    if (r < 0 || r >= dataRows.length) return null;
+    const tds = dataRows[r].querySelectorAll('td.cell');
+    if (c < 0 || c >= tds.length) return null;
+    return tds[c]?.querySelector(`input[data-field="${f}"]`);
+  }
+
+  switch (e.key) {
+    case 'ArrowRight':
+      e.preventDefault();
+      target = getInput(rowIdx, colIdx + 1, field);
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      target = getInput(rowIdx, colIdx - 1, field);
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      if (field === 'before') {
+        // 전 → 후 (같은 셀)
+        target = td.querySelector('input[data-field="after"]');
+      } else {
+        // 후 → 다음 캐릭터의 전
+        target = getInput(rowIdx + 1, colIdx, 'before');
+      }
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      if (field === 'after') {
+        // 후 → 전 (같은 셀)
+        target = td.querySelector('input[data-field="before"]');
+      } else {
+        // 전 → 이전 캐릭터의 후
+        target = getInput(rowIdx - 1, colIdx, 'after');
+      }
+      break;
+    case 'Enter':
+      e.preventDefault();
+      if (field === 'before') {
+        target = td.querySelector('input[data-field="after"]');
+      } else {
+        // 후 → 다음 셀의 전, 또는 다음 캐릭터
+        target = getInput(rowIdx, colIdx + 1, 'before');
+        if (!target) target = getInput(rowIdx + 1, 0, 'before');
+      }
+      break;
+    case 'Tab':
+      e.preventDefault();
+      if (e.shiftKey) {
+        if (field === 'after') {
+          target = td.querySelector('input[data-field="before"]');
+        } else {
+          const prev = getInput(rowIdx, colIdx - 1, 'after');
+          target = prev || getInput(rowIdx - 1, cells.length - 1, 'after');
+        }
+      } else {
+        if (field === 'before') {
+          target = td.querySelector('input[data-field="after"]');
+        } else {
+          const next = getInput(rowIdx, colIdx + 1, 'before');
+          target = next || getInput(rowIdx + 1, 0, 'before');
+        }
+      }
+      break;
+    case 'Escape':
+      el.blur();
+      break;
+  }
+
+  if (target) {
+    target.focus();
+    target.select();
+  }
+});
+
+// --- History Tab ---
+const histStart = document.getElementById('histStart');
+const histEnd = document.getElementById('histEnd');
+histEnd.value = todayStr();
+const d30 = new Date(); d30.setDate(d30.getDate() - 29);
+histStart.value = d30.toISOString().slice(0, 10);
+histStart.addEventListener('change', renderHistory);
+histEnd.addEventListener('change', renderHistory);
+
+// 캐릭터별 마지막 정산일 이후 누적 계산
+function getAccumulated(data, ch) {
+  const lastDate = data.settlements?.[ch]?.lastDate || '';
+  const totals = {};
+  data.resources.forEach(r => totals[r] = 0);
+  Object.keys(data.records).forEach(date => {
+    if (date > lastDate) { // 정산일 다음날부터 누적 (정산일 포함 X)
+      data.resources.forEach(r => {
+        totals[r] += getEarned(data.records[date]?.[ch]?.[r]);
+      });
+    }
+  });
+  return totals;
+}
+
+function settleChar(ch) {
+  const data = loadData();
+  if (!data.settlements) data.settlements = {};
+  const totals = getAccumulated(data, ch);
+  const hasAny = data.resources.some(r => totals[r] !== 0);
+  if (!hasAny) { toast('누적된 재화가 없습니다.', 'error'); return; }
+  if (!confirm(`"${ch}" 정산 완료 처리하시겠습니까?`)) return;
+
+  data.settlements[ch] = {
+    lastDate: todayStr(),
+    history: [...(data.settlements[ch]?.history || []), { date: todayStr(), amounts: totals }]
+  };
+  saveData(data);
+  renderHistory();
+  toast(`"${ch}" ${todayStr()} 정산 완료`);
+}
+
+function rollbackSettle(ch) {
+  const data = loadData();
+  const hist = data.settlements?.[ch]?.history;
+  if (!hist || !hist.length) { toast('롤백할 정산 이력이 없습니다.', 'error'); return; }
+  const last = hist[hist.length - 1];
+  if (!confirm(`"${ch}" 마지막 정산(${last.date})을 되돌리시겠습니까?\n${last.date} 이후 데이터가 다시 미정산 상태로 돌아갑니다.`)) return;
+
+  hist.pop();
+  if (hist.length > 0) {
+    data.settlements[ch].lastDate = hist[hist.length - 1].date;
+  } else {
+    delete data.settlements[ch];
+  }
+  saveData(data);
+  renderHistory();
+  toast(`"${ch}" 정산 롤백 완료`);
+}
+
+function renderHistory() {
+  const data = loadData();
+  const settleWrap = document.getElementById('settlementWrap');
+  const wrap = document.getElementById('historyTableWrap');
+
+  if (!data.characters.length || !data.resources.length) {
+    settleWrap.innerHTML = '<div class="no-data">캐릭터와 재화를 먼저 추가해주세요.</div>';
+    wrap.innerHTML = '';
+    return;
+  }
+
+  // --- 캐릭터별 누적 정산 ---
+  let sh = '<table class="sheet"><thead><tr><th class="corner">캐릭터</th>';
+  data.resources.forEach(r => sh += `<th>${r}</th>`);
+  sh += '<th style="min-width:100px">정산</th></tr></thead><tbody>';
+
+  // 미정산 캐릭터 먼저, 정산완료 캐릭터는 아래로
+  const unsettled = [];
+  const settled = [];
+  data.characters.forEach(ch => {
+    const totals = getAccumulated(data, ch);
+    const lastDate = data.settlements?.[ch]?.lastDate || '';
+    const lastAmounts = data.settlements?.[ch]?.history?.slice(-1)[0]?.amounts || null;
+    const hasAny = data.resources.some(r => totals[r] !== 0);
+    if (hasAny) unsettled.push({ ch, totals, lastDate, lastAmounts, hasAny });
+    else settled.push({ ch, totals, lastDate, lastAmounts, hasAny });
+  });
+
+  if (unsettled.length) {
+    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#f5a623;background:#2a2510;border:1px solid #3a3018;">미정산 (${unsettled.length})</td></tr>`;
+    unsettled.forEach(({ ch, totals, lastDate, lastAmounts }) => {
+      sh += `<tr><td class="row-header">${ch}</td>`;
+      data.resources.forEach(r => {
+        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:13px;color:#f5a623">${formatNum(totals[r])}</td>`;
+      });
+      sh += `<td style="text-align:center;padding:4px 6px;">`;
+      sh += `<button onclick="settleChar('${ch}')" style="padding:5px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;background:#f5a623;color:#000;font-weight:600;">정산하기</button>`;
+      if (lastDate) sh += `<div style="font-size:10px;color:#666;margin-top:3px">이전: ${lastDate}</div>`;
+      sh += `</td></tr>`;
+    });
+  }
+
+  if (settled.length) {
+    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#5a7a5a;background:#1a2a1a;border:1px solid #2a3a2a;">정산 완료 (${settled.length})</td></tr>`;
+    settled.forEach(({ ch, totals, lastDate, lastAmounts }) => {
+      // 이전 정산 이력
+      if (lastDate && lastAmounts) {
+        sh += `<tr style="opacity:0.5"><td class="row-header" style="color:#6a8a6a">${ch}</td>`;
+        data.resources.forEach(r => {
+          sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:12px;color:#5a7a5a;text-decoration:line-through">${formatNum(lastAmounts[r] || 0)}</td>`;
+        });
+        sh += `<td style="text-align:center;padding:4px 6px;">`;
+        sh += `<div style="font-size:11px;color:#5a7a5a">${lastDate} 정산완료</div>`;
+        sh += `<button onclick="rollbackSettle('${ch}')" style="margin-top:3px;padding:3px 10px;border:1px solid #444;border-radius:4px;cursor:pointer;font-size:11px;background:#2a2a2a;color:#c0392b;">되돌리기</button>`;
+        sh += `</td></tr>`;
+      } else {
+        sh += `<tr><td class="row-header" style="color:#666">${ch}</td>`;
+        data.resources.forEach(() => sh += `<td></td>`);
+        sh += `<td style="text-align:center;color:#555;font-size:12px">기록 없음</td></tr>`;
+      }
+    });
+  }
+
+  sh += '</tbody></table>';
+  settleWrap.innerHTML = sh;
+
+  // --- 하단 테이블 (뷰에 따라) ---
+  renderRecordView(data, wrap);
+}
+
+let currentView = 'daily';
+
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.view-tab').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.getElementById('dailyControls').style.display = view === 'daily' ? 'flex' : 'none';
+  document.getElementById('yearControl').style.display = view !== 'daily' ? 'flex' : 'none';
+  if (view !== 'daily') populateYearSelect();
+  renderHistoryView();
+}
+
+function renderHistoryView() {
+  const data = loadData();
+  renderRecordView(data, document.getElementById('historyTableWrap'));
+}
+
+function populateYearSelect() {
+  const data = loadData();
+  const years = new Set();
+  Object.keys(data.records).forEach(d => years.add(d.slice(0,4)));
+  const sel = document.getElementById('yearSelect');
+  const curVal = sel.value || new Date().getFullYear().toString();
+  sel.innerHTML = '';
+  [...years].sort().reverse().forEach(y => {
+    sel.innerHTML += `<option value="${y}" ${y===curVal?'selected':''}>${y}년</option>`;
+  });
+  if (!years.size) sel.innerHTML = `<option>${new Date().getFullYear()}년</option>`;
+}
+
+// 목~수 주간 정보 생성
+function getWeekInfo(dateStr) {
+  const d = new Date(dateStr);
+  const day = d.getDay();
+  const diff = (day - 4 + 7) % 7;
+  const thu = new Date(d);
+  thu.setDate(d.getDate() - diff);
+  const wed = new Date(thu);
+  wed.setDate(thu.getDate() + 6);
+  // N월 N주차 계산: 해당 월의 첫 목요일 기준
+  const month = thu.getMonth(); // 목요일 기준 월
+  const firstOfMonth = new Date(thu.getFullYear(), month, 1);
+  const firstThu = new Date(firstOfMonth);
+  const fDay = firstOfMonth.getDay();
+  const daysToThu = (4 - fDay + 7) % 7;
+  firstThu.setDate(1 + daysToThu);
+  const weekNum = Math.floor((thu - firstThu) / (7 * 86400000)) + 1;
+  return {
+    sortKey: thu.toISOString().slice(0,10),
+    label: `${month + 1}월 ${weekNum}주차`,
+    detail: `${thu.toISOString().slice(5,10)} ~ ${wed.toISOString().slice(5,10)}`,
+    year: thu.getFullYear().toString()
+  };
+}
+
+function renderRecordView(data, wrap) {
+  const allDates = Object.keys(data.records).sort().reverse();
+  if (!allDates.length || !data.resources.length) {
+    wrap.innerHTML = '<div class="no-data">기록이 없습니다.</div>';
+    return;
+  }
+
+  if (currentView === 'daily') {
+    renderDailyView(data, wrap, allDates);
+  } else if (currentView === 'weekly') {
+    renderGroupedView(data, wrap, allDates, 'weekly');
+  } else {
+    renderGroupedView(data, wrap, allDates, 'monthly');
+  }
+}
+
+function renderDailyView(data, wrap, allDates) {
+  const start = histStart.value;
+  const end = histEnd.value;
+  const dates = allDates.filter(d => d >= start && d <= end);
+
+  if (!dates.length) {
+    wrap.innerHTML = '<div class="no-data">해당 기간에 기록이 없습니다.</div>';
+    return;
+  }
+
+  let html = '<table class="sheet"><thead><tr><th class="corner">날짜</th>';
+  data.resources.forEach(r => html += `<th>${r}</th>`);
+  html += '<th>상세</th></tr></thead><tbody>';
+
+  dates.forEach(date => {
+    html += `<tr><td class="row-header">${date}</td>`;
+    data.resources.forEach(r => {
+      let sum = 0;
+      data.characters.forEach(ch => { sum += getEarned(data.records[date]?.[ch]?.[r]); });
+      html += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:13px">${formatNum(sum)}</td>`;
+    });
+    html += `<td style="text-align:center"><button class="view-btn" onclick="viewDate('${date}')">보기</button></td>`;
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function renderGroupedView(data, wrap, allDates, mode) {
+  const selectedYear = document.getElementById('yearSelect').value || new Date().getFullYear().toString();
+
+  // 그룹핑
+  const groups = {};
+  const groupMeta = {};
+  allDates.forEach(date => {
+    if (mode === 'weekly') {
+      const info = getWeekInfo(date);
+      if (info.year !== selectedYear) return;
+      const key = info.sortKey;
+      if (!groups[key]) { groups[key] = []; groupMeta[key] = info; }
+      groups[key].push(date);
+    } else {
+      const ym = date.slice(0, 7);
+      if (date.slice(0,4) !== selectedYear) return;
+      if (!groups[ym]) groups[ym] = [];
+      groups[ym].push(date);
+    }
+  });
+
+  const groupKeys = Object.keys(groups).sort().reverse();
+
+  if (!groupKeys.length) {
+    wrap.innerHTML = '<div class="no-data">해당 연도에 기록이 없습니다.</div>';
+    return;
+  }
+
+  let html = '<table class="sheet"><thead><tr><th class="corner" style="width:90px">' + (mode === 'weekly' ? '주차' : '월') + '</th><th class="corner">캐릭터</th>';
+  data.resources.forEach(r => html += `<th>${r}</th>`);
+  html += '</tr></thead><tbody>';
+
+  groupKeys.forEach(key => {
+    const dates = groups[key];
+    let label, sub;
+    if (mode === 'weekly') {
+      label = groupMeta[key].label;
+      sub = groupMeta[key].detail;
+    } else {
+      const m = parseInt(key.slice(5));
+      label = m + '월';
+      sub = '';
+    }
+    let first = true;
+    const charCount = data.characters.length;
+
+    data.characters.forEach(ch => {
+      html += '<tr>';
+      if (first) {
+        html += `<td class="row-header" rowspan="${charCount + 1}" style="vertical-align:middle;text-align:center;line-height:1.5;white-space:normal;font-size:13px;"><strong>${label}</strong>${sub ? '<br><span style="font-size:10px;color:#999;font-weight:400">'+sub+'</span>' : ''}</td>`;
+        first = false;
+      }
+      html += `<td class="row-header">${ch}</td>`;
+      data.resources.forEach(r => {
+        let total = 0;
+        dates.forEach(d => { total += getEarned(data.records[d]?.[ch]?.[r]); });
+        html += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:13px">${formatNum(total)}</td>`;
+      });
+      html += '</tr>';
+    });
+
+    // 그룹 합계
+    html += '<tr class="sum-row">';
+    html += `<td class="row-header">합계</td>`;
+    data.resources.forEach(r => {
+      let grand = 0;
+      dates.forEach(d => {
+        data.characters.forEach(ch => { grand += getEarned(data.records[d]?.[ch]?.[r]); });
+      });
+      html += `<td>${formatNum(grand)}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function viewDate(date) {
+  dateInput.value = date;
+  const d = new Date(date);
+  calYear = d.getFullYear();
+  calMonth = d.getMonth();
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="input"]').classList.add('active');
+  document.getElementById('input').classList.add('active');
+  renderCal();
+  renderInputTable();
+}
+
+// --- Settings Tab ---
+function renderSettings() {
+  const data = loadData();
+  renderList('charList', data.characters, 'char');
+  renderList('resList', data.resources, 'res');
+}
+
+function renderList(containerId, items, type) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  items.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.innerHTML = `
+      <span class="item-name" data-type="${type}" data-index="${i}" title="클릭하여 수정">${item}</span>
+      <button class="btn-move" onclick="moveItem('${type}',${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+      <button class="btn-move" onclick="moveItem('${type}',${i},1)" ${i === items.length - 1 ? 'disabled' : ''}>▼</button>
+      <button class="btn-del" onclick="deleteItem('${type}',${i})">삭제</button>
+    `;
+    el.appendChild(row);
+  });
+}
+
+function startRename(span) {
+  const oldName = span.textContent;
+  const type = span.dataset.type;
+  const index = Number(span.dataset.index);
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = oldName;
+  input.className = 'rename-input';
+  span.replaceWith(input);
+  input.focus();
+  input.select();
+
+  function commit() {
+    const newName = input.value.trim();
+    const data = loadData();
+    const arr = type === 'char' ? data.characters : data.resources;
+    if (!newName || newName === oldName) {
+      renderSettings();
+      return;
+    }
+    if (arr.includes(newName)) {
+      toast('이미 존재하는 이름입니다.', 'error');
+      renderSettings();
+      return;
+    }
+    // 레코드에서 이름도 변경
+    if (type === 'char') {
+      Object.keys(data.records).forEach(date => {
+        if (data.records[date][oldName]) {
+          data.records[date][newName] = data.records[date][oldName];
+          delete data.records[date][oldName];
+        }
+      });
+      if (data.settlements?.[oldName]) {
+        data.settlements[newName] = data.settlements[oldName];
+        delete data.settlements[oldName];
+      }
+    } else {
+      Object.keys(data.records).forEach(date => {
+        Object.keys(data.records[date]).forEach(ch => {
+          if (data.records[date][ch][oldName] !== undefined) {
+            data.records[date][ch][newName] = data.records[date][ch][oldName];
+            delete data.records[date][ch][oldName];
+          }
+        });
+      });
+    }
+    arr[index] = newName;
+    saveData(data);
+    renderSettings();
+    toast(`"${oldName}" → "${newName}" 변경됨`);
+  }
+
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { input.blur(); }
+    if (e.key === 'Escape') { input.value = oldName; input.blur(); }
+  });
+}
+
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('item-name')) startRename(e.target);
+});
+
+function addCharacter(name) {
+  if (!name) {
+    const input = document.getElementById('newCharName');
+    name = input.value.trim();
+    if (!name) return;
+    input.value = '';
+  }
+  const data = loadData();
+  if (data.characters.includes(name)) { toast('이미 존재하는 캐릭터입니다.', 'error'); return; }
+  data.characters.push(name);
+  saveData(data);
+  renderSettings();
+  toast(`"${name}" 추가됨`);
+}
+
+function addResource() {
+  const input = document.getElementById('newResName');
+  const name = input.value.trim();
+  if (!name) return;
+  const data = loadData();
+  if (data.resources.includes(name)) { toast('이미 존재하는 항목입니다.', 'error'); return; }
+  data.resources.push(name);
+  saveData(data);
+  input.value = '';
+  renderSettings();
+  toast(`"${name}" 추가됨`);
+}
+
+function deleteItem(type, index) {
+  const data = loadData();
+  const arr = type === 'char' ? data.characters : data.resources;
+  const name = arr[index];
+  if (!confirm(`"${name}"을(를) 삭제하시겠습니까?`)) return;
+  arr.splice(index, 1);
+  saveData(data);
+  renderSettings();
+  toast(`"${name}" 삭제됨`);
+}
+
+function moveItem(type, index, dir) {
+  const data = loadData();
+  const arr = type === 'char' ? data.characters : data.resources;
+  const newIdx = index + dir;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  [arr[index], arr[newIdx]] = [arr[newIdx], arr[index]];
+  saveData(data);
+  renderSettings();
+}
+
+// --- Enter key for add inputs ---
+document.getElementById('newCharName').addEventListener('keydown', e => { if (e.key === 'Enter') addCharacter(); });
+document.getElementById('newResName').addEventListener('keydown', e => { if (e.key === 'Enter') addResource(); });
+
+// --- Export / Import / Reset ---
+function exportData() {
+  const data = loadData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `maple_tracker_${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('데이터 내보내기 완료');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.characters || !imported.resources || !imported.records) {
+        toast('올바른 형식이 아닙니다.', 'error'); return;
+      }
+      saveData(imported);
+      toast('데이터 가져오기 완료');
+      renderInputTable();
+      renderSettings();
+    } catch { toast('파일 읽기 실패', 'error'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetData() {
+  if (!confirm('현재 유저의 모든 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+  if (!confirm('정말로 초기화하시겠습니까?')) return;
+  const username = getCurrentUser();
+  const empty = { characters: [], resources: [...DEFAULT_RESOURCES], records: {}, settlements: {} };
+  saveData(empty);
+  toast('데이터 초기화 완료');
+  renderInputTable();
+  renderSettings();
+}
+
+// --- Init ---
+// localStorage 캐시로 즉시 렌더링
+const _cachedBoot = localStorage.getItem('maple_cloud_cache');
+if (_cachedBoot) _cloudData = JSON.parse(_cachedBoot);
+renderUserSelect();
+renderCal();
+renderInputTable();
+// 클라우드 동기화 (비동기)
+initCloud();
+</script>
+</body>
+</html>

@@ -201,7 +201,7 @@ input[type="file"] { display: none; }
           <option value="income">수입</option>
           <option value="expense">지출</option>
         </select>
-        <input type="text" id="ledgerAmount" placeholder="금액 (메소)" style="width:140px">
+        <input type="text" id="ledgerAmount" placeholder="예: 5.43억, 3000만" style="width:160px">
         <input type="text" id="ledgerMemo" placeholder="메모 (예: 장비 구매, 보스 드랍)" style="flex:1">
         <button class="btn-add" onclick="addLedger()">추가</button>
       </div>
@@ -1374,14 +1374,15 @@ function importData(event) {
 }
 
 function resetData() {
+  const pw = prompt('초기화 비밀번호를 입력하세요:');
+  if (pw !== '0000') { toast('비밀번호가 틀렸습니다.', 'error'); return; }
   if (!confirm('현재 유저의 모든 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
-  if (!confirm('정말로 초기화하시겠습니까?')) return;
-  const username = getCurrentUser();
-  const empty = { characters: [], resources: [...DEFAULT_RESOURCES], records: {}, settlements: {} };
+  const empty = { characters: [], resources: [...DEFAULT_RESOURCES], records: {}, settlements: {}, ledger: [] };
   saveData(empty);
   toast('데이터 초기화 완료');
   renderInputTable();
   renderSettings();
+  renderDashboard();
 }
 
 // --- 대시보드 ---
@@ -1455,15 +1456,33 @@ function formatMeso(n) {
 }
 
 // --- 수입/지출 장부 ---
+// 억 단위 입력 파싱: "5.43" → 543000000, "5.43억" → 543000000, "3000만" → 30000000, 숫자만 → 그대로 메소
+function parseMeso(str) {
+  str = str.trim();
+  if (!str) return 0;
+  // "5.43억" or "5.43"
+  let m = str.match(/^([0-9.]+)\s*억$/);
+  if (m) return Math.round(parseFloat(m[1]) * 100000000);
+  // "3000만"
+  m = str.match(/^([0-9.]+)\s*만$/);
+  if (m) return Math.round(parseFloat(m[1]) * 10000);
+  // 숫자만 (소수점 있으면 억 단위로 간주)
+  const num = parseFloat(str.replace(/,/g, ''));
+  if (isNaN(num)) return 0;
+  if (str.includes('.') && num < 10000) return Math.round(num * 100000000);
+  return Math.round(num);
+}
+
 function addLedger() {
   const date = document.getElementById('ledgerDate').value;
   const type = document.getElementById('ledgerType').value;
-  const amountRaw = document.getElementById('ledgerAmount').value.replace(/[^0-9]/g, '');
+  const amountStr = document.getElementById('ledgerAmount').value;
   const memo = document.getElementById('ledgerMemo').value.trim();
-  if (!date || !amountRaw) { toast('날짜와 금액을 입력하세요.', 'error'); return; }
+  const amount = parseMeso(amountStr);
+  if (!date || !amount) { toast('날짜와 금액을 입력하세요.', 'error'); return; }
   const data = loadData();
   if (!data.ledger) data.ledger = [];
-  data.ledger.push({ date, type, amount: Number(amountRaw), memo, id: Date.now() });
+  data.ledger.push({ date, type, amount, memo, id: Date.now() });
   data.ledger.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
   saveData(data);
   document.getElementById('ledgerAmount').value = '';

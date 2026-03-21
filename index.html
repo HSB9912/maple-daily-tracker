@@ -151,6 +151,23 @@ h1 { color: #f5a623; font-size: 1.3em; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
 .btn-reset:hover { background: #e74c3c; }
 input[type="file"] { display: none; }
 
+/* Dashboard */
+.dashboard { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.dash-card { flex: 1; min-width: 120px; background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 12px 16px; text-align: center; }
+.dash-card .dash-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+.dash-card .dash-value { font-size: 18px; font-weight: 700; font-family: 'Consolas', monospace; }
+.dash-card .dash-value.income { color: #5bc0fa; }
+.dash-card .dash-value.expense { color: #ff6b6b; }
+.dash-card .dash-value.net { color: #f5a623; }
+.dash-card .dash-value.asset { color: #27ae60; }
+.dash-card .dash-sub { font-size: 10px; color: #555; margin-top: 2px; }
+
+/* Ledger */
+.ledger-form { margin-bottom: 12px; }
+.ledger-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.ledger-row input, .ledger-row select { padding: 7px 10px; border-radius: 6px; border: 1px solid #444; background: #1e1e1e; color: #ddd; font-size: 13px; }
+.ledger-row select { min-width: 80px; }
+
 .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: #fff; font-size: 0.9em; opacity: 0; transition: opacity 0.3s; z-index: 100; }
 .toast.show { opacity: 1; }
 .toast.success { background: #34a853; }
@@ -167,10 +184,29 @@ input[type="file"] { display: none; }
     </div>
   </div>
   <div class="user-tabs" id="userTabs"></div>
+  <div class="dashboard" id="dashboard"></div>
   <div class="tabs">
     <button class="tab active" data-tab="input">일일 입력</button>
+    <button class="tab" data-tab="ledger">수입/지출</button>
     <button class="tab" data-tab="history">정산</button>
     <button class="tab" data-tab="settings">설정</button>
+  </div>
+
+  <!-- 수입/지출 -->
+  <div id="ledger" class="panel">
+    <div class="ledger-form">
+      <div class="ledger-row">
+        <input type="date" id="ledgerDate">
+        <select id="ledgerType">
+          <option value="income">수입</option>
+          <option value="expense">지출</option>
+        </select>
+        <input type="text" id="ledgerAmount" placeholder="금액 (메소)" style="width:140px">
+        <input type="text" id="ledgerMemo" placeholder="메모 (예: 장비 구매, 보스 드랍)" style="flex:1">
+        <button class="btn-add" onclick="addLedger()">추가</button>
+      </div>
+    </div>
+    <div class="sheet-wrap" id="ledgerTableWrap"></div>
   </div>
 
   <!-- 일일 입력 -->
@@ -439,6 +475,7 @@ function renameUserTab(oldName) {
 }
 
 function refreshAll() {
+  renderDashboard();
   renderCal();
   renderInputTable();
   renderSettings();
@@ -523,6 +560,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById(tab.dataset.tab).classList.add('active');
     if (tab.dataset.tab === 'input') renderInputTable();
+    if (tab.dataset.tab === 'ledger') renderLedger();
     if (tab.dataset.tab === 'history') renderHistory();
     if (tab.dataset.tab === 'settings') renderSettings();
   });
@@ -1346,11 +1384,152 @@ function resetData() {
   renderSettings();
 }
 
+// --- 대시보드 ---
+function renderDashboard() {
+  const wrap = document.getElementById('dashboard');
+  if (!_cloudData || !_cloudData.users) { wrap.innerHTML = ''; return; }
+
+  const username = getCurrentUser();
+  const data = loadData();
+
+  // 이번주 수입 (목~수 기준 획득 재화 합산 - 메소만)
+  const now = new Date();
+  const day = now.getDay();
+  const diff = (day - 4 + 7) % 7;
+  const thu = new Date(now);
+  thu.setDate(now.getDate() - diff);
+  const thuStr = thu.toISOString().slice(0,10);
+  let weekIncome = 0;
+  Object.keys(data.records || {}).forEach(date => {
+    if (date >= thuStr) {
+      (data.characters || []).forEach(ch => {
+        const rec = data.records[date]?.[ch]?.['매소'];
+        if (rec) weekIncome += getEarned(rec);
+      });
+    }
+  });
+
+  // 수입/지출 합산
+  let totalIncome = 0, totalExpense = 0;
+  (data.ledger || []).forEach(entry => {
+    if (entry.type === 'income') totalIncome += Number(entry.amount) || 0;
+    else totalExpense += Number(entry.amount) || 0;
+  });
+
+  // 전체 유저 요약
+  let allHtml = '';
+  _cloudData.users.forEach(name => {
+    const pData = _cloudData.profiles?.[name];
+    if (!pData) return;
+    let uIncome = 0, uExpense = 0;
+    (pData.ledger || []).forEach(e => {
+      if (e.type === 'income') uIncome += Number(e.amount) || 0;
+      else uExpense += Number(e.amount) || 0;
+    });
+    const net = uIncome - uExpense;
+    const isMe = name === username;
+    allHtml += `<div class="dash-card" style="${isMe ? 'border-color:#f5a623' : ''}" onclick="switchUser('${name}')" style="cursor:pointer">`;
+    allHtml += `<div class="dash-label">${name}${isMe ? ' (현재)' : ''}</div>`;
+    allHtml += `<div class="dash-value ${net >= 0 ? 'asset' : 'expense'}">${formatMeso(net)}</div>`;
+    allHtml += `<div class="dash-sub">수입 ${formatMeso(uIncome)} / 지출 ${formatMeso(uExpense)}</div>`;
+    allHtml += `</div>`;
+  });
+
+  // 현재 유저 상세
+  let html = '';
+  html += `<div class="dash-card"><div class="dash-label">이번주 메소 수입</div><div class="dash-value income">${formatMeso(weekIncome)}</div><div class="dash-sub">${thuStr} ~</div></div>`;
+  html += `<div class="dash-card"><div class="dash-label">총 수입</div><div class="dash-value income">${formatMeso(totalIncome)}</div></div>`;
+  html += `<div class="dash-card"><div class="dash-label">총 지출</div><div class="dash-value expense">${formatMeso(totalExpense)}</div></div>`;
+  html += `<div class="dash-card"><div class="dash-label">순이익</div><div class="dash-value net">${formatMeso(totalIncome - totalExpense)}</div></div>`;
+
+  wrap.innerHTML = html;
+}
+
+function formatMeso(n) {
+  if (n === 0) return '0';
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 100000000) return sign + (abs / 100000000).toFixed(2) + '억';
+  if (abs >= 10000) return sign + (abs / 10000).toFixed(0) + '만';
+  return sign + abs.toLocaleString();
+}
+
+// --- 수입/지출 장부 ---
+function addLedger() {
+  const date = document.getElementById('ledgerDate').value;
+  const type = document.getElementById('ledgerType').value;
+  const amountRaw = document.getElementById('ledgerAmount').value.replace(/[^0-9]/g, '');
+  const memo = document.getElementById('ledgerMemo').value.trim();
+  if (!date || !amountRaw) { toast('날짜와 금액을 입력하세요.', 'error'); return; }
+  const data = loadData();
+  if (!data.ledger) data.ledger = [];
+  data.ledger.push({ date, type, amount: Number(amountRaw), memo, id: Date.now() });
+  data.ledger.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  saveData(data);
+  document.getElementById('ledgerAmount').value = '';
+  document.getElementById('ledgerMemo').value = '';
+  renderLedger();
+  renderDashboard();
+  toast((type === 'income' ? '수입' : '지출') + ' 추가됨');
+}
+
+function deleteLedger(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  const data = loadData();
+  data.ledger = (data.ledger || []).filter(e => e.id !== id);
+  saveData(data);
+  renderLedger();
+  renderDashboard();
+  toast('삭제됨');
+}
+
+function renderLedger() {
+  const data = loadData();
+  const wrap = document.getElementById('ledgerTableWrap');
+  const ledger = data.ledger || [];
+
+  if (!ledger.length) {
+    wrap.innerHTML = '<div class="no-data">수입/지출 기록이 없습니다.</div>';
+    return;
+  }
+
+  let html = '<table class="sheet"><thead><tr>';
+  html += '<th style="width:90px">날짜</th><th style="width:60px">구분</th><th>금액</th><th>메모</th><th style="width:50px"></th>';
+  html += '</tr></thead><tbody>';
+
+  let runTotal = 0;
+  // 오래된 순으로 잔액 계산
+  const sorted = [...ledger].sort((a,b) => a.date.localeCompare(b.date) || a.id - b.id);
+  const balances = {};
+  sorted.forEach(e => {
+    runTotal += e.type === 'income' ? e.amount : -e.amount;
+    balances[e.id] = runTotal;
+  });
+
+  ledger.forEach(e => {
+    const isIncome = e.type === 'income';
+    html += `<tr>`;
+    html += `<td class="row-header">${e.date}</td>`;
+    html += `<td style="text-align:center;color:${isIncome ? '#5bc0fa' : '#ff6b6b'};font-weight:600;font-size:12px">${isIncome ? '수입' : '지출'}</td>`;
+    html += `<td style="text-align:right;padding:6px 10px;font-family:Consolas,monospace;font-size:14px;color:${isIncome ? '#5bc0fa' : '#ff6b6b'}">${isIncome ? '+' : '-'}${formatNum(e.amount)}</td>`;
+    html += `<td style="padding:6px 10px;color:#aaa;font-size:13px">${e.memo || ''}</td>`;
+    html += `<td style="text-align:center"><button onclick="deleteLedger(${e.id})" style="border:none;background:none;color:#666;cursor:pointer;font-size:14px">✕</button></td>`;
+    html += `</tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+// ledger date 초기값
+document.getElementById('ledgerDate').value = todayStr();
+
 // --- Init ---
 // localStorage 캐시로 즉시 렌더링
 const _cachedBoot = localStorage.getItem('maple_cloud_cache');
 if (_cachedBoot) _cloudData = JSON.parse(_cachedBoot);
 renderUserSelect();
+renderDashboard();
 renderCal();
 renderInputTable();
 // 클라우드 동기화 (비동기)

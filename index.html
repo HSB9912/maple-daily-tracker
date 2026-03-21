@@ -291,9 +291,15 @@ input[type="file"] { display: none; }
 // --- GitHub Gist ---
 const GIST_API = 'https://api.github.com/gists';
 function getGistToken() {
+  // URL 해시에서 토큰 읽기 (#ghp_xxx)
+  const hash = location.hash.slice(1);
+  if (hash && hash.startsWith('ghp_')) {
+    localStorage.setItem('maple_gist_token', hash);
+    history.replaceState(null, '', location.pathname + location.search);
+  }
   let token = localStorage.getItem('maple_gist_token') || '';
   if (!token) {
-    token = prompt('GitHub Personal Access Token을 입력하세요.\n(gist 권한 필요, 최초 1회만 입력)');
+    token = prompt('GitHub Token을 입력하거나,\n토큰이 포함된 링크로 접속하세요.');
     if (token) localStorage.setItem('maple_gist_token', token);
   }
   return token;

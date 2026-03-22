@@ -1549,6 +1549,14 @@ renderCal();
 renderInputTable();
 // 클라우드 동기화 (비동기)
 initCloud();
+
+// 창 닫기 전 미저장 경고
+window.addEventListener('beforeunload', function(e) {
+  if (_unsaved) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 </script>
 </body>
 </html>

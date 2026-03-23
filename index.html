@@ -955,16 +955,23 @@ function renderHistory() {
   data.resources.forEach(r => sh += `<th>${r}</th>`);
   sh += '<th style="min-width:100px">정산</th></tr></thead><tbody>';
 
-  // 미정산 캐릭터 먼저, 정산완료 캐릭터는 아래로
+  // 3그룹: 미정산(누적있음), 정산완료(이력있고 누적0), 기록없음
   const unsettled = [];
   const settled = [];
+  const noRecord = [];
   data.characters.forEach(ch => {
     const totals = getAccumulated(data, ch);
     const lastDate = data.settlements?.[ch]?.lastDate || '';
     const lastAmounts = data.settlements?.[ch]?.history?.slice(-1)[0]?.amounts || null;
     const hasAny = data.resources.some(r => totals[r] !== 0);
-    if (hasAny) unsettled.push({ ch, totals, lastDate, lastAmounts, hasAny });
-    else settled.push({ ch, totals, lastDate, lastAmounts, hasAny });
+    const hasSettleHistory = !!(data.settlements?.[ch]?.history?.length);
+    if (hasAny) {
+      unsettled.push({ ch, totals, lastDate, lastAmounts });
+    } else if (hasSettleHistory) {
+      settled.push({ ch, totals, lastDate, lastAmounts });
+    } else {
+      noRecord.push({ ch });
+    }
   });
 
   if (unsettled.length) {
@@ -984,21 +991,23 @@ function renderHistory() {
   if (settled.length) {
     sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#5a7a5a;background:#1a2a1a;border:1px solid #2a3a2a;">정산 완료 (${settled.length})</td></tr>`;
     settled.forEach(({ ch, totals, lastDate, lastAmounts }) => {
-      // 이전 정산 이력
-      if (lastDate && lastAmounts) {
-        sh += `<tr style="opacity:0.5"><td class="row-header" style="color:#6a8a6a">${ch}</td>`;
-        data.resources.forEach(r => {
-          sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:12px;color:#5a7a5a;text-decoration:line-through">${formatNum(lastAmounts[r] || 0)}</td>`;
-        });
-        sh += `<td style="text-align:center;padding:4px 6px;">`;
-        sh += `<div style="font-size:11px;color:#5a7a5a">${lastDate} 정산완료</div>`;
-        sh += `<button onclick="rollbackSettle('${ch}')" style="margin-top:3px;padding:3px 10px;border:1px solid #444;border-radius:4px;cursor:pointer;font-size:11px;background:#2a2a2a;color:#c0392b;">되돌리기</button>`;
-        sh += `</td></tr>`;
-      } else {
-        sh += `<tr><td class="row-header" style="color:#666">${ch}</td>`;
-        data.resources.forEach(() => sh += `<td></td>`);
-        sh += `<td style="text-align:center;color:#555;font-size:12px">기록 없음</td></tr>`;
-      }
+      sh += `<tr style="opacity:0.5"><td class="row-header" style="color:#6a8a6a">${ch}</td>`;
+      data.resources.forEach(r => {
+        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:12px;color:#5a7a5a;text-decoration:line-through">${formatNum((lastAmounts?.[r]) || 0)}</td>`;
+      });
+      sh += `<td style="text-align:center;padding:4px 6px;">`;
+      sh += `<div style="font-size:11px;color:#5a7a5a">${lastDate} 정산완료</div>`;
+      sh += `<button onclick="rollbackSettle('${ch}')" style="margin-top:3px;padding:3px 10px;border:1px solid #444;border-radius:4px;cursor:pointer;font-size:11px;background:#2a2a2a;color:#c0392b;">되돌리기</button>`;
+      sh += `</td></tr>`;
+    });
+  }
+
+  if (noRecord.length) {
+    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#555;background:#1a1a1a;border:1px solid #2a2a2a;">기록 없음 (${noRecord.length})</td></tr>`;
+    noRecord.forEach(({ ch }) => {
+      sh += `<tr><td class="row-header" style="color:#555">${ch}</td>`;
+      data.resources.forEach(() => sh += `<td></td>`);
+      sh += `<td style="text-align:center;color:#444;font-size:12px">-</td></tr>`;
     });
   }
 

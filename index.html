@@ -249,7 +249,7 @@ input[type="file"] { display: none; }
       </div>
       <div class="history-controls" id="yearControl" style="display:none;">
         <label>연도:</label>
-        <select id="yearSelect" onchange="renderHistoryView()" style="padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#333;font-size:14px;"></select>
+        <select id="yearSelect" onchange="renderHistoryView()" style="padding:6px 10px;border-radius:6px;border:1px solid #444;background:#1e1e1e;color:#ddd;font-size:14px;"></select>
       </div>
     </div>
     <div class="sheet-wrap" id="historyTableWrap"></div>
@@ -651,7 +651,11 @@ function renderCal() {
     let cls = 'cal-day';
     if (ds === today) cls += ' today';
     if (ds === selected) cls += ' selected';
-    if (data.records[ds] && data.resources.some(r => data.characters.some(ch => getEarned(data.records[ds]?.[ch]?.[r])))) cls += ' has-data';
+    if (data.records[ds] && data.resources.some(r => data.characters.some(ch => {
+      const rec = data.records[ds]?.[ch]?.[r];
+      if (r === '경험치') return getExpEarnedNum(rec) !== 0;
+      return getEarned(rec) !== 0;
+    }))) cls += ' has-data';
     if (dow === 0) cls += ' sun';
     if (dow === 6) cls += ' sat';
     html += `<div class="${cls}" onclick="calSelect('${ds}')">${d}</div>`;
@@ -1236,7 +1240,10 @@ function renderDailyView(data, wrap, allDates) {
     html += `<tr><td class="row-header">${date}</td>`;
     data.resources.forEach(r => {
       let sum = 0;
-      data.characters.forEach(ch => { sum += getEarned(data.records[date]?.[ch]?.[r]); });
+      data.characters.forEach(ch => {
+        const rec = data.records[date]?.[ch]?.[r];
+        sum += (r === '경험치') ? getExpEarnedNum(rec) : getEarned(rec);
+      });
       html += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:13px">${formatNum(sum)}</td>`;
     });
     html += `<td style="text-align:center"><button class="view-btn" onclick="viewDate('${date}')">보기</button></td>`;
@@ -1302,7 +1309,10 @@ function renderGroupedView(data, wrap, allDates, mode) {
       html += `<td class="row-header">${ch}</td>`;
       data.resources.forEach(r => {
         let total = 0;
-        dates.forEach(d => { total += getEarned(data.records[d]?.[ch]?.[r]); });
+        dates.forEach(d => {
+          const rec = data.records[d]?.[ch]?.[r];
+          total += (r === '경험치') ? getExpEarnedNum(rec) : getEarned(rec);
+        });
         html += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:13px">${formatNum(total)}</td>`;
       });
       html += '</tr>';
@@ -1314,7 +1324,10 @@ function renderGroupedView(data, wrap, allDates, mode) {
     data.resources.forEach(r => {
       let grand = 0;
       dates.forEach(d => {
-        data.characters.forEach(ch => { grand += getEarned(data.records[d]?.[ch]?.[r]); });
+        data.characters.forEach(ch => {
+          const rec = data.records[d]?.[ch]?.[r];
+          grand += (r === '경험치') ? getExpEarnedNum(rec) : getEarned(rec);
+        });
       });
       html += `<td>${formatNum(grand)}</td>`;
     });
@@ -1459,6 +1472,11 @@ function deleteItem(type, index) {
   const name = arr[index];
   if (!confirm(`"${name}"을(를) 삭제하시겠습니까?`)) return;
   arr.splice(index, 1);
+  // 관련 데이터 정리
+  if (type === 'char') {
+    Object.keys(data.records).forEach(date => { delete data.records[date]?.[name]; });
+    if (data.settlements?.[name]) delete data.settlements[name];
+  }
   saveData(data);
   renderSettings();
   toast(`"${name}" 삭제됨`);
@@ -1567,7 +1585,7 @@ function renderDashboard() {
     });
     const net = uIncome - uExpense;
     const isMe = name === username;
-    allHtml += `<div class="dash-card" style="${isMe ? 'border-color:#f5a623' : ''}" onclick="switchUser('${name}')" style="cursor:pointer">`;
+    allHtml += `<div class="dash-card" style="cursor:pointer;${isMe ? 'border-color:#f5a623' : ''}" onclick="switchUser('${name}')">`;
     allHtml += `<div class="dash-label">${name}${isMe ? ' (현재)' : ''}</div>`;
     allHtml += `<div class="dash-value ${net >= 0 ? 'asset' : 'expense'}">${formatMeso(net)}</div>`;
     allHtml += `<div class="dash-sub">수입 ${formatMeso(uIncome)} / 지출 ${formatMeso(uExpense)}</div>`;

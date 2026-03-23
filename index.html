@@ -42,8 +42,8 @@ h1 { color: #f5a623; font-size: 1.3em; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
 .sheet { border-collapse: collapse; font-size: 14px; width: 100%; table-layout: fixed; }
 .sheet th, .sheet td { border: 1px solid #333; padding: 0; white-space: nowrap; }
 .sheet th { background: #1e1e1e; color: #aaa; font-weight: 600; text-align: center; padding: 8px 10px; font-size: 13px; user-select: none; }
-.sheet th.corner { background: #1a1a1a; width: 72px; }
-.sheet td.row-header { background: #1e1e1e; color: #ddd; padding: 0 8px; font-size: 13px; font-weight: 700; width: 72px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.sheet th.corner { background: #1a1a1a; min-width: 90px; white-space: nowrap; }
+.sheet td.row-header { background: #1e1e1e; color: #ddd; padding: 0 8px; font-size: 13px; font-weight: 700; min-width: 90px; white-space: nowrap; vertical-align: middle; }
 .sheet td.cell { padding: 0; position: relative; background: #232323; vertical-align: top; overflow: hidden; }
 .sheet td.cell .cell-stack { display: flex; flex-direction: column; }
 .sheet td.cell .cell-input-row { display: flex; align-items: center; }
@@ -671,21 +671,18 @@ function renderInputTable() {
     return;
   }
 
-  if (!data.records[date]) data.records[date] = {};
-
   let html = '<table class="sheet"><thead><tr><th class="corner"></th>';
   data.resources.forEach(r => html += `<th>${r}</th>`);
   html += '</tr></thead><tbody>';
 
   data.characters.forEach(ch => {
-    if (!data.records[date][ch]) data.records[date][ch] = {};
     // 이 날짜가 이 캐릭터의 정산 범위에 포함되는지
     const settledDate = data.settlements?.[ch]?.lastDate || '';
     const isSettled = settledDate && date <= settledDate;
 
     html += `<tr${isSettled ? ' class="settled-row"' : ''}><td class="row-header" style="position:relative">${ch}${isSettled ? '<div class="settled-overlay"><span>정 산 완 료</span></div>' : ''}</td>`;
     data.resources.forEach(r => {
-      let rec = data.records[date][ch][r];
+      let rec = data.records?.[date]?.[ch]?.[r];
       if (typeof rec === 'number') rec = { before: 0, after: rec };
       if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
       const bv = rec.before ?? '';
@@ -706,7 +703,7 @@ function renderInputTable() {
   html += '<tr class="sum-row"><td class="row-header">합계</td>';
   data.resources.forEach(r => {
     let sum = 0;
-    data.characters.forEach(ch => { sum += getEarned(data.records[date][ch]?.[r]); });
+    data.characters.forEach(ch => { sum += getEarned(data.records?.[date]?.[ch]?.[r]); });
     html += `<td data-sum-res="${r}">${formatNum(sum)}</td>`;
   });
   html += '</tr>';
@@ -745,6 +742,12 @@ function updateValue(el) {
   const num = el.value.replace(/[^0-9.\-]/g, '');
   rec[field] = num !== '' ? Number(num) : '';
   data.records[date][ch][res] = rec;
+
+  // 빈 레코드 정리
+  if (rec.before === '' && rec.after === '') delete data.records[date][ch][res];
+  if (data.records[date][ch] && !Object.keys(data.records[date][ch]).length) delete data.records[date][ch];
+  if (data.records[date] && !Object.keys(data.records[date]).length) delete data.records[date];
+
   saveData(data);
 }
 

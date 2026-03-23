@@ -680,7 +680,7 @@ function renderInputTable() {
     const settledDate = data.settlements?.[ch]?.lastDate || '';
     const isSettled = settledDate && date <= settledDate;
 
-    html += `<tr${isSettled ? ' class="settled-row"' : ''}><td class="row-header" style="position:relative">${ch}${isSettled ? '<div class="settled-overlay"><span>정 산 완 료</span></div>' : ''}</td>`;
+    html += `<tr${isSettled ? ' class="settled-row"' : ''}><td class="row-header" style="position:relative;cursor:pointer" data-charname="${ch}" ondblclick="renameCharInline(this)">${ch}${isSettled ? '<div class="settled-overlay"><span>정 산 완 료</span></div>' : ''}</td>`;
     data.resources.forEach(r => {
       let rec = data.records?.[date]?.[ch]?.[r];
       if (typeof rec === 'number') rec = { before: 0, after: rec };
@@ -776,6 +776,32 @@ function updateSums() {
     const el = document.querySelector(`[data-sum-res="${r}"]`);
     if (el) el.textContent = formatNum(sum);
   });
+}
+
+function renameCharInline(td) {
+  const oldName = td.dataset.charname;
+  const newName = prompt(`"${oldName}" → 새 이름:`, oldName);
+  if (!newName || !newName.trim() || newName.trim() === oldName) return;
+  const data = loadData();
+  const idx = data.characters.indexOf(oldName);
+  if (idx === -1) return;
+  if (data.characters.includes(newName.trim())) { toast('이미 존재하는 이름입니다.', 'error'); return; }
+  data.characters[idx] = newName.trim();
+  // records 이전
+  Object.keys(data.records).forEach(date => {
+    if (data.records[date][oldName]) {
+      data.records[date][newName.trim()] = data.records[date][oldName];
+      delete data.records[date][oldName];
+    }
+  });
+  // settlements 이전
+  if (data.settlements?.[oldName]) {
+    data.settlements[newName.trim()] = data.settlements[oldName];
+    delete data.settlements[oldName];
+  }
+  saveData(data);
+  renderInputTable();
+  toast(`"${oldName}" → "${newName.trim()}" 변경 완료`);
 }
 
 // --- Spreadsheet 키보드 & 이벤트 ---

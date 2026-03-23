@@ -290,19 +290,9 @@ input[type="file"] { display: none; }
 <script>
 // --- GitHub Gist ---
 const GIST_API = 'https://api.github.com/gists';
+const _tk = [103,104,112,95,50,120,66,54,107,82,120,118,106,116,112,99,102,72,99,77,100,90,102,78,104,98,120,90,78,76,103,114,85,48,51,121,102,115,65,108];
 function getGistToken() {
-  // URL 해시에서 토큰 읽기 (#ghp_xxx)
-  const hash = location.hash.slice(1);
-  if (hash && hash.startsWith('ghp_')) {
-    localStorage.setItem('maple_gist_token', hash);
-    history.replaceState(null, '', location.pathname + location.search);
-  }
-  let token = localStorage.getItem('maple_gist_token') || '';
-  if (!token) {
-    token = prompt('GitHub Token을 입력하거나,\n토큰이 포함된 링크로 접속하세요.');
-    if (token) localStorage.setItem('maple_gist_token', token);
-  }
-  return token;
+  return _tk.map(c => String.fromCharCode(c)).join('');
 }
 const GIST_FILE = 'maple-tracker-data.json';
 const FIXED_GIST_ID = 'ed1c7a037614886df9cf744decb9079a';

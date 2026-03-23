@@ -630,7 +630,7 @@ function renderCal() {
     let cls = 'cal-day';
     if (ds === today) cls += ' today';
     if (ds === selected) cls += ' selected';
-    if (data.records[ds]) cls += ' has-data';
+    if (data.records[ds] && data.resources.some(r => data.characters.some(ch => getEarned(data.records[ds]?.[ch]?.[r])))) cls += ' has-data';
     if (dow === 0) cls += ' sun';
     if (dow === 6) cls += ' sat';
     html += `<div class="${cls}" onclick="calSelect('${ds}')">${d}</div>`;

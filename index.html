@@ -1170,8 +1170,19 @@ function getWeekInfo(dateStr) {
   };
 }
 
+function hasActualData(data, date) {
+  const dayRec = data.records[date];
+  if (!dayRec) return false;
+  return data.characters.some(ch => data.resources.some(r => {
+    const rec = dayRec?.[ch]?.[r];
+    if (!rec) return false;
+    if (r === '경험치') return getExpEarnedNum(rec) !== 0;
+    return getEarned(rec) !== 0;
+  }));
+}
+
 function renderRecordView(data, wrap) {
-  const allDates = Object.keys(data.records).sort().reverse();
+  const allDates = Object.keys(data.records).filter(d => hasActualData(data, d)).sort().reverse();
   if (!allDates.length || !data.resources.length) {
     wrap.innerHTML = '<div class="no-data">기록이 없습니다.</div>';
     return;

@@ -305,7 +305,8 @@ function getGistToken() {
   return token;
 }
 const GIST_FILE = 'maple-tracker-data.json';
-let _gistId = localStorage.getItem('maple_gist_id') || '';
+const FIXED_GIST_ID = 'ed1c7a037614886df9cf744decb9079a';
+let _gistId = FIXED_GIST_ID;
 let _cloudData = null;
 let _saving = false;
 let _saveQueued = false;
@@ -338,16 +339,8 @@ async function cloudSave() {
         body: JSON.stringify(body)
       });
     } else {
-      body.description = '메이플 일일 재화 관리 데이터';
-      body.public = false;
-      const res = await fetch(GIST_API, {
-        method: 'POST',
-        headers: { 'Authorization': 'token ' + getGistToken(), 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const json = await res.json();
-      _gistId = json.id;
-      localStorage.setItem('maple_gist_id', _gistId);
+      // FIXED_GIST_ID가 항상 있으므로 여기 도달 안함
+      console.error('Gist ID 없음 - 비정상 상태');
     }
   } catch (e) {
     console.error('Gist 저장 실패:', e);

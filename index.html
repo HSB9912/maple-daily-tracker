@@ -489,7 +489,28 @@ function loadData() {
   return { characters: [], resources: [...DEFAULT_RESOURCES], records: {}, settlements: {} };
 }
 
+function cleanEmptyRecords(data) {
+  if (!data.records) return;
+  Object.keys(data.records).forEach(date => {
+    const day = data.records[date];
+    if (!day || typeof day !== 'object') { delete data.records[date]; return; }
+    Object.keys(day).forEach(ch => {
+      const charRec = day[ch];
+      if (!charRec || typeof charRec !== 'object') { delete day[ch]; return; }
+      Object.keys(charRec).forEach(r => {
+        const v = charRec[r];
+        if (!v || typeof v !== 'object') { delete charRec[r]; return; }
+        const vals = Object.values(v);
+        if (vals.every(x => x === '' || x === undefined || x === null)) delete charRec[r];
+      });
+      if (!Object.keys(charRec).length) delete day[ch];
+    });
+    if (!Object.keys(day).length) delete data.records[date];
+  });
+}
+
 function saveData(data) {
+  cleanEmptyRecords(data);
   const username = getCurrentUser();
   if (!_cloudData) _cloudData = getEmptyCloud();
   _cloudData.profiles[username] = data;

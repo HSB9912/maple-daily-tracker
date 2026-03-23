@@ -650,6 +650,29 @@ function renderCal() {
   document.getElementById('calDays').innerHTML = html;
 }
 
+// 경험치 획득량 (레벨+% 방식)
+function getExpEarned(rec) {
+  if (typeof rec !== 'object' || rec === null) return '';
+  const bLv = rec.beforeLv, bPct = rec.beforePct, aLv = rec.afterLv, aPct = rec.afterPct;
+  if (bLv === '' || bLv === undefined || bPct === '' || bPct === undefined ||
+      aLv === '' || aLv === undefined || aPct === '' || aPct === undefined) return '';
+  const lvDiff = Number(aLv) - Number(bLv);
+  const pctDiff = ((Number(aPct) || 0) - (Number(bPct) || 0)).toFixed(3);
+  const totalPct = (lvDiff * 100 + Number(pctDiff)).toFixed(3);
+  if (lvDiff > 0) return `${lvDiff}Lv +${(Number(aPct)||0).toFixed(3)}% (${totalPct}%)`;
+  if (lvDiff === 0) return `+${pctDiff}%`;
+  return `${totalPct}%`;
+}
+
+// 경험치 획득량 숫자값 (정산용)
+function getExpEarnedNum(rec) {
+  if (typeof rec !== 'object' || rec === null) return 0;
+  const bLv = rec.beforeLv, bPct = rec.beforePct, aLv = rec.afterLv, aPct = rec.afterPct;
+  if (bLv === '' || bLv === undefined || bPct === '' || bPct === undefined ||
+      aLv === '' || aLv === undefined || aPct === '' || aPct === undefined) return 0;
+  return (Number(aLv) - Number(bLv)) * 100 + (Number(aPct) || 0) - (Number(bPct) || 0);
+}
+
 // 레코드에서 획득량 계산 (after - before)
 function getEarned(rec) {
   if (typeof rec === 'number') return rec;
@@ -683,17 +706,34 @@ function renderInputTable() {
     html += `<tr${isSettled ? ' class="settled-row"' : ''}><td class="row-header" style="position:relative;cursor:pointer" data-charname="${ch}" ondblclick="renameCharInline(this)">${ch}${isSettled ? '<div class="settled-overlay"><span>정 산 완 료</span></div>' : ''}</td>`;
     data.resources.forEach(r => {
       let rec = data.records?.[date]?.[ch]?.[r];
-      if (typeof rec === 'number') rec = { before: 0, after: rec };
-      if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
-      const bv = rec.before ?? '';
-      const av = rec.after ?? '';
-      const earned = (bv !== '' && av !== '') ? (Number(av) || 0) - (Number(bv) || 0) : '';
-      html += `<td class="cell"><div class="cell-stack">`;
       const ro = isSettled ? ' readonly' : '';
-      html += `<div class="cell-input-row"><span class="cell-label">전</span><input type="text" value="${bv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="before" placeholder="시작 전"${ro}></div>`;
-      html += `<div class="cell-divider"></div>`;
-      html += `<div class="cell-input-row"><span class="cell-label">후</span><input type="text" value="${av}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="after" placeholder="종료 후"${ro}></div>`;
-      html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}">${earned !== '' ? formatNum(earned) : ''}</div>`;
+      html += `<td class="cell"><div class="cell-stack">`;
+
+      if (r === '경험치') {
+        // 경험치: 레벨 + %
+        if (typeof rec !== 'object' || rec === null) rec = {};
+        const bLv = rec.beforeLv ?? '';
+        const bPct = rec.beforePct ?? '';
+        const aLv = rec.afterLv ?? '';
+        const aPct = rec.afterPct ?? '';
+        const earned = getExpEarned(rec);
+        html += `<div class="cell-input-row"><span class="cell-label">전</span><input type="text" value="${bLv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="beforeLv" placeholder="Lv" style="width:36px;text-align:center"${ro}><input type="text" value="${bPct}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="beforePct" placeholder="%" style="flex:1"${ro}></div>`;
+        html += `<div class="cell-divider"></div>`;
+        html += `<div class="cell-input-row"><span class="cell-label">후</span><input type="text" value="${aLv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterLv" placeholder="Lv" style="width:36px;text-align:center"${ro}><input type="text" value="${aPct}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterPct" placeholder="%" style="flex:1"${ro}></div>`;
+        html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}">${earned}</div>`;
+      } else {
+        // 일반 재화
+        if (typeof rec === 'number') rec = { before: 0, after: rec };
+        if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
+        const bv = rec.before ?? '';
+        const av = rec.after ?? '';
+        const earned = (bv !== '' && av !== '') ? (Number(av) || 0) - (Number(bv) || 0) : '';
+        html += `<div class="cell-input-row"><span class="cell-label">전</span><input type="text" value="${bv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="before" placeholder="시작 전"${ro}></div>`;
+        html += `<div class="cell-divider"></div>`;
+        html += `<div class="cell-input-row"><span class="cell-label">후</span><input type="text" value="${av}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="after" placeholder="종료 후"${ro}></div>`;
+        html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}">${earned !== '' ? formatNum(earned) : ''}</div>`;
+      }
+
       html += `</div></td>`;
     });
     html += '</tr>';
@@ -737,14 +777,29 @@ function updateValue(el) {
   if (!data.records[date]) data.records[date] = {};
   if (!data.records[date][ch]) data.records[date][ch] = {};
   let rec = data.records[date][ch][res];
-  if (typeof rec === 'number') rec = { before: 0, after: rec };
-  if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
   const num = el.value.replace(/[^0-9.\-]/g, '');
-  rec[field] = num !== '' ? Number(num) : '';
-  data.records[date][ch][res] = rec;
+  const val = num !== '' ? Number(num) : '';
 
-  // 빈 레코드 정리
-  if (rec.before === '' && rec.after === '') delete data.records[date][ch][res];
+  if (res === '경험치') {
+    // 경험치: {beforeLv, beforePct, afterLv, afterPct}
+    if (typeof rec !== 'object' || rec === null) rec = {};
+    rec[field] = val;
+    data.records[date][ch][res] = rec;
+    // 빈 체크
+    const isEmpty = (rec.beforeLv === '' || rec.beforeLv === undefined) &&
+                    (rec.beforePct === '' || rec.beforePct === undefined) &&
+                    (rec.afterLv === '' || rec.afterLv === undefined) &&
+                    (rec.afterPct === '' || rec.afterPct === undefined);
+    if (isEmpty) delete data.records[date][ch][res];
+  } else {
+    // 일반 재화
+    if (typeof rec === 'number') rec = { before: 0, after: rec };
+    if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
+    rec[field] = val;
+    data.records[date][ch][res] = rec;
+    if (rec.before === '' && rec.after === '') delete data.records[date][ch][res];
+  }
+
   if (data.records[date][ch] && !Object.keys(data.records[date][ch]).length) delete data.records[date][ch];
   if (data.records[date] && !Object.keys(data.records[date]).length) delete data.records[date];
 
@@ -759,8 +814,10 @@ function updateSums() {
   document.querySelectorAll('.cell-earned[data-earned-char]').forEach(el => {
     const ch = el.dataset.earnedChar;
     const r = el.dataset.earnedRes;
-    const rec = data.records[date]?.[ch]?.[r];
-    if (typeof rec === 'object' && rec !== null) {
+    const rec = data.records?.[date]?.[ch]?.[r];
+    if (r === '경험치') {
+      el.textContent = getExpEarned(rec);
+    } else if (typeof rec === 'object' && rec !== null) {
       const bEmpty = rec.before === '' || rec.before === undefined;
       const aEmpty = rec.after === '' || rec.after === undefined;
       el.textContent = (!bEmpty && !aEmpty) ? formatNum((Number(rec.after)||0) - (Number(rec.before)||0)) : '';
@@ -771,10 +828,17 @@ function updateSums() {
 
   // 합계
   data.resources.forEach(r => {
-    let sum = 0;
-    data.characters.forEach(ch => { sum += getEarned(data.records[date]?.[ch]?.[r]); });
     const el = document.querySelector(`[data-sum-res="${r}"]`);
-    if (el) el.textContent = formatNum(sum);
+    if (!el) return;
+    if (r === '경험치') {
+      let totalPct = 0;
+      data.characters.forEach(ch => { totalPct += getExpEarnedNum(data.records?.[date]?.[ch]?.[r]); });
+      el.textContent = totalPct ? `+${totalPct.toFixed(3)}%` : '';
+    } else {
+      let sum = 0;
+      data.characters.forEach(ch => { sum += getEarned(data.records?.[date]?.[ch]?.[r]); });
+      el.textContent = formatNum(sum);
+    }
   });
 }
 
@@ -927,7 +991,11 @@ function getAccumulated(data, ch) {
   Object.keys(data.records).forEach(date => {
     if (date > lastDate) { // 정산일 다음날부터 누적 (정산일 포함 X)
       data.resources.forEach(r => {
-        totals[r] += getEarned(data.records[date]?.[ch]?.[r]);
+        if (r === '경험치') {
+          totals[r] += getExpEarnedNum(data.records[date]?.[ch]?.[r]);
+        } else {
+          totals[r] += getEarned(data.records[date]?.[ch]?.[r]);
+        }
       });
     }
   });
@@ -1009,7 +1077,7 @@ function renderHistory() {
     unsettled.forEach(({ ch, totals, lastDate, lastAmounts }) => {
       sh += `<tr><td class="row-header">${ch}</td>`;
       data.resources.forEach(r => {
-        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:13px;color:#f5a623">${formatNum(totals[r])}</td>`;
+        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:13px;color:#f5a623">${r === '경험치' ? (totals[r] ? totals[r].toFixed(3) + '%' : '') : formatNum(totals[r])}</td>`;
       });
       sh += `<td style="text-align:center;padding:4px 6px;">`;
       sh += `<button onclick="settleChar('${ch}')" style="padding:5px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;background:#f5a623;color:#000;font-weight:600;">정산하기</button>`;

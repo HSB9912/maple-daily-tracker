@@ -50,7 +50,11 @@ h1 { color: #FFFFFF; font-size: 1.2em; letter-spacing: -0.5px; }
 .sheet td.cell { padding: 0; position: relative; background: #131824; vertical-align: top; overflow: hidden; }
 .sheet td.cell .cell-stack { display: flex; flex-direction: column; }
 .sheet td.cell .cell-input-row { display: flex; align-items: center; }
-.sheet td.cell .cell-label { font-size: 9px; color: #5c5f66; padding-left: 2px; width: 14px; flex-shrink: 0; text-align: center; font-weight: 500; }
+.sheet td.cell .cell-label { font-size: 9px; padding-left: 2px; width: 14px; flex-shrink: 0; text-align: center; font-weight: 700; }
+.sheet td.cell .cell-label.before { color: #60a5fa; }
+.sheet td.cell .cell-label.after { color: #f59e0b; }
+.sheet td.cell .cell-input-row.before-row { background: #0c1018; }
+.sheet td.cell .cell-input-row.after-row { background: #141e2c; }
 .sheet td.cell input {
   flex: 1; border: none; outline: none;
   background: transparent; color: #D7D8DD; text-align: right;
@@ -576,7 +580,13 @@ function todayStr() {
 
 function formatNum(n) {
   if (n === 0 || n === '' || n === null || n === undefined) return '';
-  return formatMeso(Number(n));
+  const v = Number(n);
+  // 소수점이 있거나 1만 미만이면 소수점 둘째자리까지
+  if (!Number.isInteger(v) || (Math.abs(v) < 10000 && v % 1 !== 0)) {
+    const r = Math.round(v * 100) / 100;
+    return r % 1 === 0 ? String(r) : r.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+  }
+  return formatMeso(v);
 }
 
 function formatMeso(n) {
@@ -895,10 +905,12 @@ function renderInputTable() {
         const aLv = rec.afterLv ?? '';
         const aPct = rec.afterPct ?? '';
         const earned = getExpEarned(rec);
-        html += `<div class="cell-input-row"><span class="cell-label">전</span><input type="text" value="${bLv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="beforeLv" placeholder="Lv" style="width:36px;text-align:center"${ro}><input type="text" value="${bPct}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="beforePct" placeholder="%" style="flex:1"${ro}></div>`;
+        html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bLv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="beforeLv" placeholder="Lv" style="width:36px;text-align:center"${ro}><input type="text" value="${bPct}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="beforePct" placeholder="%" style="flex:1"${ro}></div>`;
         html += `<div class="cell-divider"></div>`;
-        html += `<div class="cell-input-row"><span class="cell-label">후</span><input type="text" value="${aLv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterLv" placeholder="Lv" style="width:36px;text-align:center"${ro}><input type="text" value="${aPct}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterPct" placeholder="%" style="flex:1"${ro}></div>`;
-        html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}">${earned}</div>`;
+        html += `<div class="cell-input-row after-row"><span class="cell-label after">후</span><input type="text" value="${aLv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterLv" placeholder="Lv" style="width:36px;text-align:center"${ro}><input type="text" value="${aPct}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterPct" placeholder="%" style="flex:1"${ro}></div>`;
+        const expNum = getExpEarnedNum(rec);
+        const expColor = expNum > 0 ? '#ef4444' : expNum < 0 ? '#60a5fa' : '';
+        html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}" style="${expColor ? 'color:' + expColor : ''}">${earned}</div>`;
       } else {
         if (typeof rec === 'number') rec = { before: 0, after: rec };
         if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
@@ -908,9 +920,9 @@ function renderInputTable() {
         const bvDisp = bv !== '' ? formatMeso(Number(bv)) : '';
         const avDisp = av !== '' ? formatMeso(Number(av)) : '';
         const earnedColor = earned > 0 ? '#ef4444' : earned < 0 ? '#60a5fa' : '';
-        html += `<div class="cell-input-row"><span class="cell-label">전</span><input type="text" value="${bvDisp}" data-raw="${bv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="before" placeholder="시작 전"${ro}></div>`;
+        html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bvDisp}" data-raw="${bv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="before" placeholder="시작 전"${ro}></div>`;
         html += `<div class="cell-divider"></div>`;
-        html += `<div class="cell-input-row"><span class="cell-label">후</span><input type="text" value="${avDisp}" data-raw="${av}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="after" placeholder="종료 후"${ro}></div>`;
+        html += `<div class="cell-input-row after-row"><span class="cell-label after">후</span><input type="text" value="${avDisp}" data-raw="${av}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="after" placeholder="종료 후"${ro}></div>`;
         html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}" style="${earnedColor ? 'color:' + earnedColor : ''}">${earned !== '' ? formatNum(earned) : ''}</div>`;
       }
 
@@ -994,6 +1006,8 @@ function updateSums() {
     const rec = data.records?.[date]?.[ch]?.[r];
     if (r === '경험치') {
       el.textContent = getExpEarned(rec);
+      const expVal = getExpEarnedNum(rec);
+      el.style.color = expVal > 0 ? '#ef4444' : expVal < 0 ? '#60a5fa' : '';
     } else if (typeof rec === 'object' && rec !== null) {
       const bEmpty = rec.before === '' || rec.before === undefined;
       const aEmpty = rec.after === '' || rec.after === undefined;

@@ -4,180 +4,201 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>메이플 일일 재화 관리</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
+@font-face { font-family: 'MaplestoryOTFBold'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryOTFBold.woff') format('woff'); font-weight: normal; font-style: normal; }
+@font-face { font-family: 'MaplestoryOTFLight'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryOTFLight.woff') format('woff'); font-weight: normal; font-style: normal; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Segoe UI', 'Malgun Gothic', -apple-system, sans-serif; background: #121212; color: #e0e0e0; min-height: 100vh; }
+body { font-family: 'MaplestoryOTFLight', 'Pretendard', 'Noto Sans KR', sans-serif; background: #0C1019; color: #C1C2C5; min-height: 100vh; font-size: 14px; line-height: 1.5; letter-spacing: -0.3px; }
 
-.app { max-width: 100%; margin: 0 auto; padding: 10px 16px; }
+.app { max-width: 100%; margin: 0 auto; padding: 6px 8px; }
 .header-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-h1 { color: #f5a623; font-size: 1.3em; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+h1 { color: #FFFFFF; font-size: 1.2em; letter-spacing: -0.5px; }
 .cloud-bar { display: flex; gap: 6px; }
-.cloud-btn { padding: 6px 16px; border: 1px solid #333; border-radius: 6px; background: #1e1e1e; color: #666; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
-.cloud-btn.unsaved { background: #f5a623; color: #000; border-color: #f5a623; font-weight: 700; animation: pulse 1.5s infinite; }
-.cloud-btn-load { color: #888; }
-.cloud-btn:hover { background: #333; color: #fff; }
-.cloud-btn.unsaved:hover { background: #e09510; }
+.cloud-btn { padding: 6px 16px; border: 1px solid #373A40; border-radius: 4px; background: #131822; color: #8F96A3; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; font-family: inherit; }
+.cloud-btn.unsaved { background: #1971c2; color: #fff; border-color: #1971c2; font-weight: 700; animation: pulse 1.5s infinite; }
+.cloud-btn-load { color: #8F96A3; }
+.cloud-btn:hover { background: #1864ab; color: #fff; }
+.cloud-btn.unsaved:hover { background: #1864ab; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
 .user-tabs { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 2px; }
-.user-tab { padding: 8px 18px; border: 1px solid #333; border-radius: 8px; background: #1e1e1e; color: #888; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap; transition: all 0.15s; position: relative; }
-.user-tab:hover { background: #2a2a2a; color: #ccc; }
-.user-tab.active { background: #f5a623; color: #000; font-weight: 700; border-color: #f5a623; }
+.user-tab { padding: 8px 18px; border: 1px solid #373A40; border-radius: 4px; background: #131822; color: #8F96A3; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap; transition: all 0.15s; position: relative; font-family: inherit; }
+.user-tab:hover { background: #1B2030; color: #C1C2C5; }
+.user-tab.active { background: #1971c2; color: #fff; font-weight: 700; border-color: #1971c2; }
 .user-tab .user-tab-x { display: none; margin-left: 6px; font-size: 11px; opacity: 0.6; }
 .user-tab.active .user-tab-x { display: inline; }
 .user-tab .user-tab-x:hover { opacity: 1; }
-.user-tab-add { padding: 8px 14px; border: 1px dashed #444; border-radius: 8px; background: transparent; color: #666; cursor: pointer; font-size: 14px; }
-.user-tab-add:hover { border-color: #f5a623; color: #f5a623; }
+.user-tab-add { padding: 8px 14px; border: 1px dashed #373A40; border-radius: 4px; background: transparent; color: #8F96A3; cursor: pointer; font-size: 14px; font-family: inherit; }
+.user-tab-add:hover { border-color: #1971c2; color: #1971c2; }
 
 /* Tabs */
-.tabs { display: flex; gap: 2px; margin-bottom: 0; }
-.tab { flex: 1; padding: 12px; text-align: center; background: #1e1e1e; border: none; color: #777; cursor: pointer; border-radius: 10px 10px 0 0; font-size: 1em; transition: all 0.15s; border-bottom: 2px solid transparent; }
-.tab.active { background: #2a2a2a; color: #f5a623; font-weight: 600; border-bottom: 2px solid #f5a623; }
-.tab:hover { background: #252525; color: #aaa; }
+.tabs { display: flex; gap: 0; margin-bottom: 0; background: #1A1B1E; border-radius: 4px 4px 0 0; }
+.tab { flex: 1; padding: 12px; text-align: center; background: transparent; border: none; color: #8F96A3; cursor: pointer; font-size: 14px; transition: all 0.15s; border-bottom: 2px solid transparent; font-family: inherit; }
+.tab.active { color: #FFFFFF; font-weight: 600; border-bottom: 2px solid #1971c2; }
+.tab:hover { color: #C1C2C5; }
 
-.panel { display: none; background: #2a2a2a; border-radius: 0 0 10px 10px; padding: 14px; }
+.panel { display: none; background: #131822; border-radius: 0 0 4px 4px; padding: 8px; border: 1px solid #373A40; border-top: none; }
 .panel.active { display: block; }
 
 /* Spreadsheet */
-.sheet-wrap { overflow: hidden; border: 1px solid #3a3a3a; border-radius: 8px; }
-.sheet { border-collapse: collapse; font-size: 14px; width: 100%; table-layout: fixed; }
-.sheet th, .sheet td { border: 1px solid #333; padding: 0; white-space: nowrap; }
-.sheet th { background: #1e1e1e; color: #aaa; font-weight: 600; text-align: center; padding: 8px 10px; font-size: 13px; user-select: none; }
-.sheet th.corner { background: #1a1a1a; min-width: 90px; white-space: nowrap; }
-.sheet td.row-header { background: #1e1e1e; color: #ddd; padding: 0 8px; font-size: 13px; font-weight: 700; min-width: 90px; white-space: nowrap; vertical-align: middle; }
-.sheet td.cell { padding: 0; position: relative; background: #232323; vertical-align: top; overflow: hidden; }
+.sheet-wrap { overflow: hidden; border: 1px solid #373A40; border-radius: 4px; }
+.sheet { border-collapse: collapse; font-size: 12px; width: 100%; table-layout: fixed; }
+.sheet th, .sheet td { border: 1px solid #373A40; padding: 0; white-space: nowrap; }
+.sheet th { background: #1B2030; color: #9DA0AC; font-weight: 600; text-align: center; padding: 4px 2px; font-size: 11px; user-select: none; overflow: hidden; text-overflow: ellipsis; }
+.sheet th.corner { background: #1B2030; width: 50px; }
+.sheet td.row-header { background: #1B2030; color: #D7D8DD; padding: 0 4px; font-size: 11px; font-weight: 700; width: 50px; white-space: nowrap; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; }
+.sheet td.cell { padding: 0; position: relative; background: #131824; vertical-align: top; overflow: hidden; }
 .sheet td.cell .cell-stack { display: flex; flex-direction: column; }
 .sheet td.cell .cell-input-row { display: flex; align-items: center; }
-.sheet td.cell .cell-label { font-size: 11px; color: #666; padding-left: 4px; width: 20px; flex-shrink: 0; text-align: center; font-weight: 500; }
+.sheet td.cell .cell-label { font-size: 9px; color: #5c5f66; padding-left: 2px; width: 14px; flex-shrink: 0; text-align: center; font-weight: 500; }
 .sheet td.cell input {
   flex: 1; border: none; outline: none;
-  background: transparent; color: #e0e0e0; text-align: right;
-  padding: 4px 8px; font-size: 14px; font-family: 'Consolas', 'Courier New', monospace;
-  height: 26px; min-width: 0;
+  background: transparent; color: #D7D8DD; text-align: right;
+  padding: 2px 3px; font-size: 11px; font-family: 'MaplestoryOTFLight', 'Consolas', monospace;
+  height: 22px; min-width: 0;
 }
-.sheet td.cell input:focus { background: #333; }
-.sheet td.cell input::selection { background: #555; }
-.sheet td.cell input::placeholder { color: #555; font-size: 12px; }
-.sheet td.cell .cell-divider { height: 1px; background: #333; }
-.sheet td.cell .cell-earned { text-align: right; padding: 3px 8px; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace; color: #f5a623; font-weight: 700; background: #2a2510; border-top: 1px solid #3a3018; height: 22px; line-height: 22px; }
-.sheet tr.sum-row td { background: #1e1e1e; color: #f5a623; font-weight: 700; text-align: right; padding: 6px 8px; font-size: 14px; font-family: 'Consolas', 'Courier New', monospace; border-top: 2px solid #444; }
-.sheet tr.sum-row td.row-header { color: #f5a623; border-top: 2px solid #444; }
-.sheet tr.add-row td { background: transparent; border: none; }
-.sheet td.add-cell { padding: 0; border: none; }
+.sheet td.cell input:focus { background: #25262b; }
+.sheet td.cell input::selection { background: #1971c2; }
+.sheet td.cell input::placeholder { color: #5c5f66; font-size: 12px; }
+.sheet td.cell .cell-divider { height: 1px; background: #373A40; }
+.sheet td.cell .cell-earned { text-align: right; padding: 1px 3px; font-size: 10px; font-family: 'MaplestoryOTFBold', 'Consolas', monospace; color: #1971c2; font-weight: 700; background: #0f1520; border-top: 1px solid #373A40; height: 18px; line-height: 18px; }
+.sheet tr.sum-row td { background: #1B2030; color: #1971c2; font-weight: 700; text-align: right; padding: 4px 3px; font-size: 11px; font-family: 'MaplestoryOTFBold', 'Consolas', monospace; border-top: 2px solid #373A40; }
+.sheet tr.sum-row td.row-header { color: #1971c2; border-top: 2px solid #373A40; }
+.sheet tr.add-row td { background: transparent; border: none; overflow: visible; }
+.sheet td.add-cell { padding: 0; border: none; overflow: visible; }
 .sheet td.add-cell input {
   width: 100%; border: none; outline: none; background: transparent;
-  color: #777; padding: 6px 8px; font-size: 13px; height: 30px;
+  color: #8F96A3; padding: 8px; font-size: 13px; height: 34px; font-family: inherit;
 }
-.sheet td.add-cell input::placeholder { color: #555; }
-.sheet td.add-cell input:focus { color: #ccc; }
-
-/* Calendar */
-.cal-and-sheet { display: flex; flex-direction: column; gap: 10px; }
-.cal-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 10px 14px; }
-.cal-header { display: flex; align-items: center; gap: 6px; }
-.cal-title { font-weight: 700; font-size: 15px; color: #e0e0e0; min-width: 110px; text-align: center; }
-.cal-nav { width: 30px; height: 30px; border: none; background: none; font-size: 20px; color: #888; cursor: pointer; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-.cal-nav:hover { background: #333; color: #fff; }
-.cal-days-wrap { display: flex; flex-direction: column; gap: 1px; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 34px); gap: 2px; }
-.cal-dow { text-align: center; font-size: 11px; color: #666; padding: 3px 0; font-weight: 600; }
-.cal-day { text-align: center; padding: 5px 0; font-size: 13px; border-radius: 6px; cursor: pointer; color: #bbb; position: relative; line-height: 1.4; }
-.cal-day:hover { background: #333; color: #fff; }
-.cal-day.today { font-weight: 700; color: #5bc0fa; }
-.cal-day.selected { background: #f5a623; color: #000; font-weight: 700; }
-.cal-day.selected:hover { background: #e09510; }
-.cal-day.other-month { color: #444; }
-.cal-day.has-data::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: #f5a623; border-radius: 50%; }
-.cal-day.selected.has-data::after { background: #000; }
-.cal-day.sun { color: #ff6b6b; }
-.cal-day.sat { color: #5bc0fa; }
-.cal-day.selected.sun, .cal-day.selected.sat { color: #000; }
-.cal-today-btn { padding: 5px 16px; border: 1px solid #444; background: #2a2a2a; border-radius: 6px; font-size: 13px; color: #bbb; cursor: pointer; font-weight: 500; }
-.cal-today-btn:hover { background: #333; color: #fff; }
-.sheet-area { flex: 1; min-width: 0; }
+.sheet td.add-cell input::placeholder { color: #5c5f66; }
+.sheet td.add-cell input:focus { color: #C1C2C5; }
 
 /* Settled */
-.sheet tr.settled-row td { background: #1a2030; }
-.sheet tr.settled-row td.cell { background: #1a2030; }
-.sheet tr.settled-row td.cell input { color: #556680; }
-.sheet tr.settled-row .cell-earned { color: #556680; background: #182030; }
-.sheet tr.settled-row .cell-label { color: #3a4a60; }
-.sheet tr.settled-row .cell-divider { background: #253040; }
+.sheet tr.settled-row td { background: #0f1520; }
+.sheet tr.settled-row td.cell { background: #0f1520; }
+.sheet tr.settled-row td.cell input { color: #3a4a60; }
+.sheet tr.settled-row .cell-earned { color: #3a4a60; background: #0d1218; }
+.sheet tr.settled-row .cell-label { color: #2a3a50; }
+.sheet tr.settled-row .cell-divider { background: #1a2530; }
 .sheet tr.settled-row td.row-header { position: relative; }
-.settled-overlay { position: absolute; top: 0; left: 0; width: calc(100vw - 40px); height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 3; background: rgba(20,30,50,0.6); }
-.settled-overlay span { background: #3a5a8a; color: #b0c8e8; font-size: 15px; font-weight: 800; padding: 6px 32px; letter-spacing: 8px; border-radius: 4px; }
+.settled-overlay { position: absolute; top: 0; left: 0; width: calc(100vw - 40px); height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 3; background: rgba(10,16,25,0.6); }
+.settled-overlay span { background: #1971c2; color: #fff; font-size: 15px; font-weight: 800; padding: 6px 32px; letter-spacing: 8px; border-radius: 4px; }
 
 /* View tabs */
 .view-tabs { display: flex; gap: 0; }
-.view-tab { padding: 6px 16px; border: 1px solid #444; background: #1e1e1e; color: #888; cursor: pointer; font-size: 13px; font-weight: 500; }
-.view-tab:first-child { border-radius: 6px 0 0 6px; }
-.view-tab:last-child { border-radius: 0 6px 6px 0; }
+.view-tab { padding: 6px 16px; border: 1px solid #373A40; background: #131822; color: #8F96A3; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit; }
+.view-tab:first-child { border-radius: 4px 0 0 4px; }
+.view-tab:last-child { border-radius: 0 4px 4px 0; }
 .view-tab:not(:first-child) { border-left: none; }
-.view-tab.active { background: #f5a623; color: #000; border-color: #f5a623; font-weight: 700; }
+.view-tab.active { background: #1971c2; color: #fff; border-color: #1971c2; font-weight: 700; }
 
-.no-data { color: #666; text-align: center; padding: 20px; font-size: 13px; }
+.no-data { color: #5c5f66; text-align: center; padding: 20px; font-size: 13px; }
 
 /* History */
 .history-controls { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
-.history-controls label { color: #888; }
-.history-controls input, .history-controls select { padding: 7px 12px; border-radius: 6px; border: 1px solid #444; background: #1e1e1e; color: #ddd; font-size: 14px; }
-.view-btn { padding: 5px 14px; border: none; border-radius: 6px; background: #f5a623; color: #000; cursor: pointer; font-size: 13px; font-weight: 600; }
-.view-btn:hover { background: #ffbb44; }
+.history-controls label { color: #8F96A3; }
+.history-controls input, .history-controls select { padding: 7px 12px; border-radius: 4px; border: 1px solid #373A40; background: #25262b; color: #C1C2C5; font-size: 14px; font-family: inherit; }
+.history-controls input:focus, .history-controls select:focus { border-color: #1971c2; outline: none; }
+.view-btn { padding: 5px 14px; border: none; border-radius: 4px; background: #1971c2; color: #fff; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; }
+.view-btn:hover { background: #1864ab; }
 
 /* Settings */
 .setting-section { margin-bottom: 24px; }
-.setting-section h3 { color: #f5a623; margin-bottom: 12px; font-size: 1.1em; }
+.setting-section h3 { color: #FFFFFF; margin-bottom: 12px; font-size: 1.1em; }
 .item-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-.item-row { display: flex; align-items: center; gap: 8px; background: #1e1e1e; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; }
-.item-row span { flex: 1; color: #ddd; cursor: pointer; border-bottom: 1px dashed #555; }
-.item-row span:hover { color: #f5a623; border-color: #f5a623; }
-.rename-input { flex: 1; padding: 4px 8px; border: 2px solid #f5a623; border-radius: 4px; font-size: 14px; outline: none; background: #1e1e1e; color: #fff; }
-.item-row button { padding: 5px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.item-row { display: flex; align-items: center; gap: 8px; background: #131822; padding: 10px 14px; border-radius: 4px; border: 1px solid #373A40; }
+.item-row span { flex: 1; color: #D7D8DD; cursor: pointer; border-bottom: 1px dashed #373A40; }
+.item-row span:hover { color: #1971c2; border-color: #1971c2; }
+.rename-input { flex: 1; padding: 4px 8px; border: 2px solid #1971c2; border-radius: 4px; font-size: 14px; outline: none; background: #25262b; color: #fff; font-family: inherit; }
+.item-row button { padding: 5px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: inherit; }
 .btn-del { background: #c0392b; color: #fff; }
 .btn-del:hover { background: #e74c3c; }
-.btn-move { background: #333; color: #aaa; }
-.btn-move:hover { background: #444; color: #fff; }
+.btn-move { background: #25262b; color: #8F96A3; border: 1px solid #373A40; }
+.btn-move:hover { background: #373A40; color: #fff; }
 .add-row { display: flex; gap: 8px; }
-.add-row input { flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #444; background: #1e1e1e; color: #ddd; font-size: 14px; }
-.btn-add { padding: 8px 18px; border: none; border-radius: 8px; background: #27ae60; color: #fff; cursor: pointer; font-size: 14px; font-weight: 600; }
-.btn-add:hover { background: #2ecc71; }
+.add-row input { flex: 1; padding: 8px 12px; border-radius: 4px; border: 1px solid #373A40; background: #25262b; color: #C1C2C5; font-size: 14px; font-family: inherit; }
+.add-row input:focus { border-color: #1971c2; outline: none; }
+.btn-add { padding: 8px 18px; border: none; border-radius: 4px; background: #1971c2; color: #fff; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; }
+.btn-add:hover { background: #1864ab; }
 
 .data-section { display: flex; gap: 10px; flex-wrap: wrap; }
-.data-section button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; }
-.btn-export { background: #2980b9; color: #fff; }
-.btn-import { background: #8e44ad; color: #fff; }
+.data-section button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; font-family: inherit; }
+.btn-export { background: #1971c2; color: #fff; }
+.btn-import { background: #7048e8; color: #fff; }
 .btn-reset { background: #c0392b; color: #fff; }
-.btn-export:hover { background: #3498db; }
-.btn-import:hover { background: #9b59b6; }
+.btn-export:hover { background: #1864ab; }
+.btn-import:hover { background: #5f3dc4; }
 .btn-reset:hover { background: #e74c3c; }
 input[type="file"] { display: none; }
 
 /* Dashboard */
 .dashboard { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-.dash-card { flex: 1; min-width: 120px; background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 12px 16px; text-align: center; }
-.dash-card .dash-label { font-size: 11px; color: #888; margin-bottom: 4px; }
-.dash-card .dash-value { font-size: 18px; font-weight: 700; font-family: 'Consolas', monospace; }
-.dash-card .dash-value.income { color: #5bc0fa; }
-.dash-card .dash-value.expense { color: #ff6b6b; }
-.dash-card .dash-value.net { color: #f5a623; }
-.dash-card .dash-value.asset { color: #27ae60; }
-.dash-card .dash-sub { font-size: 10px; color: #555; margin-top: 2px; }
+.dash-card { flex: 1; min-width: 120px; background: #131822; border: 1px solid #373A40; border-radius: 4px; padding: 12px 16px; text-align: center; }
+.dash-card .dash-label { font-size: 11px; color: #8F96A3; margin-bottom: 4px; }
+.dash-card .dash-value { font-size: 16px; font-weight: 700; font-family: 'MaplestoryOTFBold', 'Consolas', monospace; }
+.dash-card .dash-value.income { color: #ef4444; }
+.dash-card .dash-value.expense { color: #60a5fa; }
+.dash-card .dash-value.net { color: #1971c2; }
+.dash-card .dash-value.asset { color: #ef4444; }
+.dash-card .dash-sub { font-size: 10px; color: #5c5f66; margin-top: 2px; }
 
 /* Ledger */
 .ledger-form { margin-bottom: 12px; }
 .ledger-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.ledger-row input, .ledger-row select { padding: 7px 10px; border-radius: 6px; border: 1px solid #444; background: #1e1e1e; color: #ddd; font-size: 13px; }
+.ledger-row input, .ledger-row select { padding: 7px 10px; border-radius: 4px; border: 1px solid #373A40; background: #25262b; color: #C1C2C5; font-size: 13px; font-family: inherit; }
+.ledger-row input:focus, .ledger-row select:focus { border-color: #1971c2; outline: none; }
 .ledger-row select { min-width: 80px; }
+.type-btns { display: flex; gap: 0; }
+.type-btn { border: 1px solid #373A40; padding: 3px 8px; font-size: 11px; cursor: pointer; color: #5c5f66; background: #131822; font-family: inherit; transition: all 0.1s; }
+.type-btn:first-child { border-radius: 4px 0 0 4px; }
+.type-btn:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+.type-btn.active[data-val="income"] { background: #ef4444; color: #fff; border-color: #ef4444; }
+.type-btn.active[data-val="expense"] { background: #60a5fa; color: #fff; border-color: #60a5fa; }
 
-.toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: #fff; font-size: 0.9em; opacity: 0; transition: opacity 0.3s; z-index: 100; }
+/* Asset Calendar */
+.asset-cal { background: #131822; border: 1px solid #373A40; border-radius: 4px; padding: 16px; margin-bottom: 12px; }
+.asset-cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.asset-cal-nav { background: none; border: 1px solid #373A40; border-radius: 4px; color: #8F96A3; cursor: pointer; padding: 6px 14px; font-size: 13px; font-family: inherit; transition: all 0.15s; }
+.asset-cal-nav:hover { background: #1971c2; color: #fff; border-color: #1971c2; }
+.asset-cal-title { font-size: 1.15em; font-weight: 700; color: #FFFFFF; }
+.asset-cal-today { background: #1971c2; color: #fff; border: none; border-radius: 4px; padding: 6px 16px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; }
+.asset-cal-today:hover { background: #1864ab; }
+.asset-cal-summary { margin-bottom: 14px; }
+.asset-cal-week-summary { display: flex; justify-content: space-between; padding: 6px 10px; border-bottom: 1px solid #17191C; font-size: 13px; }
+.asset-cal-month-summary { display: flex; justify-content: space-between; padding: 8px 10px; font-weight: 700; font-size: 14px; border-top: 1px solid #373A40; margin-top: 4px; }
+.asset-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.asset-cal-dow { text-align: center; padding: 6px 0; font-size: 12px; color: #5c5f66; font-weight: 600; }
+.asset-cal-dow.sun { color: #ff6b6b; }
+.asset-cal-dow.sat { color: #60a5fa; }
+.asset-cal-cell { background: #131822; border: 1px solid #373A40; border-radius: 4px; padding: 4px; min-height: 68px; cursor: pointer; transition: all 0.1s; }
+.asset-cal-cell:hover { border-color: #1971c2; }
+.asset-cal-cell.today { border-color: #1971c2; background: #0f1a2e; }
+.asset-cal-cell.selected { background: #0d1a30; border-color: #1971c2; box-shadow: 0 0 0 1px #1971c2; }
+.asset-cal-cell.other-month { opacity: 0.35; }
+.asset-cal-cell .cal-date { font-size: 12px; font-weight: 700; color: #C1C2C5; margin-bottom: 2px; }
+.asset-cal-cell .cal-date.sun { color: #ff6b6b; }
+.asset-cal-cell .cal-date.sat { color: #60a5fa; }
+.asset-cal-cell .cal-meso { font-size: 10px; color: #ef4444; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell .cal-meso.negative { color: #60a5fa; }
+.asset-cal-cell .cal-dajo { font-size: 10px; color: #a78bfa; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell .cal-ledger-income { font-size: 10px; color: #ef4444; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell .cal-ledger-expense { font-size: 10px; color: #60a5fa; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell-empty { min-height: 68px; }
+
+/* Inline ledger in journal tab */
+.journal-ledger { margin-top: 16px; background: #131822; border: 1px solid #373A40; border-radius: 4px; padding: 14px; }
+.journal-ledger h4 { color: #FFFFFF; margin-bottom: 10px; font-size: 14px; }
+
+.toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 4px; color: #fff; font-size: 0.9em; opacity: 0; transition: opacity 0.3s; z-index: 100; font-family: inherit; }
 .toast.show { opacity: 1; }
-.toast.success { background: #34a853; }
-.toast.error { background: #e74c3c; }
+.toast.success { background: #1971c2; }
+.toast.error { background: #c0392b; }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="header-bar">
-    <h1>메이플 일일 재화 관리</h1>
+    <h1 style="font-family:'MaplestoryOTFBold',sans-serif;">메이플 일일 재화 관리</h1>
     <div class="cloud-bar">
       <button id="cloudSaveBtn" class="cloud-btn" onclick="manualCloudSave()">저장됨</button>
       <button id="cloudLoadBtn" class="cloud-btn cloud-btn-load" onclick="manualCloudLoad()">불러오기</button>
@@ -186,54 +207,48 @@ input[type="file"] { display: none; }
   <div class="user-tabs" id="userTabs"></div>
   <div class="dashboard" id="dashboard"></div>
   <div class="tabs">
-    <button class="tab active" data-tab="input">재획 일지</button>
-    <button class="tab" data-tab="ledger">가계부</button>
-    <button class="tab" data-tab="history">정산</button>
+    <button class="tab active" data-tab="journal">일지</button>
+    <button class="tab" data-tab="history">부주 정산</button>
     <button class="tab" data-tab="settings">설정</button>
   </div>
 
-  <!-- 수입/지출 -->
-  <div id="ledger" class="panel">
-    <div class="ledger-form">
-      <div class="ledger-row">
-        <input type="date" id="ledgerDate">
-        <select id="ledgerType">
-          <option value="income">수입</option>
-          <option value="expense">지출</option>
-        </select>
-        <input type="text" id="ledgerAmount" placeholder="억 단위 (예: 5.43 = 5.43억)" style="width:160px">
-        <input type="text" id="ledgerMemo" placeholder="메모 (예: 장비 구매, 보스 드랍)" style="flex:1">
-        <button class="btn-add" onclick="addLedger()">추가</button>
-      </div>
-    </div>
-    <div class="sheet-wrap" id="ledgerTableWrap"></div>
-  </div>
-
-  <!-- 일일 입력 -->
-  <div id="input" class="panel active">
+  <!-- 일지 (캘린더 + 입력 + 가계부) -->
+  <div id="journal" class="panel active">
     <input type="date" id="inputDate" style="display:none">
-    <div class="cal-and-sheet">
-      <div class="cal-wrap">
-        <div class="cal-header">
-          <button class="cal-nav" onclick="calMove(-1)">&lsaquo;</button>
-          <span id="calTitle" class="cal-title"></span>
-          <button class="cal-nav" onclick="calMove(1)">&rsaquo;</button>
-        </div>
-        <div class="cal-days-wrap">
-          <div class="cal-grid">
-            <div class="cal-dow">일</div><div class="cal-dow">월</div><div class="cal-dow">화</div><div class="cal-dow">수</div><div class="cal-dow">목</div><div class="cal-dow">금</div><div class="cal-dow">토</div>
+    <div id="assetCalendarWrap"></div>
+    <div class="sheet-wrap" id="inputTableWrap" style="margin-top:12px;"></div>
+    <div class="journal-ledger" id="journalLedgerWrap">
+      <h4>가계부 (수입/지출)</h4>
+      <div class="ledger-form">
+        <div class="ledger-row" style="flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <img src="meso.png" style="width:16px;height:16px">
+            <div class="type-btns" id="mesoTypeBtns">
+              <button type="button" class="type-btn active" data-val="income" onclick="setLedgerType('meso','income')">수입</button>
+              <button type="button" class="type-btn" data-val="expense" onclick="setLedgerType('meso','expense')">지출</button>
+            </div>
+            <input type="text" id="ledgerMesoAmt" placeholder="억 단위" style="width:110px">
+            <span style="color:#373A40;margin:0 4px">|</span>
+            <img src="dajo.png" style="width:16px;height:16px">
+            <div class="type-btns" id="dajoTypeBtns">
+              <button type="button" class="type-btn active" data-val="income" onclick="setLedgerType('dajo','income')">수입</button>
+              <button type="button" class="type-btn" data-val="expense" onclick="setLedgerType('dajo','expense')">지출</button>
+            </div>
+            <input type="text" id="ledgerDajoAmt" placeholder="개수" style="width:80px">
           </div>
-          <div class="cal-grid" id="calDays"></div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input type="text" id="ledgerMemo" placeholder="메모" style="flex:1">
+            <button class="btn-add" onclick="addLedger()">추가</button>
+          </div>
         </div>
-        <button class="cal-today-btn" onclick="calToday()">오늘</button>
       </div>
-      <div class="sheet-wrap" id="inputTableWrap"></div>
+      <div class="sheet-wrap" id="ledgerTableWrap"></div>
     </div>
   </div>
 
-  <!-- 정산 -->
+  <!-- 부주 정산 -->
   <div id="history" class="panel">
-    <h3 style="margin:0 0 12px;color:#e67e00;font-size:1em;">캐릭터별 누적 정산</h3>
+    <h3 style="margin:0 0 12px;color:#FFFFFF;font-size:1em;">캐릭터별 누적 정산</h3>
     <div class="sheet-wrap" id="settlementWrap"></div>
     <div style="margin:20px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <div class="view-tabs">
@@ -244,12 +259,12 @@ input[type="file"] { display: none; }
       <div class="history-controls" id="dailyControls">
         <label>기간:</label>
         <input type="date" id="histStart">
-        <span style="color:#aaa">~</span>
+        <span style="color:#8F96A3">~</span>
         <input type="date" id="histEnd">
       </div>
       <div class="history-controls" id="yearControl" style="display:none;">
         <label>연도:</label>
-        <select id="yearSelect" onchange="renderHistoryView()" style="padding:6px 10px;border-radius:6px;border:1px solid #444;background:#1e1e1e;color:#ddd;font-size:14px;"></select>
+        <select id="yearSelect" onchange="renderHistoryView()" style="padding:6px 10px;border-radius:4px;border:1px solid #373A40;background:#25262b;color:#C1C2C5;font-size:14px;"></select>
       </div>
     </div>
     <div class="sheet-wrap" id="historyTableWrap"></div>
@@ -301,7 +316,7 @@ let _cloudData = null;
 let _saving = false;
 let _saveQueued = false;
 
-const DEFAULT_RESOURCES = ['매소', '조각', '경험치', '기운', '상주정', '우유', '이슬', '코젬', '달라심볼'];
+const DEFAULT_RESOURCES = ['매소', '다조', '경험치', '기운', '상주정', '우유', '이슬', '코젬', '달라심볼'];
 
 function getCurrentUser() {
   return localStorage.getItem('maple_current_user') || '기본';
@@ -329,7 +344,6 @@ async function cloudSave() {
         body: JSON.stringify(body)
       });
     } else {
-      // FIXED_GIST_ID가 항상 있으므로 여기 도달 안함
       console.error('Gist ID 없음 - 비정상 상태');
     }
   } catch (e) {
@@ -465,8 +479,9 @@ function renameUserTab(oldName) {
 
 function refreshAll() {
   renderDashboard();
-  renderCal();
+  renderAssetCalendar();
   renderInputTable();
+  renderLedger();
   renderHistory();
   renderSettings();
 }
@@ -561,7 +576,21 @@ function todayStr() {
 
 function formatNum(n) {
   if (n === 0 || n === '' || n === null || n === undefined) return '';
-  return Number(n).toLocaleString();
+  return formatMeso(Number(n));
+}
+
+function formatMeso(n) {
+  if (n === 0) return '0';
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  const eok = Math.floor(abs / 100000000);
+  const man = Math.floor((abs % 100000000) / 10000);
+  const rest = abs % 10000;
+  let parts = [];
+  if (eok) parts.push(eok + '억');
+  if (man) parts.push(man + '만');
+  if (rest) parts.push(String(rest));
+  return sign + (parts.length ? parts.join(' ') : '0');
 }
 
 // --- Tabs ---
@@ -571,8 +600,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById(tab.dataset.tab).classList.add('active');
-    if (tab.dataset.tab === 'input') renderInputTable();
-    if (tab.dataset.tab === 'ledger') renderLedger();
+    if (tab.dataset.tab === 'journal') { renderAssetCalendar(); renderInputTable(); renderLedger(); }
     if (tab.dataset.tab === 'history') renderHistory();
     if (tab.dataset.tab === 'settings') renderSettings();
   });
@@ -582,88 +610,219 @@ document.querySelectorAll('.tab').forEach(tab => {
 const dateInput = document.getElementById('inputDate');
 dateInput.value = todayStr();
 
-// --- Calendar ---
-let calYear, calMonth;
+// --- Asset Calendar state ---
+let _acYear, _acMonth;
 (function() {
   const d = new Date();
-  calYear = d.getFullYear();
-  calMonth = d.getMonth();
+  _acYear = d.getFullYear();
+  _acMonth = d.getMonth();
 })();
 
-function calMove(offset) {
-  calMonth += offset;
-  if (calMonth < 0) { calMonth = 11; calYear--; }
-  if (calMonth > 11) { calMonth = 0; calYear++; }
-  renderCal();
+let _selectedDate = todayStr();
+
+function acMove(offset) {
+  _acMonth += offset;
+  if (_acMonth < 0) { _acMonth = 11; _acYear--; }
+  if (_acMonth > 11) { _acMonth = 0; _acYear++; }
+  renderAssetCalendar();
 }
 
-function calToday() {
+function acToday() {
   const d = new Date();
-  calYear = d.getFullYear();
-  calMonth = d.getMonth();
-  dateInput.value = todayStr();
-  renderCal();
+  _acYear = d.getFullYear();
+  _acMonth = d.getMonth();
+  _selectedDate = todayStr();
+  dateInput.value = _selectedDate;
+  renderAssetCalendar();
   renderInputTable();
+  renderLedger();
 }
 
-function calSelect(dateStr) {
-  dateInput.value = dateStr;
-  renderCal();
+function selectDate(ds) {
+  _selectedDate = ds;
+  dateInput.value = ds;
+  renderAssetCalendar();
   renderInputTable();
+  renderLedger();
 }
 
-function renderCal() {
+function renderAssetCalendar() {
+  const wrap = document.getElementById('assetCalendarWrap');
+  if (!wrap) return;
   const data = loadData();
-  const selected = dateInput.value;
+  const year = _acYear;
+  const month = _acMonth;
+  const firstDay = new Date(year, month, 1).getDay();
+  const lastDate = new Date(year, month + 1, 0).getDate();
   const today = todayStr();
+  const selected = _selectedDate;
 
-  document.getElementById('calTitle').textContent = calYear + '년 ' + (calMonth + 1) + '월';
+  // daily meso, dajo, ledger aggregates
+  const dailyMeso = {}, dailyDajo = {}, dailyLedgerIncome = {}, dailyLedgerExpense = {};
+  Object.keys(data.records || {}).forEach(date => {
+    const [y,m] = date.split('-').map(Number);
+    if (y === year && m === month + 1) {
+      let meso = 0, dajo = 0;
+      (data.characters || []).forEach(ch => {
+        const mesoRec = data.records[date]?.[ch]?.['매소'];
+        if (mesoRec) meso += getEarned(mesoRec);
+        const dajoRec = data.records[date]?.[ch]?.['다조'];
+        if (dajoRec) dajo += getEarned(dajoRec);
+      });
+      if (meso) dailyMeso[date] = meso;
+      if (dajo) dailyDajo[date] = dajo;
+    }
+  });
 
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
-  const prevLastDate = new Date(calYear, calMonth, 0).getDate();
+  // ledger aggregates for this month
+  (data.ledger || []).forEach(entry => {
+    const [y,m] = entry.date.split('-').map(Number);
+    if (y === year && m === month + 1) {
+      if (entry.type === 'income') {
+        dailyLedgerIncome[entry.date] = (dailyLedgerIncome[entry.date] || 0) + (Number(entry.amount) || 0);
+      } else {
+        dailyLedgerExpense[entry.date] = (dailyLedgerExpense[entry.date] || 0) + (Number(entry.amount) || 0);
+      }
+    }
+  });
 
-  let html = '';
-
-  // 이전 달
-  for (let i = firstDay - 1; i >= 0; i--) {
-    const d = prevLastDate - i;
-    const m = calMonth === 0 ? 12 : calMonth;
-    const y = calMonth === 0 ? calYear - 1 : calYear;
-    const ds = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dow = (firstDay - 1 - i) % 7;
-    html += `<div class="cal-day other-month${dow===0?' sun':''}${dow===6?' sat':''}" onclick="calSelect('${ds}')">${d}</div>`;
-  }
-
-  // 이번 달
+  // Week summaries (Thu-Wed)
+  const weeks = {};
   for (let d = 1; d <= lastDate; d++) {
-    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dow = new Date(calYear, calMonth, d).getDay();
-    let cls = 'cal-day';
-    if (ds === today) cls += ' today';
-    if (ds === selected) cls += ' selected';
-    if (data.records[ds] && data.resources.some(r => data.characters.some(ch => {
-      const rec = data.records[ds]?.[ch]?.[r];
-      if (r === '경험치') return getExpEarnedNum(rec) !== 0;
-      return getEarned(rec) !== 0;
-    }))) cls += ' has-data';
-    if (dow === 0) cls += ' sun';
-    if (dow === 6) cls += ' sat';
-    html += `<div class="${cls}" onclick="calSelect('${ds}')">${d}</div>`;
+    const dt = new Date(year, month, d);
+    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = dt.getDay();
+    const thuOffset = (dow - 4 + 7) % 7;
+    const thuDate = new Date(dt);
+    thuDate.setDate(dt.getDate() - thuOffset);
+    const thuMonth = thuDate.getMonth();
+    if (thuMonth === month || (d <= 7 && thuMonth === month - 1)) {
+      const firstThu = new Date(year, month, 1);
+      while (firstThu.getDay() !== 4) firstThu.setDate(firstThu.getDate() + 1);
+      const weekNum = Math.floor((thuDate.getDate() - firstThu.getDate()) / 7) + 1;
+      const wk = Math.max(1, weekNum);
+      if (!weeks[wk]) weeks[wk] = { meso: 0, dajo: 0 };
+      weeks[wk].meso += dailyMeso[ds] || 0;
+      weeks[wk].dajo += dailyDajo[ds] || 0;
+    }
   }
 
-  // 다음 달 (6줄 채우기)
+  let monthMeso = 0, monthDajo = 0;
+  Object.values(dailyMeso).forEach(v => monthMeso += v);
+  Object.values(dailyDajo).forEach(v => monthDajo += v);
+
+  // Build HTML
+  let html = '<div class="asset-cal">';
+
+  // Header
+  html += '<div class="asset-cal-header">';
+  html += `<button class="asset-cal-nav" onclick="acMove(-1)">&lsaquo; 이전 달</button>`;
+  html += `<span class="asset-cal-title">${year}년 ${month+1}월</span>`;
+  html += `<div style="display:flex;gap:6px;">`;
+  html += `<button class="asset-cal-today" onclick="acToday()">오늘</button>`;
+  html += `<button class="asset-cal-nav" onclick="acMove(1)">다음 달 &rsaquo;</button>`;
+  html += `</div></div>`;
+
+  // Week summaries
+  html += '<div class="asset-cal-summary">';
+  Object.keys(weeks).sort().forEach(wk => {
+    const w = weeks[wk];
+    const mesoColor = w.meso > 0 ? '#ef4444' : w.meso < 0 ? '#60a5fa' : '#5c5f66';
+    html += `<div class="asset-cal-week-summary">`;
+    html += `<span style="color:#8F96A3;">${wk}주차 (목~수)</span>`;
+    html += `<span>`;
+    html += `<span style="color:${mesoColor};font-weight:600;">${w.meso >= 0 ? '+' : ''}${formatMeso(w.meso)}</span>`;
+    if (w.dajo) html += `<span style="color:#a78bfa;margin-left:8px;">${w.dajo >= 0 ? '+' : ''}${w.dajo}개</span>`;
+    html += `</span></div>`;
+  });
+  const mMonthColor = monthMeso > 0 ? '#ef4444' : monthMeso < 0 ? '#60a5fa' : '#5c5f66';
+  html += `<div class="asset-cal-month-summary">`;
+  html += `<span style="color:#C1C2C5;">${month+1}월 합계</span>`;
+  html += `<span>`;
+  html += `<span style="color:${mMonthColor};">${monthMeso >= 0 ? '+' : ''}${formatMeso(monthMeso)}</span>`;
+  if (monthDajo) html += `<span style="color:#a78bfa;margin-left:8px;">${monthDajo >= 0 ? '+' : ''}${monthDajo}개</span>`;
+  html += `</span></div>`;
+  html += '</div>';
+
+  // Day-of-week headers
+  const dows = ['일','월','화','수','목','금','토'];
+  html += '<div class="asset-cal-grid">';
+  dows.forEach((d,i) => {
+    let cls = 'asset-cal-dow';
+    if (i === 0) cls += ' sun';
+    if (i === 6) cls += ' sat';
+    html += `<div class="${cls}">${d}</div>`;
+  });
+
+  // Previous month fill
+  const prevLastDate = new Date(year, month, 0).getDate();
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const dd = prevLastDate - i;
+    const pm = month === 0 ? 12 : month;
+    const py = month === 0 ? year - 1 : year;
+    const ds = `${py}-${String(pm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+    const dow = (firstDay - 1 - i) % 7;
+    let dateCls = 'cal-date';
+    if (dow === 0) dateCls += ' sun';
+    if (dow === 6) dateCls += ' sat';
+    html += `<div class="asset-cal-cell other-month" onclick="selectDate('${ds}')">`;
+    html += `<div class="${dateCls}">${dd}</div>`;
+    html += `</div>`;
+  }
+
+  // Current month days
+  for (let d = 1; d <= lastDate; d++) {
+    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = new Date(year, month, d).getDay();
+    let cellCls = 'asset-cal-cell';
+    if (ds === today) cellCls += ' today';
+    if (ds === selected) cellCls += ' selected';
+    let dateCls = 'cal-date';
+    if (dow === 0) dateCls += ' sun';
+    if (dow === 6) dateCls += ' sat';
+
+    const meso = dailyMeso[ds] || 0;
+    const dajo = dailyDajo[ds] || 0;
+    const lIncome = dailyLedgerIncome[ds] || 0;
+    const lExpense = dailyLedgerExpense[ds] || 0;
+
+    html += `<div class="${cellCls}" onclick="selectDate('${ds}')">`;
+    html += `<div class="${dateCls}">${d}</div>`;
+    if (meso) {
+      const mc = meso > 0 ? 'cal-meso' : 'cal-meso negative';
+      html += `<div class="${mc}">${meso > 0 ? '+' : ''}${formatMeso(meso)}</div>`;
+    }
+    if (dajo) {
+      html += `<div class="cal-dajo">${dajo > 0 ? '+' : ''}${dajo}개</div>`;
+    }
+    if (lIncome) {
+      html += `<div class="cal-ledger-income">+${formatMeso(lIncome)}</div>`;
+    }
+    if (lExpense) {
+      html += `<div class="cal-ledger-expense">-${formatMeso(lExpense)}</div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Next month fill
   const totalCells = firstDay + lastDate;
   const remaining = (7 - totalCells % 7) % 7;
   for (let d = 1; d <= remaining; d++) {
-    const m = calMonth === 11 ? 1 : calMonth + 2;
-    const y = calMonth === 11 ? calYear + 1 : calYear;
-    const ds = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const nm = month === 11 ? 1 : month + 2;
+    const ny = month === 11 ? year + 1 : year;
+    const ds = `${ny}-${String(nm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dow = (totalCells + d - 1) % 7;
-    html += `<div class="cal-day other-month${dow===0?' sun':''}${dow===6?' sat':''}" onclick="calSelect('${ds}')">${d}</div>`;
+    let dateCls = 'cal-date';
+    if (dow === 0) dateCls += ' sun';
+    if (dow === 6) dateCls += ' sat';
+    html += `<div class="asset-cal-cell other-month" onclick="selectDate('${ds}')">`;
+    html += `<div class="${dateCls}">${d}</div>`;
+    html += `</div>`;
   }
 
-  document.getElementById('calDays').innerHTML = html;
+  html += '</div>'; // grid
+  html += '</div>'; // asset-cal
+  wrap.innerHTML = html;
 }
 
 // 경험치 획득량 (레벨+% 방식)
@@ -710,12 +869,16 @@ function renderInputTable() {
     return;
   }
 
-  let html = '<table class="sheet"><thead><tr><th class="corner"></th>';
-  data.resources.forEach(r => html += `<th>${r}</th>`);
+  let html = `<div style="margin-bottom:8px;color:#8F96A3;font-size:13px;">선택된 날짜: <strong style="color:#FFFFFF">${date}</strong></div>`;
+  const resIcons = { '매소': 'meso.png', '다조': 'dajo.png' };
+  html += '<table class="sheet"><thead><tr><th class="corner"></th>';
+  data.resources.forEach(r => {
+    const icon = resIcons[r] ? `<img src="${resIcons[r]}" style="width:18px;height:18px;vertical-align:middle;margin-right:3px;">` : '';
+    html += `<th>${icon}${r}</th>`;
+  });
   html += '</tr></thead><tbody>';
 
   data.characters.forEach(ch => {
-    // 이 날짜가 이 캐릭터의 정산 범위에 포함되는지
     const settledDate = data.settlements?.[ch]?.lastDate || '';
     const isSettled = settledDate && date <= settledDate;
 
@@ -726,7 +889,6 @@ function renderInputTable() {
       html += `<td class="cell"><div class="cell-stack">`;
 
       if (r === '경험치') {
-        // 경험치: 레벨 + %
         if (typeof rec !== 'object' || rec === null) rec = {};
         const bLv = rec.beforeLv ?? '';
         const bPct = rec.beforePct ?? '';
@@ -738,16 +900,18 @@ function renderInputTable() {
         html += `<div class="cell-input-row"><span class="cell-label">후</span><input type="text" value="${aLv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterLv" placeholder="Lv" style="width:36px;text-align:center"${ro}><input type="text" value="${aPct}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterPct" placeholder="%" style="flex:1"${ro}></div>`;
         html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}">${earned}</div>`;
       } else {
-        // 일반 재화
         if (typeof rec === 'number') rec = { before: 0, after: rec };
         if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
         const bv = rec.before ?? '';
         const av = rec.after ?? '';
         const earned = (bv !== '' && av !== '') ? (Number(av) || 0) - (Number(bv) || 0) : '';
-        html += `<div class="cell-input-row"><span class="cell-label">전</span><input type="text" value="${bv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="before" placeholder="시작 전"${ro}></div>`;
+        const bvDisp = bv !== '' ? formatMeso(Number(bv)) : '';
+        const avDisp = av !== '' ? formatMeso(Number(av)) : '';
+        const earnedColor = earned > 0 ? '#ef4444' : earned < 0 ? '#60a5fa' : '';
+        html += `<div class="cell-input-row"><span class="cell-label">전</span><input type="text" value="${bvDisp}" data-raw="${bv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="before" placeholder="시작 전"${ro}></div>`;
         html += `<div class="cell-divider"></div>`;
-        html += `<div class="cell-input-row"><span class="cell-label">후</span><input type="text" value="${av}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="after" placeholder="종료 후"${ro}></div>`;
-        html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}">${earned !== '' ? formatNum(earned) : ''}</div>`;
+        html += `<div class="cell-input-row"><span class="cell-label">후</span><input type="text" value="${avDisp}" data-raw="${av}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="after" placeholder="종료 후"${ro}></div>`;
+        html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}" style="${earnedColor ? 'color:' + earnedColor : ''}">${earned !== '' ? formatNum(earned) : ''}</div>`;
       }
 
       html += `</div></td>`;
@@ -760,14 +924,15 @@ function renderInputTable() {
   data.resources.forEach(r => {
     let sum = 0;
     data.characters.forEach(ch => { sum += getEarned(data.records?.[date]?.[ch]?.[r]); });
-    html += `<td data-sum-res="${r}">${formatNum(sum)}</td>`;
+    const sc = sum > 0 ? 'color:#ef4444' : sum < 0 ? 'color:#60a5fa' : '';
+    html += `<td data-sum-res="${r}" style="${sc}">${formatNum(sum)}</td>`;
   });
   html += '</tr>';
 
   // 캐릭터 추가 행
   const totalCols = data.resources.length + 1;
   html += `<tr class="add-row"><td class="add-cell" colspan="${totalCols}">`;
-  html += '<input type="text" id="inlineAddChar" placeholder="+ 캐릭터 추가 (이름 입력 후 Enter)">';
+  html += '<input type="text" id="inlineAddChar" placeholder="+ 캐릭터 추가 (이름 → Enter)">';
   html += '</td></tr>';
 
   html += '</tbody></table>';
@@ -797,18 +962,15 @@ function updateValue(el) {
   const val = num !== '' ? Number(num) : '';
 
   if (res === '경험치') {
-    // 경험치: {beforeLv, beforePct, afterLv, afterPct}
     if (typeof rec !== 'object' || rec === null) rec = {};
     rec[field] = val;
     data.records[date][ch][res] = rec;
-    // 빈 체크
     const isEmpty = (rec.beforeLv === '' || rec.beforeLv === undefined) &&
                     (rec.beforePct === '' || rec.beforePct === undefined) &&
                     (rec.afterLv === '' || rec.afterLv === undefined) &&
                     (rec.afterPct === '' || rec.afterPct === undefined);
     if (isEmpty) delete data.records[date][ch][res];
   } else {
-    // 일반 재화
     if (typeof rec === 'number') rec = { before: 0, after: rec };
     if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
     rec[field] = val;
@@ -826,7 +988,6 @@ function updateSums() {
   const data = loadData();
   const date = dateInput.value;
 
-  // 개별 획득 셀 업데이트
   document.querySelectorAll('.cell-earned[data-earned-char]').forEach(el => {
     const ch = el.dataset.earnedChar;
     const r = el.dataset.earnedRes;
@@ -836,13 +997,15 @@ function updateSums() {
     } else if (typeof rec === 'object' && rec !== null) {
       const bEmpty = rec.before === '' || rec.before === undefined;
       const aEmpty = rec.after === '' || rec.after === undefined;
-      el.textContent = (!bEmpty && !aEmpty) ? formatNum((Number(rec.after)||0) - (Number(rec.before)||0)) : '';
+      const val = (!bEmpty && !aEmpty) ? (Number(rec.after)||0) - (Number(rec.before)||0) : '';
+      el.textContent = val !== '' ? formatNum(val) : '';
+      el.style.color = val > 0 ? '#ef4444' : val < 0 ? '#60a5fa' : '';
     } else {
       el.textContent = '';
+      el.style.color = '';
     }
   });
 
-  // 합계
   data.resources.forEach(r => {
     const el = document.querySelector(`[data-sum-res="${r}"]`);
     if (!el) return;
@@ -850,10 +1013,12 @@ function updateSums() {
       let totalPct = 0;
       data.characters.forEach(ch => { totalPct += getExpEarnedNum(data.records?.[date]?.[ch]?.[r]); });
       el.textContent = totalPct ? `+${totalPct.toFixed(3)}%` : '';
+      el.style.color = totalPct > 0 ? '#ef4444' : totalPct < 0 ? '#60a5fa' : '';
     } else {
       let sum = 0;
       data.characters.forEach(ch => { sum += getEarned(data.records?.[date]?.[ch]?.[r]); });
       el.textContent = formatNum(sum);
+      el.style.color = sum > 0 ? '#ef4444' : sum < 0 ? '#60a5fa' : '';
     }
   });
 }
@@ -867,14 +1032,12 @@ function renameCharInline(td) {
   if (idx === -1) return;
   if (data.characters.includes(newName.trim())) { toast('이미 존재하는 이름입니다.', 'error'); return; }
   data.characters[idx] = newName.trim();
-  // records 이전
   Object.keys(data.records).forEach(date => {
     if (data.records[date][oldName]) {
       data.records[date][newName.trim()] = data.records[date][oldName];
       delete data.records[date][oldName];
     }
   });
-  // settlements 이전
   if (data.settlements?.[oldName]) {
     data.settlements[newName.trim()] = data.settlements[oldName];
     delete data.settlements[oldName];
@@ -890,14 +1053,31 @@ const inputWrap = document.getElementById('inputTableWrap');
 inputWrap.addEventListener('input', function(e) {
   const el = e.target;
   if (!el.dataset.res) return;
-  // 숫자만 허용 (마이너스, 소수점 포함)
   el.value = el.value.replace(/[^0-9.\-]/g, '');
+  el.dataset.raw = el.value;
   updateValue(el);
   updateSums();
 });
 
 inputWrap.addEventListener('focusin', function(e) {
-  if (e.target.dataset.res) e.target.select();
+  const el = e.target;
+  if (!el.dataset.res) return;
+  // 포커스 시 원래 숫자 보여주기
+  const raw = el.dataset.raw;
+  if (raw !== undefined && raw !== '') el.value = raw;
+  el.select();
+});
+
+inputWrap.addEventListener('focusout', function(e) {
+  const el = e.target;
+  if (!el.dataset.res) return;
+  const f = el.dataset.field;
+  if (f === 'beforeLv' || f === 'afterLv' || f === 'beforePct' || f === 'afterPct') return;
+  // 포커스 해제 시 억/만 형식으로 표시
+  const raw = el.dataset.raw;
+  if (raw !== undefined && raw !== '') {
+    el.value = formatMeso(Number(raw));
+  }
 });
 
 inputWrap.addEventListener('keydown', function(e) {
@@ -912,12 +1092,10 @@ inputWrap.addEventListener('keydown', function(e) {
   const cells = Array.from(tr.querySelectorAll('td.cell'));
   const colIdx = cells.indexOf(td);
 
-  // 셀 내 input 순서 (경험치: Lv→%→Lv→%, 일반: 전→후)
   const cellInputs = Array.from(td.querySelectorAll('input[data-res]'));
   const inputIdx = cellInputs.indexOf(el);
   const isFirst = inputIdx === 0;
   const isLast = inputIdx === cellInputs.length - 1;
-  // 전/후 구분: 상단 절반이면 before 계열, 하단이면 after 계열
   const isBeforeRow = inputIdx < cellInputs.length / 2;
 
   let target = null;
@@ -931,13 +1109,11 @@ inputWrap.addEventListener('keydown', function(e) {
 
   function firstInput(r, c) { const arr = getCellInputs(r, c); return arr[0] || null; }
   function lastInput(r, c) { const arr = getCellInputs(r, c); return arr[arr.length - 1] || null; }
-  // 같은 위치의 input (예: 0번째→다른셀 0번째)
   function sameIdxInput(r, c, idx) { const arr = getCellInputs(r, c); return arr[Math.min(idx, arr.length - 1)] || null; }
 
   switch (e.key) {
     case 'ArrowRight':
       e.preventDefault();
-      // 같은 행 내 다음 input, 없으면 다음 셀 같은 위치
       if (inputIdx < cellInputs.length - 1) {
         target = cellInputs[inputIdx + 1];
       } else {
@@ -955,11 +1131,9 @@ inputWrap.addEventListener('keydown', function(e) {
     case 'ArrowDown':
       e.preventDefault();
       if (isBeforeRow) {
-        // 전 행 → 후 행 (같은 셀, 같은 Lv/% 위치)
         const afterIdx = inputIdx + cellInputs.length / 2;
         target = cellInputs[afterIdx] || null;
       } else {
-        // 후 행 → 다음 캐릭터의 전 행 같은 위치
         const beforeIdx = inputIdx - cellInputs.length / 2;
         target = sameIdxInput(rowIdx + 1, colIdx, beforeIdx);
       }
@@ -967,11 +1141,9 @@ inputWrap.addEventListener('keydown', function(e) {
     case 'ArrowUp':
       e.preventDefault();
       if (!isBeforeRow) {
-        // 후 행 → 전 행 (같은 셀)
         const beforeIdx = inputIdx - cellInputs.length / 2;
         target = cellInputs[beforeIdx] || null;
       } else {
-        // 전 행 → 이전 캐릭터의 후 행 같은 위치
         const afterIdx = inputIdx + cellInputs.length / 2;
         target = sameIdxInput(rowIdx - 1, colIdx, afterIdx);
       }
@@ -1022,7 +1194,7 @@ function getAccumulated(data, ch) {
   const totals = {};
   data.resources.forEach(r => totals[r] = 0);
   Object.keys(data.records).forEach(date => {
-    if (date > lastDate) { // 정산일 다음날부터 누적 (정산일 포함 X)
+    if (date > lastDate) {
       data.resources.forEach(r => {
         if (r === '경험치') {
           totals[r] += getExpEarnedNum(data.records[date]?.[ch]?.[r]);
@@ -1081,12 +1253,10 @@ function renderHistory() {
     return;
   }
 
-  // --- 캐릭터별 누적 정산 ---
   let sh = '<table class="sheet"><thead><tr><th class="corner">캐릭터</th>';
   data.resources.forEach(r => sh += `<th>${r}</th>`);
   sh += '<th style="min-width:100px">정산</th></tr></thead><tbody>';
 
-  // 3그룹: 미정산(누적있음), 정산완료(이력있고 누적0), 기록없음
   const unsettled = [];
   const settled = [];
   const noRecord = [];
@@ -1106,46 +1276,45 @@ function renderHistory() {
   });
 
   if (unsettled.length) {
-    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#f5a623;background:#2a2510;border:1px solid #3a3018;">미정산 (${unsettled.length})</td></tr>`;
+    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#1971c2;background:#0d1a30;border:1px solid #373A40;">미정산 (${unsettled.length})</td></tr>`;
     unsettled.forEach(({ ch, totals, lastDate, lastAmounts }) => {
       sh += `<tr><td class="row-header">${ch}</td>`;
       data.resources.forEach(r => {
-        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:13px;color:#f5a623">${r === '경험치' ? (totals[r] ? totals[r].toFixed(3) + '%' : '') : formatNum(totals[r])}</td>`;
+        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:13px;color:#1971c2">${r === '경험치' ? (totals[r] ? totals[r].toFixed(3) + '%' : '') : formatNum(totals[r])}</td>`;
       });
       sh += `<td style="text-align:center;padding:4px 6px;">`;
-      sh += `<button onclick="settleChar('${ch}')" style="padding:5px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;background:#f5a623;color:#000;font-weight:600;">정산하기</button>`;
-      if (lastDate) sh += `<div style="font-size:10px;color:#666;margin-top:3px">이전: ${lastDate}</div>`;
+      sh += `<button onclick="settleChar('${ch}')" style="padding:5px 14px;border:none;border-radius:4px;cursor:pointer;font-size:13px;background:#1971c2;color:#fff;font-weight:600;font-family:inherit;">정산하기</button>`;
+      if (lastDate) sh += `<div style="font-size:10px;color:#5c5f66;margin-top:3px">이전: ${lastDate}</div>`;
       sh += `</td></tr>`;
     });
   }
 
   if (settled.length) {
-    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#5a7a5a;background:#1a2a1a;border:1px solid #2a3a2a;">정산 완료 (${settled.length})</td></tr>`;
+    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#ef4444;background:#0a1a10;border:1px solid #373A40;">정산 완료 (${settled.length})</td></tr>`;
     settled.forEach(({ ch, totals, lastDate, lastAmounts }) => {
-      sh += `<tr style="opacity:0.5"><td class="row-header" style="color:#6a8a6a">${ch}</td>`;
+      sh += `<tr style="opacity:0.5"><td class="row-header" style="color:#ef4444">${ch}</td>`;
       data.resources.forEach(r => {
-        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:12px;color:#5a7a5a;text-decoration:line-through">${formatNum((lastAmounts?.[r]) || 0)}</td>`;
+        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:12px;color:#ef4444;text-decoration:line-through">${formatNum((lastAmounts?.[r]) || 0)}</td>`;
       });
       sh += `<td style="text-align:center;padding:4px 6px;">`;
-      sh += `<div style="font-size:11px;color:#5a7a5a">${lastDate} 정산완료</div>`;
-      sh += `<button onclick="rollbackSettle('${ch}')" style="margin-top:3px;padding:3px 10px;border:1px solid #444;border-radius:4px;cursor:pointer;font-size:11px;background:#2a2a2a;color:#c0392b;">되돌리기</button>`;
+      sh += `<div style="font-size:11px;color:#ef4444">${lastDate} 정산완료</div>`;
+      sh += `<button onclick="rollbackSettle('${ch}')" style="margin-top:3px;padding:3px 10px;border:1px solid #373A40;border-radius:4px;cursor:pointer;font-size:11px;background:#131822;color:#c0392b;font-family:inherit;">되돌리기</button>`;
       sh += `</td></tr>`;
     });
   }
 
   if (noRecord.length) {
-    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#555;background:#1a1a1a;border:1px solid #2a2a2a;">기록 없음 (${noRecord.length})</td></tr>`;
+    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#5c5f66;background:#0C1019;border:1px solid #373A40;">기록 없음 (${noRecord.length})</td></tr>`;
     noRecord.forEach(({ ch }) => {
-      sh += `<tr><td class="row-header" style="color:#555">${ch}</td>`;
+      sh += `<tr><td class="row-header" style="color:#5c5f66">${ch}</td>`;
       data.resources.forEach(() => sh += `<td></td>`);
-      sh += `<td style="text-align:center;color:#444;font-size:12px">-</td></tr>`;
+      sh += `<td style="text-align:center;color:#373A40;font-size:12px">-</td></tr>`;
     });
   }
 
   sh += '</tbody></table>';
   settleWrap.innerHTML = sh;
 
-  // --- 하단 테이블 (뷰에 따라) ---
   renderRecordView(data, wrap);
 }
 
@@ -1187,8 +1356,7 @@ function getWeekInfo(dateStr) {
   thu.setDate(d.getDate() - diff);
   const wed = new Date(thu);
   wed.setDate(thu.getDate() + 6);
-  // N월 N주차 계산: 해당 월의 첫 목요일 기준
-  const month = thu.getMonth(); // 목요일 기준 월
+  const month = thu.getMonth();
   const firstOfMonth = new Date(thu.getFullYear(), month, 1);
   const firstThu = new Date(firstOfMonth);
   const fDay = firstOfMonth.getDay();
@@ -1252,7 +1420,7 @@ function renderDailyView(data, wrap, allDates) {
         const rec = data.records[date]?.[ch]?.[r];
         sum += (r === '경험치') ? getExpEarnedNum(rec) : getEarned(rec);
       });
-      html += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:13px">${formatNum(sum)}</td>`;
+      html += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:13px;color:#D7D8DD">${formatNum(sum)}</td>`;
     });
     html += `<td style="text-align:center"><button class="view-btn" onclick="viewDate('${date}')">보기</button></td>`;
     html += '</tr>';
@@ -1265,7 +1433,6 @@ function renderDailyView(data, wrap, allDates) {
 function renderGroupedView(data, wrap, allDates, mode) {
   const selectedYear = document.getElementById('yearSelect').value || new Date().getFullYear().toString();
 
-  // 그룹핑
   const groups = {};
   const groupMeta = {};
   allDates.forEach(date => {
@@ -1311,7 +1478,7 @@ function renderGroupedView(data, wrap, allDates, mode) {
     data.characters.forEach(ch => {
       html += '<tr>';
       if (first) {
-        html += `<td class="row-header" rowspan="${charCount + 1}" style="vertical-align:middle;text-align:center;line-height:1.5;white-space:normal;font-size:13px;"><strong>${label}</strong>${sub ? '<br><span style="font-size:10px;color:#999;font-weight:400">'+sub+'</span>' : ''}</td>`;
+        html += `<td class="row-header" rowspan="${charCount + 1}" style="vertical-align:middle;text-align:center;line-height:1.5;white-space:normal;font-size:13px;"><strong>${label}</strong>${sub ? '<br><span style="font-size:10px;color:#8F96A3;font-weight:400">'+sub+'</span>' : ''}</td>`;
         first = false;
       }
       html += `<td class="row-header">${ch}</td>`;
@@ -1321,7 +1488,7 @@ function renderGroupedView(data, wrap, allDates, mode) {
           const rec = data.records[d]?.[ch]?.[r];
           total += (r === '경험치') ? getExpEarnedNum(rec) : getEarned(rec);
         });
-        html += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:13px">${formatNum(total)}</td>`;
+        html += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:13px;color:#D7D8DD">${formatNum(total)}</td>`;
       });
       html += '</tr>';
     });
@@ -1348,15 +1515,17 @@ function renderGroupedView(data, wrap, allDates, mode) {
 
 function viewDate(date) {
   dateInput.value = date;
+  _selectedDate = date;
   const d = new Date(date);
-  calYear = d.getFullYear();
-  calMonth = d.getMonth();
+  _acYear = d.getFullYear();
+  _acMonth = d.getMonth();
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelector('[data-tab="input"]').classList.add('active');
-  document.getElementById('input').classList.add('active');
-  renderCal();
+  document.querySelector('[data-tab="journal"]').classList.add('active');
+  document.getElementById('journal').classList.add('active');
+  renderAssetCalendar();
   renderInputTable();
+  renderLedger();
 }
 
 // --- Settings Tab ---
@@ -1407,7 +1576,6 @@ function startRename(span) {
       renderSettings();
       return;
     }
-    // 레코드에서 이름도 변경
     if (type === 'char') {
       Object.keys(data.records).forEach(date => {
         if (data.records[date][oldName]) {
@@ -1480,7 +1648,6 @@ function deleteItem(type, index) {
   const name = arr[index];
   if (!confirm(`"${name}"을(를) 삭제하시겠습니까?`)) return;
   arr.splice(index, 1);
-  // 관련 데이터 정리
   if (type === 'char') {
     Object.keys(data.records).forEach(date => { delete data.records[date]?.[name]; });
     if (data.settlements?.[name]) delete data.settlements[name];
@@ -1557,93 +1724,90 @@ function renderDashboard() {
   const username = getCurrentUser();
   const data = loadData();
 
-  // 이번주 수입 (목~수 기준 획득 재화 합산 - 메소만)
+  // 이번주 수입 (목~수 기준)
   const now = new Date();
   const day = now.getDay();
   const diff = (day - 4 + 7) % 7;
   const thu = new Date(now);
   thu.setDate(now.getDate() - diff);
-  const thuStr = thu.toISOString().slice(0,10);
-  let weekIncome = 0;
+  const thuStr = `${thu.getFullYear()}-${String(thu.getMonth()+1).padStart(2,'0')}-${String(thu.getDate()).padStart(2,'0')}`;
+  let weekMeso = 0, weekDajo = 0;
   Object.keys(data.records || {}).forEach(date => {
     if (date >= thuStr) {
       (data.characters || []).forEach(ch => {
-        const rec = data.records[date]?.[ch]?.['매소'];
-        if (rec) weekIncome += getEarned(rec);
+        const mesoRec = data.records[date]?.[ch]?.['매소'];
+        if (mesoRec) weekMeso += getEarned(mesoRec);
+        const dajoRec = data.records[date]?.[ch]?.['다조'];
+        if (dajoRec) weekDajo += getEarned(dajoRec);
       });
     }
   });
 
-  // 수입/지출 합산
-  let totalIncome = 0, totalExpense = 0;
+  let mesoIncome = 0, mesoExpense = 0, dajoIncome = 0, dajoExpense = 0;
   (data.ledger || []).forEach(entry => {
-    if (entry.type === 'income') totalIncome += Number(entry.amount) || 0;
-    else totalExpense += Number(entry.amount) || 0;
+    const amt = Number(entry.amount) || 0;
+    if (entry.currency === 'dajo') {
+      if (entry.type === 'income') dajoIncome += amt; else dajoExpense += amt;
+    } else {
+      if (entry.type === 'income') mesoIncome += amt; else mesoExpense += amt;
+    }
   });
 
-  // 전체 유저 요약
-  let allHtml = '';
-  _cloudData.users.forEach(name => {
-    const pData = _cloudData.profiles?.[name];
-    if (!pData) return;
-    let uIncome = 0, uExpense = 0;
-    (pData.ledger || []).forEach(e => {
-      if (e.type === 'income') uIncome += Number(e.amount) || 0;
-      else uExpense += Number(e.amount) || 0;
-    });
-    const net = uIncome - uExpense;
-    const isMe = name === username;
-    allHtml += `<div class="dash-card" style="cursor:pointer;${isMe ? 'border-color:#f5a623' : ''}" onclick="switchUser('${name}')">`;
-    allHtml += `<div class="dash-label">${name}${isMe ? ' (현재)' : ''}</div>`;
-    allHtml += `<div class="dash-value ${net >= 0 ? 'asset' : 'expense'}">${formatMeso(net)}</div>`;
-    allHtml += `<div class="dash-sub">수입 ${formatMeso(uIncome)} / 지출 ${formatMeso(uExpense)}</div>`;
-    allHtml += `</div>`;
-  });
-
-  // 현재 유저 상세
   let html = '';
-  html += `<div class="dash-card"><div class="dash-label">이번주 메소 수입</div><div class="dash-value income">${formatMeso(weekIncome)}</div><div class="dash-sub">${thuStr} ~</div></div>`;
-  html += `<div class="dash-card"><div class="dash-label">총 수입</div><div class="dash-value income">${formatMeso(totalIncome)}</div></div>`;
-  html += `<div class="dash-card"><div class="dash-label">총 지출</div><div class="dash-value expense">${formatMeso(totalExpense)}</div></div>`;
-  html += `<div class="dash-card"><div class="dash-label">순이익</div><div class="dash-value net">${formatMeso(totalIncome - totalExpense)}</div></div>`;
+  html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:16px;height:16px;vertical-align:middle;margin-right:3px">이번주 메소</div><div class="dash-value income">${formatMeso(weekMeso)}</div><div class="dash-sub">${thuStr} ~</div></div>`;
+  html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:16px;height:16px;vertical-align:middle;margin-right:3px">이번주 다조</div><div class="dash-value" style="color:#a78bfa">${weekDajo}개</div><div class="dash-sub">${thuStr} ~</div></div>`;
+  html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:3px">수입/지출</div><div class="dash-value income">${formatMeso(mesoIncome)}</div><div style="font-size:11px;color:#60a5fa">-${formatMeso(mesoExpense)}</div></div>`;
+  html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:3px">수입/지출</div><div class="dash-value" style="color:#a78bfa">+${dajoIncome}개</div><div style="font-size:11px;color:#60a5fa">-${dajoExpense}개</div></div>`;
+  html += `<div class="dash-card"><div class="dash-label">순이익</div><div class="dash-value net">${formatMeso(mesoIncome - mesoExpense)}</div></div>`;
 
   wrap.innerHTML = html;
 }
 
-function formatMeso(n) {
-  if (n === 0) return '0';
-  const abs = Math.abs(n);
-  const sign = n < 0 ? '-' : '';
-  if (abs >= 100000000) return sign + (abs / 100000000).toFixed(2) + '억';
-  if (abs >= 10000) return sign + (abs / 10000).toFixed(0) + '만';
-  return sign + abs.toLocaleString();
-}
-
-// --- 수입/지출 장부 ---
-// 수입/지출은 무조건 억 단위: "5.43" → 5억4300만, "30" → 30억
+// --- 수입/지출 장부 (억 단위) ---
 function parseMeso(str) {
   const num = parseFloat(str.trim().replace(/[^0-9.\-]/g, ''));
   if (isNaN(num)) return 0;
   return Math.round(num * 100000000);
 }
 
+function setLedgerType(currency, type) {
+  const wrap = document.getElementById(currency === 'meso' ? 'mesoTypeBtns' : 'dajoTypeBtns');
+  wrap.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.val === type));
+}
+
+function getLedgerType(currency) {
+  const wrap = document.getElementById(currency === 'meso' ? 'mesoTypeBtns' : 'dajoTypeBtns');
+  const active = wrap.querySelector('.type-btn.active');
+  return active ? active.dataset.val : 'income';
+}
+
 function addLedger() {
-  const date = document.getElementById('ledgerDate').value;
-  const type = document.getElementById('ledgerType').value;
-  const amountStr = document.getElementById('ledgerAmount').value;
+  const date = _selectedDate;
+  const mesoType = getLedgerType('meso');
+  const dajoType = getLedgerType('dajo');
+  const mesoStr = document.getElementById('ledgerMesoAmt').value;
+  const dajoStr = document.getElementById('ledgerDajoAmt').value;
   const memo = document.getElementById('ledgerMemo').value.trim();
-  const amount = parseMeso(amountStr);
-  if (!date || !amount) { toast('날짜와 금액을 입력하세요.', 'error'); return; }
+  const mesoAmt = parseMeso(mesoStr);
+  const dajoAmt = Math.round(Number(dajoStr.replace(/[^0-9.\-]/g, '')) || 0);
+  if (!date || (!mesoAmt && !dajoAmt)) { toast('금액을 입력하세요.', 'error'); return; }
   const data = loadData();
   if (!data.ledger) data.ledger = [];
-  data.ledger.push({ date, type, amount, memo, id: Date.now() });
+  if (mesoAmt) {
+    data.ledger.push({ date, type: mesoType, currency: 'meso', amount: mesoAmt, memo, id: Date.now() });
+  }
+  if (dajoAmt) {
+    data.ledger.push({ date, type: dajoType, currency: 'dajo', amount: dajoAmt, memo, id: Date.now() + 1 });
+  }
   data.ledger.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
   saveData(data);
-  document.getElementById('ledgerAmount').value = '';
+  document.getElementById('ledgerMesoAmt').value = '';
+  document.getElementById('ledgerDajoAmt').value = '';
   document.getElementById('ledgerMemo').value = '';
   renderLedger();
   renderDashboard();
-  toast((type === 'income' ? '수입' : '지출') + ' 추가됨');
+  renderAssetCalendar();
+  toast('추가됨');
 }
 
 function deleteLedger(id) {
@@ -1653,6 +1817,7 @@ function deleteLedger(id) {
   saveData(data);
   renderLedger();
   renderDashboard();
+  renderAssetCalendar();
   toast('삭제됨');
 }
 
@@ -1661,32 +1826,35 @@ function renderLedger() {
   const wrap = document.getElementById('ledgerTableWrap');
   const ledger = data.ledger || [];
 
-  if (!ledger.length) {
-    wrap.innerHTML = '<div class="no-data">수입/지출 기록이 없습니다.</div>';
+  // Show entries for selected month
+  const selYear = _acYear;
+  const selMonth = _acMonth;
+  const monthLedger = ledger.filter(e => {
+    const [y,m] = e.date.split('-').map(Number);
+    return y === selYear && m === selMonth + 1;
+  });
+
+  if (!monthLedger.length) {
+    wrap.innerHTML = `<div class="no-data">${selMonth+1}월 수입/지출 기록이 없습니다.</div>`;
     return;
   }
 
   let html = '<table class="sheet"><thead><tr>';
-  html += '<th style="width:90px">날짜</th><th style="width:60px">구분</th><th>금액</th><th>메모</th><th style="width:50px"></th>';
+  html += '<th style="width:80px">날짜</th><th style="width:50px">재화</th><th style="width:50px">구분</th><th>금액</th><th>메모</th><th style="width:40px"></th>';
   html += '</tr></thead><tbody>';
 
-  let runTotal = 0;
-  // 오래된 순으로 잔액 계산
-  const sorted = [...ledger].sort((a,b) => a.date.localeCompare(b.date) || a.id - b.id);
-  const balances = {};
-  sorted.forEach(e => {
-    runTotal += e.type === 'income' ? e.amount : -e.amount;
-    balances[e.id] = runTotal;
-  });
-
-  ledger.forEach(e => {
+  monthLedger.forEach(e => {
     const isIncome = e.type === 'income';
+    const isDajo = e.currency === 'dajo';
+    const icon = isDajo ? '<img src="dajo.png" style="width:14px;height:14px;vertical-align:middle">' : '<img src="meso.png" style="width:14px;height:14px;vertical-align:middle">';
+    const amtDisplay = isDajo ? `${isIncome ? '+' : '-'}${e.amount}개` : `${isIncome ? '+' : '-'}${formatNum(e.amount)}`;
     html += `<tr>`;
     html += `<td class="row-header">${e.date}</td>`;
-    html += `<td style="text-align:center;color:${isIncome ? '#5bc0fa' : '#ff6b6b'};font-weight:600;font-size:12px">${isIncome ? '수입' : '지출'}</td>`;
-    html += `<td style="text-align:right;padding:6px 10px;font-family:Consolas,monospace;font-size:14px;color:${isIncome ? '#5bc0fa' : '#ff6b6b'}">${isIncome ? '+' : '-'}${formatNum(e.amount)}</td>`;
-    html += `<td style="padding:6px 10px;color:#aaa;font-size:13px">${e.memo || ''}</td>`;
-    html += `<td style="text-align:center"><button onclick="deleteLedger(${e.id})" style="border:none;background:none;color:#666;cursor:pointer;font-size:14px">✕</button></td>`;
+    html += `<td style="text-align:center;font-size:11px">${icon}</td>`;
+    html += `<td style="text-align:center;color:${isIncome ? '#ef4444' : '#60a5fa'};font-weight:600;font-size:11px">${isIncome ? '수입' : '지출'}</td>`;
+    html += `<td style="text-align:right;padding:4px 6px;font-family:'MaplestoryOTFBold',Consolas,monospace;font-size:12px;color:${isIncome ? '#ef4444' : '#60a5fa'}">${amtDisplay}</td>`;
+    html += `<td style="padding:4px 6px;color:#8F96A3;font-size:11px">${e.memo || ''}</td>`;
+    html += `<td style="text-align:center"><button onclick="deleteLedger(${e.id})" style="border:none;background:none;color:#5c5f66;cursor:pointer;font-size:14px">✕</button></td>`;
     html += `</tr>`;
   });
 
@@ -1694,17 +1862,14 @@ function renderLedger() {
   wrap.innerHTML = html;
 }
 
-// ledger date 초기값
-document.getElementById('ledgerDate').value = todayStr();
-
 // --- Init ---
-// localStorage 캐시로 즉시 렌더링
 const _cachedBoot = localStorage.getItem('maple_cloud_cache');
 if (_cachedBoot) _cloudData = JSON.parse(_cachedBoot);
 renderUserSelect();
 renderDashboard();
-renderCal();
+renderAssetCalendar();
 renderInputTable();
+renderLedger();
 // 클라우드 동기화 (비동기)
 initCloud();
 

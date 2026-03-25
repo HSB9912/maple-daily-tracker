@@ -905,17 +905,22 @@ function renderAssetCalendar() {
     const mesoColor = w.meso > 0 ? '#ef4444' : w.meso < 0 ? '#60a5fa' : '#5c5f66';
     html += `<div class="asset-cal-week-summary">`;
     html += `<span style="color:#8F96A3;">${wk}주차 (목~수)</span>`;
+    const dp = getDajoPrice();
+    const wTotal = w.meso + w.dajo * dp;
+    const wTotalColor = wTotal > 0 ? '#ef4444' : wTotal < 0 ? '#60a5fa' : '#5c5f66';
     html += `<span>`;
-    html += `<span style="color:${mesoColor};font-weight:600;">${w.meso >= 0 ? '+' : ''}${formatMeso(w.meso)}</span>`;
-    if (w.dajo) html += `<span style="color:#a78bfa;margin-left:8px;">${w.dajo >= 0 ? '+' : ''}${w.dajo}개</span>`;
+    html += `<span style="color:${wTotalColor};font-weight:600;">${wTotal >= 0 ? '+' : ''}${formatMeso(wTotal)}</span>`;
+    if (w.dajo) html += `<span style="color:#a78bfa;margin-left:6px;font-size:11px;">(메소 ${formatMesoShort(w.meso)} + 다조 ${w.dajo}개)</span>`;
     html += `</span></div>`;
   });
-  const mMonthColor = monthMeso > 0 ? '#ef4444' : monthMeso < 0 ? '#60a5fa' : '#5c5f66';
+  const dp = getDajoPrice();
+  const monthTotal = monthMeso + monthDajo * dp;
+  const mMonthColor = monthTotal > 0 ? '#ef4444' : monthTotal < 0 ? '#60a5fa' : '#5c5f66';
   html += `<div class="asset-cal-month-summary">`;
   html += `<span style="color:#C1C2C5;">${month+1}월 합계</span>`;
   html += `<span>`;
-  html += `<span style="color:${mMonthColor};">${monthMeso >= 0 ? '+' : ''}${formatMeso(monthMeso)}</span>`;
-  if (monthDajo) html += `<span style="color:#a78bfa;margin-left:8px;">${monthDajo >= 0 ? '+' : ''}${monthDajo}개</span>`;
+  html += `<span style="color:${mMonthColor};">${monthTotal >= 0 ? '+' : ''}${formatMeso(monthTotal)}</span>`;
+  if (monthDajo) html += `<span style="color:#a78bfa;margin-left:6px;font-size:11px;">(메소 ${formatMesoShort(monthMeso)} + 다조 ${monthDajo}개)</span>`;
   html += `</span></div>`;
   html += '</div>';
 
@@ -1991,10 +1996,16 @@ function renderDashboard() {
   const allDajoMeso = allDajo * dajoPrice;
   const allNet = allMeso + mesoIncome - mesoExpense + allDajoMeso;
   const allNetColor = allNet > 0 ? '#ef4444' : allNet < 0 ? '#60a5fa' : '#C1C2C5';
-  const weekDajoNote = weekTotalDajo ? `다조 ${weekTotalDajo}개=${formatMesoShort(weekDajoMeso)} 포함` : '재획+가계부';
-  html += `<div class="dash-card"><div class="dash-label">이번주 순이익</div><div class="dash-value" style="color:${weekNetColor}">${formatMeso(weekNet)}</div><div style="font-size:10px;color:#5c5f66">${weekDajoNote}</div></div>`;
-  const allDajoNote = allDajo ? `다조 ${allDajo}개=${formatMesoShort(allDajoMeso)} 포함` : '가계부 누적';
-  html += `<div class="dash-card"><div class="dash-label">전체 순이익</div><div class="dash-value" style="color:${allNetColor}">${formatMeso(allNet)}</div><div style="font-size:10px;color:#5c5f66">${allDajoNote}</div></div>`;
+  const weekMesoOnly = weekMeso + weekMesoIncome - weekMesoExpense;
+  html += `<div class="dash-card"><div class="dash-label">이번주 순이익</div><div class="dash-value" style="color:${weekNetColor}">${formatMeso(weekNet)}</div>`;
+  html += `<div style="font-size:10px;color:#8F96A3">메소 ${formatMesoShort(weekMesoOnly)}</div>`;
+  if (weekTotalDajo) html += `<div style="font-size:10px;color:#a78bfa">다조 ${weekTotalDajo}개 = ${formatMesoShort(weekDajoMeso)}</div>`;
+  html += `</div>`;
+  const allMesoOnly = allMeso + mesoIncome - mesoExpense;
+  html += `<div class="dash-card"><div class="dash-label">전체 순이익</div><div class="dash-value" style="color:${allNetColor}">${formatMeso(allNet)}</div>`;
+  html += `<div style="font-size:10px;color:#8F96A3">메소 ${formatMesoShort(allMesoOnly)}</div>`;
+  if (allDajo) html += `<div style="font-size:10px;color:#a78bfa">다조 ${allDajo}개 = ${formatMesoShort(allDajoMeso)}</div>`;
+  html += `</div>`;
 
   wrap.innerHTML = html;
 }

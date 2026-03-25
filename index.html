@@ -1944,16 +1944,20 @@ function renderDashboard() {
   const thu = new Date(now);
   thu.setDate(now.getDate() - diff);
   const thuStr = `${thu.getFullYear()}-${String(thu.getMonth()+1).padStart(2,'0')}-${String(thu.getDate()).padStart(2,'0')}`;
-  let weekMeso = 0, weekDajo = 0;
+  let weekMeso = 0, weekDajo = 0, allMeso = 0, allDajoEarned = 0;
   Object.keys(data.records || {}).forEach(date => {
-    if (date >= thuStr) {
-      (data.characters || []).forEach(ch => {
-        const mesoRec = data.records[date]?.[ch]?.['매소'];
-        if (mesoRec) weekMeso += getEarned(mesoRec);
-        const dajoRec = data.records[date]?.[ch]?.['다조'];
-        if (dajoRec) weekDajo += getEarned(dajoRec);
-      });
-    }
+    (data.characters || []).forEach(ch => {
+      const mesoRec = data.records[date]?.[ch]?.['매소'];
+      const dajoRec = data.records[date]?.[ch]?.['다조'];
+      const mesoEarned = mesoRec ? getEarned(mesoRec) : 0;
+      const dajoEarned = dajoRec ? getEarned(dajoRec) : 0;
+      allMeso += mesoEarned;
+      allDajoEarned += dajoEarned;
+      if (date >= thuStr) {
+        weekMeso += mesoEarned;
+        weekDajo += dajoEarned;
+      }
+    });
   });
 
   let mesoIncome = 0, mesoExpense = 0, dajoIncome = 0, dajoExpense = 0;
@@ -1981,10 +1985,10 @@ function renderDashboard() {
   const weekDajoMeso = weekTotalDajo * dajoPrice;
   const weekNet = weekMeso + weekMesoIncome - weekMesoExpense + weekDajoMeso;
   const weekNetColor = weekNet > 0 ? '#ef4444' : weekNet < 0 ? '#60a5fa' : '#C1C2C5';
-  // 전체 순이익
-  const allDajo = dajoIncome - dajoExpense;
+  // 전체 순이익 (재획 + 가계부 전체)
+  const allDajo = allDajoEarned + dajoIncome - dajoExpense;
   const allDajoMeso = allDajo * dajoPrice;
-  const allNet = mesoIncome - mesoExpense + allDajoMeso;
+  const allNet = allMeso + mesoIncome - mesoExpense + allDajoMeso;
   const allNetColor = allNet > 0 ? '#ef4444' : allNet < 0 ? '#60a5fa' : '#C1C2C5';
   html += `<div class="dash-card"><div class="dash-label">이번주 순이익</div><div class="dash-value" style="color:${weekNetColor}">${formatMeso(weekNet)}</div><div style="font-size:10px;color:#5c5f66">재획+가계부</div></div>`;
   html += `<div class="dash-card"><div class="dash-label">전체 순이익</div><div class="dash-value" style="color:${allNetColor}">${formatMeso(allNet)}</div><div style="font-size:10px;color:#5c5f66">가계부 누적</div></div>`;

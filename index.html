@@ -350,8 +350,38 @@ async function cloudSave() {
   if (!_cloudData) return;
   _saving = true;
   try {
-    localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
-    const body = { files: { [GIST_FILE]: { content: JSON.stringify(_cloudData) } } };
+    const username = getCurrentUser();
+    // 1. 최신 데이터를 Gist에서 불러오기 (다른 유저 변경사항 보존)
+    let latest = null;
+    if (_gistId) {
+      try {
+        const res = await fetch(GIST_API + '/' + _gistId, {
+          headers: { 'Authorization': 'token ' + getGistToken() }
+        });
+        if (res.ok) {
+          const g = await res.json();
+          const raw = g.files?.[GIST_FILE]?.content;
+          if (raw) latest = JSON.parse(raw);
+        }
+      } catch (e) { console.warn('최신 데이터 로드 실패, 전체 덮어쓰기:', e); }
+    }
+
+    // 2. 병합: 최신 데이터 기반 + 현재 유저 프로필만 교체
+    let merged;
+    if (latest && latest.profiles) {
+      merged = latest;
+      // 현재 유저 프로필 교체
+      merged.profiles[username] = _cloudData.profiles[username];
+      // 유저 목록 동기화 (새 유저 추가된 경우)
+      if (!merged.users.includes(username)) merged.users.push(username);
+      // 로컬에도 최신 다른 유저 데이터 반영
+      _cloudData = merged;
+    } else {
+      merged = _cloudData;
+    }
+
+    localStorage.setItem('maple_cloud_cache', JSON.stringify(merged));
+    const body = { files: { [GIST_FILE]: { content: JSON.stringify(merged) } } };
     if (_gistId) {
       await fetch(GIST_API + '/' + _gistId, {
         method: 'PATCH',

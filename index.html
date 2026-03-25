@@ -398,6 +398,55 @@ async function cloudSave() {
   if (_saveQueued) { _saveQueued = false; cloudSave(); }
 }
 
+// 자동 저장 디바운스 (5초)
+let _autoSaveTimer = null;
+function scheduleAutoSave() {
+  markUnsaved();
+  if (_autoSaveTimer) clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(() => {
+    _autoSaveTimer = null;
+    manualCloudSave();
+  }, 5000);
+}
+
+// 자동 폴링 (30초) - 다른 유저 데이터 갱신
+let _pollTimer = null;
+function startPolling() {
+  if (_pollTimer) clearInterval(_pollTimer);
+  _pollTimer = setInterval(async () => {
+    if (_saving || _autoSaveTimer) return; // 저장 중이거나 수정 중이면 스킵
+    try {
+      const cloud = await cloudLoad();
+      if (!cloud || !cloud.profiles) return;
+      const myUser = getCurrentUser();
+      let updated = false;
+      // 다른 유저 프로필만 갱신
+      Object.keys(cloud.profiles).forEach(user => {
+        if (user !== myUser) {
+          const remote = JSON.stringify(cloud.profiles[user]);
+          const local = JSON.stringify(_cloudData.profiles[user] || {});
+          if (remote !== local) {
+            _cloudData.profiles[user] = cloud.profiles[user];
+            updated = true;
+          }
+        }
+      });
+      // 새 유저 추가된 경우
+      cloud.users.forEach(u => {
+        if (!_cloudData.users.includes(u)) {
+          _cloudData.users.push(u);
+          _cloudData.profiles[u] = cloud.profiles[u];
+          updated = true;
+        }
+      });
+      if (updated) {
+        localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
+        renderUserSelect();
+      }
+    } catch (e) { /* 폴링 실패는 무시 */ }
+  }, 30000);
+}
+
 async function cloudLoad() {
   if (!_gistId) return null;
   try {
@@ -452,6 +501,7 @@ async function initCloud() {
 
   renderUserSelect();
   refreshAll();
+  startPolling();
 }
 
 // --- 유저 관리 ---
@@ -489,7 +539,7 @@ function addUser() {
   _cloudData.profiles[name.trim()] = { characters: [], resources: [...DEFAULT_RESOURCES], records: {}, settlements: {} };
   setCurrentUser(name.trim());
   localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
-  markUnsaved();
+  scheduleAutoSave();
   renderUserSelect();
   refreshAll();
   toast(`"${name.trim()}" 유저 추가됨`);
@@ -502,7 +552,7 @@ function deleteUserTab(name) {
   delete _cloudData.profiles[name];
   setCurrentUser(_cloudData.users[0]);
   localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
-  markUnsaved();
+  scheduleAutoSave();
   renderUserSelect();
   refreshAll();
   toast('유저 삭제 완료');
@@ -517,7 +567,7 @@ function renameUserTab(oldName) {
   delete _cloudData.profiles[oldName];
   if (getCurrentUser() === oldName) setCurrentUser(newName.trim());
   localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
-  markUnsaved();
+  scheduleAutoSave();
   renderUserSelect();
   toast(`"${oldName}" → "${newName.trim()}" 변경됨`);
 }
@@ -565,7 +615,7 @@ function saveData(data) {
   if (!_cloudData) _cloudData = getEmptyCloud();
   _cloudData.profiles[username] = data;
   localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
-  markUnsaved();
+  scheduleAutoSave();
 }
 
 let _unsaved = false;

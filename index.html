@@ -604,6 +604,39 @@ function formatMeso(n) {
   return sign + (parts.length ? parts.join(' ') : '0');
 }
 
+// 최근 데이터 역추적 (최대 7일, after → before 순)
+function findPrevValue(records, ch, res, fromDate, maxDays) {
+  const d = new Date(fromDate + 'T00:00:00');
+  for (let i = 1; i <= (maxDays || 7); i++) {
+    d.setDate(d.getDate() - 1);
+    const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const rec = records?.[ds]?.[ch]?.[res];
+    if (!rec) continue;
+    if (res === '경험치') {
+      if (typeof rec === 'object') {
+        if (rec.afterLv !== '' && rec.afterLv !== undefined) return { val: rec, src: 'after' };
+        if (rec.beforeLv !== '' && rec.beforeLv !== undefined) return { val: rec, src: 'before' };
+      }
+    } else {
+      const r = typeof rec === 'number' ? { before: 0, after: rec } : rec;
+      if (r.after !== '' && r.after !== undefined) return { val: r.after, src: 'after' };
+      if (r.before !== '' && r.before !== undefined) return { val: r.before, src: 'before' };
+    }
+  }
+  return null;
+}
+
+function liveFormatInput(el) {
+  const f = el.dataset.field;
+  if (f === 'beforeLv' || f === 'afterLv' || f === 'beforePct' || f === 'afterPct') return;
+  const digits = el.value.replace(/[^0-9\-]/g, '');
+  const num = digits !== '' && digits !== '-' ? Number(digits) : '';
+  el.dataset.raw = digits;
+  if (num === '' || num === 0) { el.value = digits; return; }
+  if (Math.abs(num) < 10000) { el.value = digits; return; }
+  el.value = formatMeso(num);
+}
+
 // --- Tabs ---
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -893,6 +926,8 @@ function renderInputTable() {
     const settledDate = data.settlements?.[ch]?.lastDate || '';
     const isSettled = settledDate && date <= settledDate;
 
+    // findPrevValue는 전역 함수로 이동됨
+
     html += `<tr${isSettled ? ' class="settled-row"' : ''}><td class="row-header" style="position:relative;cursor:pointer" data-charname="${ch}" ondblclick="renameCharInline(this)">${ch}${isSettled ? '<div class="settled-overlay"><span>정 산 완 료</span></div>' : ''}</td>`;
     data.resources.forEach(r => {
       let rec = data.records?.[date]?.[ch]?.[r];
@@ -901,27 +936,49 @@ function renderInputTable() {
 
       if (r === '경험치') {
         if (typeof rec !== 'object' || rec === null) rec = {};
-        const bLv = rec.beforeLv ?? '';
-        const bPct = rec.beforePct ?? '';
+        let bLv = rec.beforeLv ?? '';
+        let bPct = rec.beforePct ?? '';
+        let expAuto = false;
+        // 자동 복사: 시작 전 비어있으면 최근 데이터에서 가져옴
+        if (bLv === '' && bPct === '') {
+          const prev = findPrevValue(data.records, ch, r, date);
+          if (prev) {
+            const p = prev.val;
+            if (prev.src === 'after' && p.afterLv !== '' && p.afterLv !== undefined) {
+              bLv = p.afterLv; bPct = p.afterPct ?? ''; expAuto = true;
+            } else if (prev.src === 'before' && p.beforeLv !== '' && p.beforeLv !== undefined) {
+              bLv = p.beforeLv; bPct = p.beforePct ?? ''; expAuto = true;
+            }
+          }
+        }
         const aLv = rec.afterLv ?? '';
         const aPct = rec.afterPct ?? '';
-        const earned = getExpEarned(rec);
-        html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bLv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="beforeLv" placeholder="Lv" style="width:36px;text-align:center"${ro}><input type="text" value="${bPct}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="beforePct" placeholder="%" style="flex:1"${ro}></div>`;
+        const dispRec = { beforeLv: bLv, beforePct: bPct, afterLv: aLv, afterPct: aPct };
+        const earned = getExpEarned(dispRec);
+        const autoC = expAuto ? ';color:#4a6a8a' : '';
+        html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bLv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="beforeLv" placeholder="Lv" style="width:36px;text-align:center${autoC}"${ro}><input type="text" value="${bPct}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="beforePct" placeholder="%" style="flex:1${autoC}"${ro}></div>`;
         html += `<div class="cell-divider"></div>`;
         html += `<div class="cell-input-row after-row"><span class="cell-label after">후</span><input type="text" value="${aLv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterLv" placeholder="Lv" style="width:36px;text-align:center"${ro}><input type="text" value="${aPct}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterPct" placeholder="%" style="flex:1"${ro}></div>`;
-        const expNum = getExpEarnedNum(rec);
+        const expNum = getExpEarnedNum(dispRec);
         const expColor = expNum > 0 ? '#ef4444' : expNum < 0 ? '#60a5fa' : '';
         html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}" style="${expColor ? 'color:' + expColor : ''}">${earned}</div>`;
       } else {
         if (typeof rec === 'number') rec = { before: 0, after: rec };
         if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
-        const bv = rec.before ?? '';
+        let bv = rec.before ?? '';
+        let isAutoB = false;
+        // 자동 복사: 시작 전 비어있으면 최근 데이터에서 가져옴 (after → before 순)
+        if (bv === '') {
+          const prev = findPrevValue(data.records, ch, r, date);
+          if (prev) { bv = prev.val; isAutoB = true; }
+        }
         const av = rec.after ?? '';
         const earned = (bv !== '' && av !== '') ? (Number(av) || 0) - (Number(bv) || 0) : '';
         const bvDisp = bv !== '' ? formatMeso(Number(bv)) : '';
         const avDisp = av !== '' ? formatMeso(Number(av)) : '';
         const earnedColor = earned > 0 ? '#ef4444' : earned < 0 ? '#60a5fa' : '';
-        html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bvDisp}" data-raw="${bv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="before" placeholder="시작 전"${ro}></div>`;
+        const autoS = isAutoB ? ' style="color:#4a6a8a"' : '';
+        html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bvDisp}" data-raw="${bv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="before" placeholder="시작 전"${autoS}${ro}></div>`;
         html += `<div class="cell-divider"></div>`;
         html += `<div class="cell-input-row after-row"><span class="cell-label after">후</span><input type="text" value="${avDisp}" data-raw="${av}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="after" placeholder="종료 후"${ro}></div>`;
         html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}" style="${earnedColor ? 'color:' + earnedColor : ''}">${earned !== '' ? formatNum(earned) : ''}</div>`;
@@ -977,6 +1034,16 @@ function updateValue(el) {
   if (res === '경험치') {
     if (typeof rec !== 'object' || rec === null) rec = {};
     rec[field] = val;
+    // 자동 복사: before 비어있고 after 입력 시 최근 데이터에서 가져옴
+    if ((field === 'afterLv' || field === 'afterPct') && (rec.beforeLv === '' || rec.beforeLv === undefined)) {
+      const prev = findPrevValue(data.records, ch, res, date);
+      if (prev) {
+        const p = prev.val;
+        const srcLv = prev.src === 'after' ? p.afterLv : p.beforeLv;
+        const srcPct = prev.src === 'after' ? p.afterPct : p.beforePct;
+        if (srcLv !== '' && srcLv !== undefined) { rec.beforeLv = srcLv; rec.beforePct = srcPct ?? ''; }
+      }
+    }
     data.records[date][ch][res] = rec;
     const isEmpty = (rec.beforeLv === '' || rec.beforeLv === undefined) &&
                     (rec.beforePct === '' || rec.beforePct === undefined) &&
@@ -987,6 +1054,11 @@ function updateValue(el) {
     if (typeof rec === 'number') rec = { before: 0, after: rec };
     if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
     rec[field] = val;
+    // 자동 복사: before 비어있고 after 입력 시 최근 데이터에서 가져옴
+    if (field === 'after' && (rec.before === '' || rec.before === undefined)) {
+      const prev = findPrevValue(data.records, ch, res, date);
+      if (prev) rec.before = prev.val;
+    }
     data.records[date][ch][res] = rec;
     if (rec.before === '' && rec.after === '') delete data.records[date][ch][res];
   }
@@ -1068,8 +1140,7 @@ const inputWrap = document.getElementById('inputTableWrap');
 inputWrap.addEventListener('input', function(e) {
   const el = e.target;
   if (!el.dataset.res) return;
-  el.value = el.value.replace(/[^0-9.\-]/g, '');
-  el.dataset.raw = el.value;
+  liveFormatInput(el);
   updateValue(el);
   updateSums();
 });
@@ -1077,9 +1148,6 @@ inputWrap.addEventListener('input', function(e) {
 inputWrap.addEventListener('focusin', function(e) {
   const el = e.target;
   if (!el.dataset.res) return;
-  // 포커스 시 원래 숫자 보여주기
-  const raw = el.dataset.raw;
-  if (raw !== undefined && raw !== '') el.value = raw;
   el.select();
 });
 
@@ -1088,7 +1156,6 @@ inputWrap.addEventListener('focusout', function(e) {
   if (!el.dataset.res) return;
   const f = el.dataset.field;
   if (f === 'beforeLv' || f === 'afterLv' || f === 'beforePct' || f === 'afterPct') return;
-  // 포커스 해제 시 억/만 형식으로 표시
   const raw = el.dataset.raw;
   if (raw !== undefined && raw !== '') {
     el.value = formatMeso(Number(raw));

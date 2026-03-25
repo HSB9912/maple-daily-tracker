@@ -629,11 +629,12 @@ function findPrevValue(records, ch, res, fromDate, maxDays) {
 function liveFormatInput(el) {
   const f = el.dataset.field;
   if (f === 'beforeLv' || f === 'afterLv' || f === 'beforePct' || f === 'afterPct') return;
-  const digits = el.value.replace(/[^0-9\-]/g, '');
-  const num = digits !== '' && digits !== '-' ? Number(digits) : '';
-  el.dataset.raw = digits;
-  if (num === '' || num === 0) { el.value = digits; return; }
-  if (Math.abs(num) < 10000) { el.value = digits; return; }
+  const cleaned = el.value.replace(/[^0-9.\-]/g, '');
+  const num = cleaned !== '' && cleaned !== '-' ? Number(cleaned) : '';
+  el.dataset.raw = cleaned;
+  if (num === '' || num === 0) { el.value = cleaned; return; }
+  // 소수점 포함이거나 1만 미만이면 포맷하지 않음
+  if (cleaned.includes('.') || Math.abs(num) < 10000) { el.value = cleaned; return; }
   el.value = formatMeso(num);
 }
 

@@ -1991,8 +1991,10 @@ function renderDashboard() {
   const allDajoMeso = allDajo * dajoPrice;
   const allNet = allMeso + mesoIncome - mesoExpense + allDajoMeso;
   const allNetColor = allNet > 0 ? '#ef4444' : allNet < 0 ? '#60a5fa' : '#C1C2C5';
-  html += `<div class="dash-card"><div class="dash-label">이번주 순이익</div><div class="dash-value" style="color:${weekNetColor}">${formatMeso(weekNet)}</div><div style="font-size:10px;color:#5c5f66">재획+가계부</div></div>`;
-  html += `<div class="dash-card"><div class="dash-label">전체 순이익</div><div class="dash-value" style="color:${allNetColor}">${formatMeso(allNet)}</div><div style="font-size:10px;color:#5c5f66">가계부 누적</div></div>`;
+  const weekDajoNote = weekTotalDajo ? `다조 ${weekTotalDajo}개=${formatMesoShort(weekDajoMeso)} 포함` : '재획+가계부';
+  html += `<div class="dash-card"><div class="dash-label">이번주 순이익</div><div class="dash-value" style="color:${weekNetColor}">${formatMeso(weekNet)}</div><div style="font-size:10px;color:#5c5f66">${weekDajoNote}</div></div>`;
+  const allDajoNote = allDajo ? `다조 ${allDajo}개=${formatMesoShort(allDajoMeso)} 포함` : '가계부 누적';
+  html += `<div class="dash-card"><div class="dash-label">전체 순이익</div><div class="dash-value" style="color:${allNetColor}">${formatMeso(allNet)}</div><div style="font-size:10px;color:#5c5f66">${allDajoNote}</div></div>`;
 
   wrap.innerHTML = html;
 }

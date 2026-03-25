@@ -318,6 +318,7 @@ input[type="file"] { display: none; }
 <div class="toast" id="toast"></div>
 
 <script>
+const APP_VERSION = 2;
 // --- GitHub Gist ---
 const GIST_API = 'https://api.github.com/gists';
 const _tk = [103,104,112,95,50,120,66,54,107,82,120,118,106,116,112,99,102,72,99,77,100,90,102,78,104,98,120,90,78,76,103,114,85,48,51,121,102,115,65,108];
@@ -471,7 +472,14 @@ async function initCloud() {
   if (_gistId) {
     const cloud = await cloudLoad();
     if (cloud && cloud.users) {
+      // 서버 데이터에 최소 버전이 기록되어 있으면 체크
+      if (cloud._minVersion && APP_VERSION < cloud._minVersion) {
+        alert('앱이 업데이트되었습니다. 페이지를 새로고침합니다.');
+        location.reload(true);
+        return;
+      }
       _cloudData = cloud;
+      _cloudData._minVersion = APP_VERSION;
       localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
     }
   }

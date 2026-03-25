@@ -1958,6 +1958,7 @@ function renderDashboard() {
 
   let mesoIncome = 0, mesoExpense = 0, dajoIncome = 0, dajoExpense = 0;
   (data.ledger || []).forEach(entry => {
+    if (entry.date < thuStr) return; // 이번주 기준 필터
     const amt = Number(entry.amount) || 0;
     if (entry.currency === 'dajo') {
       if (entry.type === 'income') dajoIncome += amt; else dajoExpense += amt;

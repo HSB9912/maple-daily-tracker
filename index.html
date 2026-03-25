@@ -1957,28 +1957,37 @@ function renderDashboard() {
   });
 
   let mesoIncome = 0, mesoExpense = 0, dajoIncome = 0, dajoExpense = 0;
+  let weekMesoIncome = 0, weekMesoExpense = 0, weekDajoIncome = 0, weekDajoExpense = 0;
   (data.ledger || []).forEach(entry => {
-    if (entry.date < thuStr) return; // 이번주 기준 필터
     const amt = Number(entry.amount) || 0;
+    const isThisWeek = entry.date >= thuStr;
     if (entry.currency === 'dajo') {
       if (entry.type === 'income') dajoIncome += amt; else dajoExpense += amt;
+      if (isThisWeek) { if (entry.type === 'income') weekDajoIncome += amt; else weekDajoExpense += amt; }
     } else {
       if (entry.type === 'income') mesoIncome += amt; else mesoExpense += amt;
+      if (isThisWeek) { if (entry.type === 'income') weekMesoIncome += amt; else weekMesoExpense += amt; }
     }
   });
 
   let html = '';
   html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:16px;height:16px;vertical-align:middle;margin-right:3px">이번주 메소</div><div class="dash-value income">${formatMeso(weekMeso)}</div><div class="dash-sub">${thuStr} ~</div></div>`;
   html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:16px;height:16px;vertical-align:middle;margin-right:3px">이번주 다조</div><div class="dash-value" style="color:#a78bfa">${weekDajo}개</div><div class="dash-sub">${thuStr} ~</div></div>`;
-  html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:3px">수입/지출</div><div class="dash-value income">${formatMeso(mesoIncome)}</div><div style="font-size:11px;color:#60a5fa">-${formatMeso(mesoExpense)}</div></div>`;
-  html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:3px">수입/지출</div><div class="dash-value" style="color:#a78bfa">+${dajoIncome}개</div><div style="font-size:11px;color:#60a5fa">-${dajoExpense}개</div></div>`;
+  html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:3px">총 수입/지출</div><div class="dash-value income">${formatMeso(mesoIncome)}</div><div style="font-size:11px;color:#60a5fa">-${formatMeso(mesoExpense)}</div></div>`;
+  html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:3px">총 수입/지출</div><div class="dash-value" style="color:#a78bfa">+${dajoIncome}개</div><div style="font-size:11px;color:#60a5fa">-${dajoExpense}개</div></div>`;
   const dajoPrice = getDajoPrice();
-  const totalDajo = weekDajo + dajoIncome - dajoExpense;
-  const dajoAsMeso = totalDajo * dajoPrice;
-  const totalNet = weekMeso + mesoIncome - mesoExpense + dajoAsMeso;
-  const netColor = totalNet > 0 ? '#ef4444' : totalNet < 0 ? '#60a5fa' : '#C1C2C5';
-  const dajoNote = dajoPrice > 0 ? `다조 ${totalDajo}개 × ${formatMesoShort(dajoPrice)} 포함` : '재획+가계부';
-  html += `<div class="dash-card"><div class="dash-label">순이익 (메소 환산)</div><div class="dash-value" style="color:${netColor}">${formatMeso(totalNet)}</div><div style="font-size:10px;color:#5c5f66">${dajoNote}</div></div>`;
+  // 이번주 순이익
+  const weekTotalDajo = weekDajo + weekDajoIncome - weekDajoExpense;
+  const weekDajoMeso = weekTotalDajo * dajoPrice;
+  const weekNet = weekMeso + weekMesoIncome - weekMesoExpense + weekDajoMeso;
+  const weekNetColor = weekNet > 0 ? '#ef4444' : weekNet < 0 ? '#60a5fa' : '#C1C2C5';
+  // 전체 순이익
+  const allDajo = dajoIncome - dajoExpense;
+  const allDajoMeso = allDajo * dajoPrice;
+  const allNet = mesoIncome - mesoExpense + allDajoMeso;
+  const allNetColor = allNet > 0 ? '#ef4444' : allNet < 0 ? '#60a5fa' : '#C1C2C5';
+  html += `<div class="dash-card"><div class="dash-label">이번주 순이익</div><div class="dash-value" style="color:${weekNetColor}">${formatMeso(weekNet)}</div><div style="font-size:10px;color:#5c5f66">재획+가계부</div></div>`;
+  html += `<div class="dash-card"><div class="dash-label">전체 순이익</div><div class="dash-value" style="color:${allNetColor}">${formatMeso(allNet)}</div><div style="font-size:10px;color:#5c5f66">가계부 누적</div></div>`;
 
   wrap.innerHTML = html;
 }

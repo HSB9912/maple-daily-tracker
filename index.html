@@ -1852,7 +1852,9 @@ function renderDashboard() {
   html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:16px;height:16px;vertical-align:middle;margin-right:3px">이번주 다조</div><div class="dash-value" style="color:#a78bfa">${weekDajo}개</div><div class="dash-sub">${thuStr} ~</div></div>`;
   html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:3px">수입/지출</div><div class="dash-value income">${formatMeso(mesoIncome)}</div><div style="font-size:11px;color:#60a5fa">-${formatMeso(mesoExpense)}</div></div>`;
   html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:3px">수입/지출</div><div class="dash-value" style="color:#a78bfa">+${dajoIncome}개</div><div style="font-size:11px;color:#60a5fa">-${dajoExpense}개</div></div>`;
-  html += `<div class="dash-card"><div class="dash-label">순이익</div><div class="dash-value net">${formatMeso(mesoIncome - mesoExpense)}</div></div>`;
+  const totalNet = weekMeso + mesoIncome - mesoExpense;
+  const netColor = totalNet > 0 ? '#ef4444' : totalNet < 0 ? '#60a5fa' : '#C1C2C5';
+  html += `<div class="dash-card"><div class="dash-label">순이익</div><div class="dash-value" style="color:${netColor}">${formatMeso(totalNet)}</div><div style="font-size:10px;color:#5c5f66">재획+가계부</div></div>`;
 
   wrap.innerHTML = html;
 }

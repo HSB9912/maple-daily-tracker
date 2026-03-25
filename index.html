@@ -703,9 +703,10 @@ function formatMeso(n) {
 }
 
 // 다조 시세 관리
+const DEFAULT_DAJO_PRICE = 6800000; // 680만 메소
 function getDajoPrice() {
   const data = loadData();
-  return Number(data.dajoPrice) || 0;
+  return Number(data.dajoPrice) || DEFAULT_DAJO_PRICE;
 }
 function saveDajoPrice() {
   const input = document.getElementById('dajoPriceInput');

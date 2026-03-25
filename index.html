@@ -44,13 +44,13 @@ h1 { color: #FFFFFF; font-size: 1.2em; letter-spacing: -0.5px; }
 .sheet-wrap { overflow: hidden; border: 1px solid #373A40; border-radius: 4px; }
 .sheet { border-collapse: collapse; font-size: 12px; width: 100%; table-layout: fixed; }
 .sheet th, .sheet td { border: 1px solid #373A40; padding: 0; white-space: nowrap; }
-.sheet th { background: #1B2030; color: #9DA0AC; font-weight: 600; text-align: center; padding: 4px 2px; font-size: 11px; user-select: none; overflow: hidden; text-overflow: ellipsis; }
+.sheet th { background: #1B2030; color: #9DA0AC; font-weight: 600; text-align: center; padding: 6px 4px; font-size: 12px; user-select: none; overflow: hidden; text-overflow: ellipsis; }
 .sheet th.corner { background: #1B2030; width: 50px; }
-.sheet td.row-header { background: #1B2030; color: #D7D8DD; padding: 0 4px; font-size: 11px; font-weight: 700; width: 50px; white-space: nowrap; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; }
+.sheet td.row-header { background: #1B2030; color: #D7D8DD; padding: 2px 6px; font-size: 13px; font-weight: 700; width: 60px; white-space: nowrap; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; }
 .sheet td.cell { padding: 0; position: relative; background: #131824; vertical-align: top; overflow: hidden; }
 .sheet td.cell .cell-stack { display: flex; flex-direction: column; }
 .sheet td.cell .cell-input-row { display: flex; align-items: center; }
-.sheet td.cell .cell-label { font-size: 9px; padding-left: 2px; width: 14px; flex-shrink: 0; text-align: center; font-weight: 700; }
+.sheet td.cell .cell-label { font-size: 11px; padding-left: 3px; width: 16px; flex-shrink: 0; text-align: center; font-weight: 700; }
 .sheet td.cell .cell-label.before { color: #60a5fa; }
 .sheet td.cell .cell-label.after { color: #f59e0b; }
 .sheet td.cell .cell-input-row.before-row { background: #0c1018; }
@@ -58,15 +58,15 @@ h1 { color: #FFFFFF; font-size: 1.2em; letter-spacing: -0.5px; }
 .sheet td.cell input {
   flex: 1; border: none; outline: none;
   background: transparent; color: #D7D8DD; text-align: right;
-  padding: 2px 3px; font-size: 11px; font-family: 'MaplestoryOTFLight', 'Consolas', monospace;
-  height: 22px; min-width: 0;
+  padding: 3px 4px; font-size: 13px; font-family: 'MaplestoryOTFLight', 'Consolas', monospace;
+  height: 26px; min-width: 0;
 }
 .sheet td.cell input:focus { background: #25262b; }
 .sheet td.cell input::selection { background: #1971c2; }
-.sheet td.cell input::placeholder { color: #5c5f66; font-size: 12px; }
+.sheet td.cell input::placeholder { color: #5c5f66; font-size: 11px; }
 .sheet td.cell .cell-divider { height: 1px; background: #373A40; }
-.sheet td.cell .cell-earned { text-align: right; padding: 1px 3px; font-size: 10px; font-family: 'MaplestoryOTFBold', 'Consolas', monospace; color: #1971c2; font-weight: 700; background: #0f1520; border-top: 1px solid #373A40; height: 18px; line-height: 18px; }
-.sheet tr.sum-row td { background: #1B2030; color: #1971c2; font-weight: 700; text-align: right; padding: 4px 3px; font-size: 11px; font-family: 'MaplestoryOTFBold', 'Consolas', monospace; border-top: 2px solid #373A40; }
+.sheet td.cell .cell-earned { text-align: right; padding: 2px 4px; font-size: 12px; font-family: 'MaplestoryOTFBold', 'Consolas', monospace; color: #1971c2; font-weight: 700; background: #0f1520; border-top: 1px solid #373A40; height: 22px; line-height: 22px; }
+.sheet tr.sum-row td { background: #1B2030; color: #1971c2; font-weight: 700; text-align: right; padding: 6px 4px; font-size: 13px; font-family: 'MaplestoryOTFBold', 'Consolas', monospace; border-top: 2px solid #373A40; }
 .sheet tr.sum-row td.row-header { color: #1971c2; border-top: 2px solid #373A40; }
 .sheet tr.add-row td { background: transparent; border: none; overflow: visible; }
 .sheet td.add-cell { padding: 0; border: none; overflow: visible; }
@@ -85,8 +85,8 @@ h1 { color: #FFFFFF; font-size: 1.2em; letter-spacing: -0.5px; }
 .sheet tr.settled-row .cell-label { color: #2a3a50; }
 .sheet tr.settled-row .cell-divider { background: #1a2530; }
 .sheet tr.settled-row td.row-header { position: relative; }
-.settled-overlay { position: absolute; top: 0; left: 0; width: calc(100vw - 40px); height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 3; background: rgba(10,16,25,0.6); }
-.settled-overlay span { background: #1971c2; color: #fff; font-size: 15px; font-weight: 800; padding: 6px 32px; letter-spacing: 8px; border-radius: 4px; }
+.settled-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 3; background: rgba(10,16,25,0.6); }
+.settled-overlay span { background: #1971c2; color: #fff; font-size: 14px; font-weight: 800; padding: 5px 24px; letter-spacing: 4px; border-radius: 4px; white-space: nowrap; }
 
 /* View tabs */
 .view-tabs { display: flex; gap: 0; }
@@ -96,7 +96,7 @@ h1 { color: #FFFFFF; font-size: 1.2em; letter-spacing: -0.5px; }
 .view-tab:not(:first-child) { border-left: none; }
 .view-tab.active { background: #1971c2; color: #fff; border-color: #1971c2; font-weight: 700; }
 
-.no-data { color: #5c5f66; text-align: center; padding: 20px; font-size: 13px; }
+.no-data { color: #7a7f8a; text-align: center; padding: 24px; font-size: 14px; }
 
 /* History */
 .history-controls { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
@@ -117,8 +117,9 @@ h1 { color: #FFFFFF; font-size: 1.2em; letter-spacing: -0.5px; }
 .item-row button { padding: 5px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: inherit; }
 .btn-del { background: #c0392b; color: #fff; }
 .btn-del:hover { background: #e74c3c; }
-.btn-move { background: #25262b; color: #8F96A3; border: 1px solid #373A40; }
+.btn-move { background: #1B2030; color: #9DA0AC; border: 1px solid #373A40; }
 .btn-move:hover { background: #373A40; color: #fff; }
+.btn-move:disabled { opacity: 0.35; cursor: not-allowed; }
 .add-row { display: flex; gap: 8px; }
 .add-row input { flex: 1; padding: 8px 12px; border-radius: 4px; border: 1px solid #373A40; background: #25262b; color: #C1C2C5; font-size: 14px; font-family: inherit; }
 .add-row input:focus { border-color: #1971c2; outline: none; }
@@ -138,13 +139,13 @@ input[type="file"] { display: none; }
 /* Dashboard */
 .dashboard { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .dash-card { flex: 1; min-width: 120px; background: #131822; border: 1px solid #373A40; border-radius: 4px; padding: 12px 16px; text-align: center; }
-.dash-card .dash-label { font-size: 11px; color: #8F96A3; margin-bottom: 4px; }
-.dash-card .dash-value { font-size: 16px; font-weight: 700; font-family: 'MaplestoryOTFBold', 'Consolas', monospace; }
+.dash-card .dash-label { font-size: 12px; color: #9DA0AC; margin-bottom: 4px; }
+.dash-card .dash-value { font-size: 18px; font-weight: 700; font-family: 'MaplestoryOTFBold', 'Consolas', monospace; }
 .dash-card .dash-value.income { color: #ef4444; }
 .dash-card .dash-value.expense { color: #60a5fa; }
 .dash-card .dash-value.net { color: #1971c2; }
 .dash-card .dash-value.asset { color: #ef4444; }
-.dash-card .dash-sub { font-size: 10px; color: #5c5f66; margin-top: 2px; }
+.dash-card .dash-sub { font-size: 12px; color: #7a7f8a; margin-top: 3px; }
 
 /* Ledger */
 .ledger-form { margin-bottom: 12px; }
@@ -182,11 +183,11 @@ input[type="file"] { display: none; }
 .asset-cal-cell .cal-date { font-size: 12px; font-weight: 700; color: #C1C2C5; margin-bottom: 2px; }
 .asset-cal-cell .cal-date.sun { color: #ff6b6b; }
 .asset-cal-cell .cal-date.sat { color: #60a5fa; }
-.asset-cal-cell .cal-meso { font-size: 10px; color: #ef4444; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell .cal-meso { font-size: 11px; color: #ef4444; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
 .asset-cal-cell .cal-meso.negative { color: #60a5fa; }
-.asset-cal-cell .cal-dajo { font-size: 10px; color: #a78bfa; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
-.asset-cal-cell .cal-ledger-income { font-size: 10px; color: #ef4444; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
-.asset-cal-cell .cal-ledger-expense { font-size: 10px; color: #60a5fa; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell .cal-dajo { font-size: 11px; color: #c4a5ff; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell .cal-ledger-income { font-size: 11px; color: #ef4444; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell .cal-ledger-expense { font-size: 11px; color: #60a5fa; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
 .asset-cal-cell-empty { min-height: 68px; }
 
 /* Inline ledger in journal tab */

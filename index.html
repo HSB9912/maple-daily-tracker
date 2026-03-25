@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>메이플 일일 재화 관리</title>
+<link rel="icon" type="image/png" href="meso.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 @font-face { font-family: 'MaplestoryOTFBold'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryOTFBold.woff') format('woff'); font-weight: normal; font-style: normal; }
@@ -604,6 +605,16 @@ function formatMeso(n) {
   return sign + (parts.length ? parts.join(' ') : '0');
 }
 
+// 캘린더용 축약 포맷 (5.2억, 1234만)
+function formatMesoShort(n) {
+  if (n === 0) return '0';
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 100000000) return sign + (abs / 100000000).toFixed(1).replace(/\.0$/, '') + '억';
+  if (abs >= 10000) return sign + Math.round(abs / 10000) + '만';
+  return sign + abs;
+}
+
 // 최근 데이터 역추적 (최대 7일, after → before 순)
 function findPrevValue(records, ch, res, fromDate, maxDays) {
   const d = new Date(fromDate + 'T00:00:00');
@@ -835,16 +846,16 @@ function renderAssetCalendar() {
     html += `<div class="${dateCls}">${d}</div>`;
     if (meso) {
       const mc = meso > 0 ? 'cal-meso' : 'cal-meso negative';
-      html += `<div class="${mc}">${meso > 0 ? '+' : ''}${formatMeso(meso)}</div>`;
+      html += `<div class="${mc}">${meso > 0 ? '+' : ''}${formatMesoShort(meso)}</div>`;
     }
     if (dajo) {
       html += `<div class="cal-dajo">${dajo > 0 ? '+' : ''}${dajo}개</div>`;
     }
     if (lIncome) {
-      html += `<div class="cal-ledger-income">+${formatMeso(lIncome)}</div>`;
+      html += `<div class="cal-ledger-income">+${formatMesoShort(lIncome)}</div>`;
     }
     if (lExpense) {
-      html += `<div class="cal-ledger-expense">-${formatMeso(lExpense)}</div>`;
+      html += `<div class="cal-ledger-expense">-${formatMesoShort(lExpense)}</div>`;
     }
     html += `</div>`;
   }
@@ -1959,11 +1970,13 @@ initCloud();
 // 창 닫기 전 미저장 경고
 // Ctrl+S로 클라우드 저장
 document.addEventListener('keydown', function(e) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
     e.preventDefault();
+    e.stopPropagation();
     manualCloudSave();
+    return false;
   }
-});
+}, true);
 
 window.addEventListener('beforeunload', function(e) {
   if (_unsaved) {

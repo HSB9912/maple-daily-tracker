@@ -1956,6 +1956,14 @@ renderLedger();
 initCloud();
 
 // 창 닫기 전 미저장 경고
+// Ctrl+S로 클라우드 저장
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    manualCloudSave();
+  }
+});
+
 window.addEventListener('beforeunload', function(e) {
   if (_unsaved) {
     e.preventDefault();

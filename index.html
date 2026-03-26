@@ -237,13 +237,8 @@ input[type="file"] { display: none; }
       <div class="ledger-form">
         <div class="ledger-row" style="flex-direction:column;gap:6px;">
           <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-            <select id="ledgerCategory" style="padding:4px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-size:12px;font-family:inherit;">
-              <option value="보스">🗡️ 보스</option>
-              <option value="장비">⚔️ 장비</option>
-              <option value="강화">💎 강화</option>
-              <option value="거래">🔄 거래</option>
-              <option value="기타">📌 기타</option>
-            </select>
+            <button type="button" id="ledgerCategoryBtn" onclick="toggleLedgerCategory()" style="padding:4px 10px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-size:12px;font-family:inherit;cursor:pointer;min-width:70px;">🗡️ 보스</button>
+            <input type="hidden" id="ledgerCategory" value="보스">
             <img src="meso.png" style="width:16px;height:16px">
             <div class="type-btns" id="mesoTypeBtns">
               <button type="button" class="type-btn active" data-val="income" onclick="setLedgerType('meso','income')">수입</button>
@@ -2110,29 +2105,28 @@ function editLedgerCurrency(id) {
   renderAssetCalendar();
 }
 
-function editLedgerCategory(id, td) {
+const _ledgerCats = [
+  {val:'보스',icon:'🗡️'},{val:'장비',icon:'⚔️'},{val:'강화',icon:'💎'},{val:'거래',icon:'🔄'},{val:'기타',icon:'📌'}
+];
+function toggleLedgerCategory() {
+  const hidden = document.getElementById('ledgerCategory');
+  const btn = document.getElementById('ledgerCategoryBtn');
+  const idx = _ledgerCats.findIndex(c => c.val === hidden.value);
+  const next = _ledgerCats[(idx + 1) % _ledgerCats.length];
+  hidden.value = next.val;
+  btn.textContent = `${next.icon} ${next.val}`;
+}
+
+function editLedgerCategory(id) {
   const data = loadData();
   const entry = (data.ledger || []).find(e => e.id === id);
   if (!entry) return;
   const cats = ['보스','장비','강화','거래','기타'];
-  const sel = document.createElement('select');
-  sel.style.cssText = 'background:#1B2030;border:1px solid #1971c2;color:#C1C2C5;padding:2px;font-size:11px;border-radius:3px;font-family:inherit;width:100%;';
-  cats.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c; opt.textContent = c;
-    if (c === (entry.category || '기타')) opt.selected = true;
-    sel.appendChild(opt);
-  });
-  td.innerHTML = '';
-  td.appendChild(sel);
-  sel.focus();
-  function save() {
-    entry.category = sel.value;
-    saveData(data);
-    renderLedger();
-  }
-  sel.addEventListener('change', save);
-  sel.addEventListener('blur', save);
+  const curr = entry.category || '기타';
+  const idx = cats.indexOf(curr);
+  entry.category = cats[(idx + 1) % cats.length];
+  saveData(data);
+  renderLedger();
 }
 
 function editLedgerAmount(id, td) {
@@ -2225,7 +2219,7 @@ function renderLedger() {
     const catIcon = catEmoji[cat] || '📌';
     html += `<tr>`;
     html += `<td class="row-header"><input type="date" value="${e.date}" onchange="editLedger(${e.id},'date',this.value)" style="background:#1B2030;border:1px solid #373A40;color:#C1C2C5;border-radius:3px;padding:2px;font-size:11px;width:100%;font-family:inherit;"></td>`;
-    html += `<td style="text-align:center;font-size:11px;cursor:pointer;color:#8F96A3" onclick="editLedgerCategory(${e.id},this)">${catIcon} ${cat}</td>`;
+    html += `<td style="text-align:center;font-size:11px;cursor:pointer;color:#8F96A3" onclick="editLedgerCategory(${e.id})" title="클릭하여 변경">${catIcon} ${cat}</td>`;
     html += `<td style="text-align:center;font-size:11px;cursor:pointer" onclick="editLedgerCurrency(${e.id})">${icon}</td>`;
     html += `<td style="text-align:center;font-size:11px">`;
     html += `<button onclick="editLedgerType(${e.id})" style="${typeBtnStyle}background:${isIncome ? '#ef4444' : '#60a5fa'};color:#fff;">${isIncome ? '수입' : '지출'}</button>`;

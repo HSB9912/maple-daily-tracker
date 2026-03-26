@@ -190,8 +190,8 @@ input[type="file"] { display: none; }
 .asset-cal-cell .cal-meso { font-size: 11px; color: #ef4444; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
 .asset-cal-cell .cal-meso.negative { color: #60a5fa; }
 .asset-cal-cell .cal-dajo { font-size: 11px; color: #c4a5ff; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
-.asset-cal-cell .cal-ledger-income { font-size: 11px; color: #ef4444; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
-.asset-cal-cell .cal-ledger-expense { font-size: 11px; color: #60a5fa; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell .cal-ledger-income { font-size: 10px; color: #34d399; line-height: 1.3; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell .cal-ledger-expense { font-size: 10px; color: #fb923c; line-height: 1.3; font-family: 'MaplestoryOTFLight', sans-serif; }
 .asset-cal-cell-empty { min-height: 68px; }
 
 /* Inline ledger in journal tab */
@@ -1000,10 +1000,10 @@ function renderAssetCalendar() {
       html += `<div class="cal-dajo">${dajo > 0 ? '+' : ''}${dajo}개</div>`;
     }
     if (lIncome) {
-      html += `<div class="cal-ledger-income">+${formatMesoShort(lIncome)}</div>`;
+      html += `<div class="cal-ledger-income">💰+${formatMesoShort(lIncome)}</div>`;
     }
     if (lExpense) {
-      html += `<div class="cal-ledger-expense">-${formatMesoShort(lExpense)}</div>`;
+      html += `<div class="cal-ledger-expense">💰-${formatMesoShort(lExpense)}</div>`;
     }
     html += `</div>`;
   }
@@ -2010,12 +2010,7 @@ function renderDashboard() {
     }
   });
 
-  let html = '';
-  html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:16px;height:16px;vertical-align:middle;margin-right:3px">이번주 메소</div><div class="dash-value income">${formatMeso(weekMeso)}</div><div class="dash-sub">${thuStr} ~</div></div>`;
   const dajoPrice = getDajoPrice();
-  html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:16px;height:16px;vertical-align:middle;margin-right:3px">이번주 다조</div><div class="dash-value" style="color:#a78bfa">${weekDajo}개</div><div style="font-size:10px;color:#8F96A3">= ${formatMesoShort(weekDajo * dajoPrice)}</div><div class="dash-sub">${thuStr} ~</div></div>`;
-  html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:3px">총 수입/지출</div><div class="dash-value income">${formatMeso(mesoIncome)}</div><div style="font-size:11px;color:#60a5fa">-${formatMeso(mesoExpense)}</div></div>`;
-  html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:3px">총 수입/지출</div><div class="dash-value" style="color:#a78bfa">+${dajoIncome}개 <span style="font-size:10px;color:#8F96A3">= ${formatMesoShort(dajoIncome * dajoPrice)}</span></div><div style="font-size:11px;color:#60a5fa">-${dajoExpense}개 <span style="font-size:10px;color:#8F96A3">= ${formatMesoShort(dajoExpense * dajoPrice)}</span></div></div>`;
   // 이번주 순이익
   const weekTotalDajo = weekDajo + weekDajoIncome - weekDajoExpense;
   const weekDajoMeso = weekTotalDajo * dajoPrice;
@@ -2026,15 +2021,34 @@ function renderDashboard() {
   const allDajoMeso = allDajo * dajoPrice;
   const allNet = allMeso + mesoIncome - mesoExpense + allDajoMeso;
   const allNetColor = allNet > 0 ? '#ef4444' : allNet < 0 ? '#60a5fa' : '#C1C2C5';
-  const weekMesoOnly = weekMeso + weekMesoIncome - weekMesoExpense;
+
+  let html = '';
+  // 카드 1: 이번주 재획
+  html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">이번주 재획</div>`;
+  html += `<div class="dash-value income">${formatMeso(weekMeso)}</div>`;
+  html += `<div style="font-size:10px;color:#a78bfa"><img src="dajo.png" style="width:12px;height:12px;vertical-align:middle;margin-right:2px">${weekDajo}개 = ${formatMesoShort(weekDajo * dajoPrice)}</div>`;
+  html += `<div class="dash-sub">${thuStr} ~</div></div>`;
+  // 카드 2: 이번주 가계부
+  const weekLedgerNet = weekMesoIncome - weekMesoExpense;
+  const weekLedgerColor = weekLedgerNet > 0 ? '#ef4444' : weekLedgerNet < 0 ? '#60a5fa' : '#C1C2C5';
+  html += `<div class="dash-card"><div class="dash-label">💰 이번주 가계부</div>`;
+  html += `<div class="dash-value" style="color:${weekLedgerColor}">${formatMeso(weekLedgerNet)}</div>`;
+  html += `<div style="font-size:10px;color:#5c5f66">수입 ${formatMesoShort(weekMesoIncome)} / 지출 ${formatMesoShort(weekMesoExpense)}</div></div>`;
+  // 카드 3: 이번주 순이익
   html += `<div class="dash-card"><div class="dash-label">이번주 순이익</div><div class="dash-value" style="color:${weekNetColor}">${formatMeso(weekNet)}</div>`;
-  html += `<div style="font-size:10px;color:#8F96A3">메소 ${formatMesoShort(weekMesoOnly)}</div>`;
-  if (weekTotalDajo) html += `<div style="font-size:10px;color:#a78bfa">다조 ${weekTotalDajo}개 = ${formatMesoShort(weekDajoMeso)}</div>`;
+  html += `<div style="font-size:10px;color:#8F96A3">재획 ${formatMesoShort(weekMeso)} + 다조 ${weekTotalDajo}개</div>`;
+  if (weekMesoIncome || weekMesoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${formatMesoShort(weekLedgerNet)}</div>`;
   html += `</div>`;
-  const allMesoOnly = allMeso + mesoIncome - mesoExpense;
+  // 카드 4: 전체 가계부
+  const allLedgerNet = mesoIncome - mesoExpense;
+  const allLedgerColor = allLedgerNet > 0 ? '#ef4444' : allLedgerNet < 0 ? '#60a5fa' : '#C1C2C5';
+  html += `<div class="dash-card"><div class="dash-label">💰 전체 가계부</div>`;
+  html += `<div class="dash-value" style="color:${allLedgerColor}">${formatMeso(allLedgerNet)}</div>`;
+  html += `<div style="font-size:10px;color:#5c5f66">수입 ${formatMesoShort(mesoIncome)} / 지출 ${formatMesoShort(mesoExpense)}</div></div>`;
+  // 카드 5: 전체 순이익
   html += `<div class="dash-card"><div class="dash-label">전체 순이익</div><div class="dash-value" style="color:${allNetColor}">${formatMeso(allNet)}</div>`;
-  html += `<div style="font-size:10px;color:#8F96A3">메소 ${formatMesoShort(allMesoOnly)}</div>`;
-  if (allDajo) html += `<div style="font-size:10px;color:#a78bfa">다조 ${allDajo}개 = ${formatMesoShort(allDajoMeso)}</div>`;
+  html += `<div style="font-size:10px;color:#8F96A3">재획 ${formatMesoShort(allMeso)} + 다조 ${allDajo}개</div>`;
+  if (mesoIncome || mesoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${formatMesoShort(allLedgerNet)}</div>`;
   html += `</div>`;
 
   wrap.innerHTML = html;
@@ -2086,6 +2100,28 @@ function addLedger() {
   renderDashboard();
   renderAssetCalendar();
   toast('추가됨');
+}
+
+function editLedgerDate(id, td) {
+  const data = loadData();
+  const entry = (data.ledger || []).find(e => e.id === id);
+  if (!entry) return;
+  const input = document.createElement('input');
+  input.type = 'date';
+  input.value = entry.date;
+  input.style.cssText = 'background:#1B2030;border:1px solid #1971c2;color:#C1C2C5;border-radius:3px;padding:2px;font-size:11px;width:100%;font-family:inherit;';
+  td.innerHTML = '';
+  td.appendChild(input);
+  input.focus();
+  function save() {
+    if (input.value) entry.date = input.value;
+    saveData(data);
+    renderLedger();
+    renderDashboard();
+    renderAssetCalendar();
+  }
+  input.addEventListener('change', save);
+  input.addEventListener('blur', save);
 }
 
 function editLedger(id, field, value) {
@@ -2229,7 +2265,8 @@ function renderLedger() {
     const cat = e.category || '기타';
     const catIcon = catEmoji[cat] || '📌';
     html += `<tr>`;
-    html += `<td class="row-header"><input type="date" value="${e.date}" onchange="editLedger(${e.id},'date',this.value)" style="background:#1B2030;border:1px solid #373A40;color:#C1C2C5;border-radius:3px;padding:2px;font-size:11px;width:100%;font-family:inherit;"></td>`;
+    const shortDate = e.date.slice(5); // MM-DD
+    html += `<td class="row-header" style="cursor:pointer;text-align:center;font-size:12px;" onclick="editLedgerDate(${e.id},this)" title="${e.date}">${shortDate}</td>`;
     html += `<td style="text-align:center;font-size:11px;cursor:pointer;color:#8F96A3" onclick="editLedgerCategory(${e.id})" title="클릭하여 변경">${catIcon} ${cat}</td>`;
     html += `<td style="text-align:center;font-size:11px;cursor:pointer" onclick="editLedgerCurrency(${e.id})">${icon}</td>`;
     html += `<td style="text-align:center;font-size:11px">`;

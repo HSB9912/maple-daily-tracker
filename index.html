@@ -237,52 +237,42 @@ input[type="file"] { display: none; }
         <span style="color:#60a5fa;font-weight:700;font-size:14px;">💰 보스/기타 수입지출</span>
         <span style="color:#5c5f66;font-size:11px;">보스 결정석, 장비 매매, 강화 등</span>
       </div>
-      <div class="ledger-form">
-        <div style="margin-bottom:6px;">
-          <div class="type-btns" id="ledgerCatBtns">
-            <button type="button" class="type-btn active" data-val="보스" onclick="setLedgerCat('보스')">🗡️보스</button>
-            <button type="button" class="type-btn" data-val="장비" onclick="setLedgerCat('장비')">⚔️장비</button>
-            <button type="button" class="type-btn" data-val="강화" onclick="setLedgerCat('강화')">💎강화</button>
-            <button type="button" class="type-btn" data-val="거래" onclick="setLedgerCat('거래')">🔄거래</button>
-            <button type="button" class="type-btn" data-val="기타" onclick="setLedgerCat('기타')">📌기타</button>
-          </div>
-          <input type="hidden" id="ledgerCategory" value="보스">
+      <div class="ledger-form" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="type-btns" id="ledgerCatBtns">
+          <button type="button" class="type-btn active" data-val="보스" onclick="setLedgerCat('보스')">🗡️보스</button>
+          <button type="button" class="type-btn" data-val="장비" onclick="setLedgerCat('장비')">⚔️장비</button>
+          <button type="button" class="type-btn" data-val="강화" onclick="setLedgerCat('강화')">💎강화</button>
+          <button type="button" class="type-btn" data-val="거래" onclick="setLedgerCat('거래')">🔄거래</button>
+          <button type="button" class="type-btn" data-val="기타" onclick="setLedgerCat('기타')">📌기타</button>
         </div>
-        <div class="sheet-wrap">
-          <table class="sheet" style="table-layout:fixed;">
-            <thead><tr>
-              <th style="width:35px"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle"></th>
-              <th style="width:55px">구분</th>
-              <th>금액 (억)</th>
-              <th style="width:20px"></th>
-              <th style="width:35px"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle"></th>
-              <th style="width:55px">구분</th>
-              <th>개수</th>
-              <th>메모</th>
-              <th style="width:50px"></th>
-            </tr></thead>
-            <tbody><tr>
-              <td style="padding:0"></td>
-              <td style="padding:2px;">
-                <div class="type-btns" id="mesoTypeBtns" style="justify-content:center;">
-                  <button type="button" class="type-btn active" data-val="income" onclick="setLedgerType('meso','income')" style="padding:3px 6px;font-size:10px;">수입</button>
-                  <button type="button" class="type-btn" data-val="expense" onclick="setLedgerType('meso','expense')" style="padding:3px 6px;font-size:10px;">지출</button>
-                </div>
-              </td>
-              <td style="padding:2px;"><input type="text" id="ledgerMesoAmt" placeholder="5.43" style="width:100%;padding:4px;background:#1B2030;border:1px solid #373A40;border-radius:3px;color:#C1C2C5;font-family:inherit;font-size:12px;text-align:right;"></td>
-              <td style="text-align:center;color:#373A40;font-size:10px;">|</td>
-              <td style="padding:0"></td>
-              <td style="padding:2px;">
-                <div class="type-btns" id="dajoTypeBtns" style="justify-content:center;">
-                  <button type="button" class="type-btn active" data-val="income" onclick="setLedgerType('dajo','income')" style="padding:3px 6px;font-size:10px;">수입</button>
-                  <button type="button" class="type-btn" data-val="expense" onclick="setLedgerType('dajo','expense')" style="padding:3px 6px;font-size:10px;">지출</button>
-                </div>
-              </td>
-              <td style="padding:2px;"><input type="text" id="ledgerDajoAmt" placeholder="20" style="width:100%;padding:4px;background:#1B2030;border:1px solid #373A40;border-radius:3px;color:#C1C2C5;font-family:inherit;font-size:12px;text-align:right;"></td>
-              <td style="padding:2px;"><input type="text" id="ledgerMemo" placeholder="보스 결정석" style="width:100%;padding:4px;background:#1B2030;border:1px solid #373A40;border-radius:3px;color:#C1C2C5;font-family:inherit;font-size:12px;"></td>
-              <td style="padding:2px;text-align:center;"><button class="btn-add" onclick="addLedger()" style="padding:4px 12px;font-size:12px;">추가</button></td>
-            </tr></tbody>
-          </table>
+        <input type="hidden" id="ledgerCategory" value="보스">
+        <div style="display:flex;gap:8px;align-items:stretch;">
+          <div style="flex:1;background:#131822;border:1px solid #373A40;border-radius:6px;padding:8px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <img src="meso.png" style="width:16px;height:16px">
+              <span style="color:#8F96A3;font-size:11px;font-weight:600;">메소</span>
+              <div class="type-btns" id="mesoTypeBtns">
+                <button type="button" class="type-btn active" data-val="income" onclick="setLedgerType('meso','income')" style="padding:2px 8px;font-size:10px;">수입</button>
+                <button type="button" class="type-btn" data-val="expense" onclick="setLedgerType('meso','expense')" style="padding:2px 8px;font-size:10px;">지출</button>
+              </div>
+            </div>
+            <input type="text" id="ledgerMesoAmt" placeholder="억 단위 (예: 5.43 = 5.43억)" style="width:100%;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;text-align:right;">
+          </div>
+          <div style="flex:1;background:#131822;border:1px solid #373A40;border-radius:6px;padding:8px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <img src="dajo.png" style="width:16px;height:16px">
+              <span style="color:#8F96A3;font-size:11px;font-weight:600;">다조</span>
+              <div class="type-btns" id="dajoTypeBtns">
+                <button type="button" class="type-btn active" data-val="income" onclick="setLedgerType('dajo','income')" style="padding:2px 8px;font-size:10px;">수입</button>
+                <button type="button" class="type-btn" data-val="expense" onclick="setLedgerType('dajo','expense')" style="padding:2px 8px;font-size:10px;">지출</button>
+              </div>
+            </div>
+            <input type="text" id="ledgerDajoAmt" placeholder="개수 (예: 20)" style="width:100%;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;text-align:right;">
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="text" id="ledgerMemo" placeholder="메모 (예: 보스 결정석, 장비 구매)" style="flex:1;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;">
+          <button class="btn-add" onclick="addLedger()" style="padding:6px 20px;font-size:13px;">추가</button>
         </div>
       </div>
       <div class="sheet-wrap" id="ledgerTableWrap"></div>

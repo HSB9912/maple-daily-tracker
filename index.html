@@ -222,28 +222,44 @@ input[type="file"] { display: none; }
   <div id="journal" class="panel active">
     <input type="date" id="inputDate" style="display:none">
     <div id="assetCalendarWrap"></div>
-    <div class="sheet-wrap" id="inputTableWrap" style="margin-top:12px;"></div>
-    <div class="journal-ledger" id="journalLedgerWrap">
-      <h4>가계부 (수입/지출)</h4>
+    <div id="inputTableSection" style="margin-top:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:4px 0;">
+        <span style="color:#ef4444;font-weight:700;font-size:14px;">📋 재획 기록</span>
+        <span style="color:#5c5f66;font-size:11px;">캐릭터별 시작 전/후 재화 수급</span>
+      </div>
+      <div class="sheet-wrap" id="inputTableWrap"></div>
+    </div>
+    <div class="journal-ledger" id="journalLedgerWrap" style="margin-top:16px;padding:12px;background:#0f1320;border:1px solid #1f2937;border-radius:6px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="color:#60a5fa;font-weight:700;font-size:14px;">💰 보스/기타 수입지출</span>
+        <span style="color:#5c5f66;font-size:11px;">보스 결정석, 장비 매매, 강화 등</span>
+      </div>
       <div class="ledger-form">
         <div class="ledger-row" style="flex-direction:column;gap:6px;">
-          <div style="display:flex;align-items:center;gap:4px;">
+          <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+            <select id="ledgerCategory" style="padding:4px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-size:12px;font-family:inherit;">
+              <option value="보스">🗡️ 보스</option>
+              <option value="장비">⚔️ 장비</option>
+              <option value="강화">💎 강화</option>
+              <option value="거래">🔄 거래</option>
+              <option value="기타">📌 기타</option>
+            </select>
             <img src="meso.png" style="width:16px;height:16px">
             <div class="type-btns" id="mesoTypeBtns">
               <button type="button" class="type-btn active" data-val="income" onclick="setLedgerType('meso','income')">수입</button>
               <button type="button" class="type-btn" data-val="expense" onclick="setLedgerType('meso','expense')">지출</button>
             </div>
-            <input type="text" id="ledgerMesoAmt" placeholder="억 단위" style="width:110px">
-            <span style="color:#373A40;margin:0 4px">|</span>
+            <input type="text" id="ledgerMesoAmt" placeholder="억 단위" style="width:100px">
+            <span style="color:#373A40;margin:0 2px">|</span>
             <img src="dajo.png" style="width:16px;height:16px">
             <div class="type-btns" id="dajoTypeBtns">
               <button type="button" class="type-btn active" data-val="income" onclick="setLedgerType('dajo','income')">수입</button>
               <button type="button" class="type-btn" data-val="expense" onclick="setLedgerType('dajo','expense')">지출</button>
             </div>
-            <input type="text" id="ledgerDajoAmt" placeholder="개수" style="width:80px">
+            <input type="text" id="ledgerDajoAmt" placeholder="개수" style="width:70px">
           </div>
           <div style="display:flex;align-items:center;gap:4px;">
-            <input type="text" id="ledgerMemo" placeholder="메모" style="flex:1">
+            <input type="text" id="ledgerMemo" placeholder="메모 (예: 보스 결정석, 장비 구매)" style="flex:1">
             <button class="btn-add" onclick="addLedger()">추가</button>
           </div>
         </div>
@@ -2043,11 +2059,12 @@ function addLedger() {
   if (!date || (!mesoAmt && !dajoAmt)) { toast('금액을 입력하세요.', 'error'); return; }
   const data = loadData();
   if (!data.ledger) data.ledger = [];
+  const category = document.getElementById('ledgerCategory').value;
   if (mesoAmt) {
-    data.ledger.push({ date, type: mesoType, currency: 'meso', amount: mesoAmt, memo, id: Date.now() });
+    data.ledger.push({ date, type: mesoType, currency: 'meso', amount: mesoAmt, memo, category, id: Date.now() });
   }
   if (dajoAmt) {
-    data.ledger.push({ date, type: dajoType, currency: 'dajo', amount: dajoAmt, memo, id: Date.now() + 1 });
+    data.ledger.push({ date, type: dajoType, currency: 'dajo', amount: dajoAmt, memo, category, id: Date.now() + 1 });
   }
   data.ledger.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
   saveData(data);
@@ -2091,6 +2108,31 @@ function editLedgerCurrency(id) {
   renderLedger();
   renderDashboard();
   renderAssetCalendar();
+}
+
+function editLedgerCategory(id, td) {
+  const data = loadData();
+  const entry = (data.ledger || []).find(e => e.id === id);
+  if (!entry) return;
+  const cats = ['보스','장비','강화','거래','기타'];
+  const sel = document.createElement('select');
+  sel.style.cssText = 'background:#1B2030;border:1px solid #1971c2;color:#C1C2C5;padding:2px;font-size:11px;border-radius:3px;font-family:inherit;width:100%;';
+  cats.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    if (c === (entry.category || '기타')) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  td.innerHTML = '';
+  td.appendChild(sel);
+  sel.focus();
+  function save() {
+    entry.category = sel.value;
+    saveData(data);
+    renderLedger();
+  }
+  sel.addEventListener('change', save);
+  sel.addEventListener('blur', save);
 }
 
 function editLedgerAmount(id, td) {
@@ -2168,8 +2210,9 @@ function renderLedger() {
     return;
   }
 
+  const catEmoji = {'보스':'🗡️','장비':'⚔️','강화':'💎','거래':'🔄','기타':'📌'};
   let html = '<table class="sheet"><thead><tr>';
-  html += '<th style="width:90px">날짜</th><th style="width:40px">재화</th><th style="width:45px">구분</th><th>금액</th><th>메모</th><th style="width:30px"></th>';
+  html += '<th style="width:90px">날짜</th><th style="width:55px">분류</th><th style="width:35px"></th><th style="width:42px">구분</th><th>금액</th><th>메모</th><th style="width:28px"></th>';
   html += '</tr></thead><tbody>';
 
   monthLedger.forEach(e => {
@@ -2178,8 +2221,11 @@ function renderLedger() {
     const icon = isDajo ? '<img src="dajo.png" style="width:14px;height:14px;vertical-align:middle">' : '<img src="meso.png" style="width:14px;height:14px;vertical-align:middle">';
     const amtDisplay = isDajo ? `${isIncome ? '+' : '-'}${e.amount}개` : `${isIncome ? '+' : '-'}${formatNum(e.amount)}`;
     const typeBtnStyle = 'border:none;padding:2px 6px;font-size:10px;cursor:pointer;border-radius:3px;font-family:inherit;';
+    const cat = e.category || '기타';
+    const catIcon = catEmoji[cat] || '📌';
     html += `<tr>`;
     html += `<td class="row-header"><input type="date" value="${e.date}" onchange="editLedger(${e.id},'date',this.value)" style="background:#1B2030;border:1px solid #373A40;color:#C1C2C5;border-radius:3px;padding:2px;font-size:11px;width:100%;font-family:inherit;"></td>`;
+    html += `<td style="text-align:center;font-size:11px;cursor:pointer;color:#8F96A3" onclick="editLedgerCategory(${e.id},this)">${catIcon} ${cat}</td>`;
     html += `<td style="text-align:center;font-size:11px;cursor:pointer" onclick="editLedgerCurrency(${e.id})">${icon}</td>`;
     html += `<td style="text-align:center;font-size:11px">`;
     html += `<button onclick="editLedgerType(${e.id})" style="${typeBtnStyle}background:${isIncome ? '#ef4444' : '#60a5fa'};color:#fff;">${isIncome ? '수입' : '지출'}</button>`;

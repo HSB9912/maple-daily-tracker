@@ -759,13 +759,10 @@ function findPrevValue(records, ch, res, fromDate, maxDays) {
 function liveFormatInput(el) {
   const f = el.dataset.field;
   if (f === 'beforeLv' || f === 'afterLv' || f === 'beforePct' || f === 'afterPct') return;
+  // 입력 중에는 숫자만 유지 (포맷하지 않음 - 자릿수 꼬임 방지)
   const cleaned = el.value.replace(/[^0-9.\-]/g, '');
-  const num = cleaned !== '' && cleaned !== '-' ? Number(cleaned) : '';
   el.dataset.raw = cleaned;
-  if (num === '' || num === 0) { el.value = cleaned; return; }
-  // 소수점 포함이거나 1만 미만이면 포맷하지 않음
-  if (cleaned.includes('.') || Math.abs(num) < 10000) { el.value = cleaned; return; }
-  el.value = formatMeso(num);
+  el.value = cleaned;
 }
 
 // --- Tabs ---
@@ -1284,6 +1281,12 @@ inputWrap.addEventListener('input', function(e) {
 inputWrap.addEventListener('focusin', function(e) {
   const el = e.target;
   if (!el.dataset.res) return;
+  const f = el.dataset.field;
+  if (f === 'beforeLv' || f === 'afterLv' || f === 'beforePct' || f === 'afterPct') return;
+  // 포커스 시 raw 숫자로 전환
+  if (el.dataset.raw !== undefined && el.dataset.raw !== '') {
+    el.value = el.dataset.raw;
+  }
   el.select();
 });
 

@@ -2022,33 +2022,39 @@ function renderDashboard() {
   const allNet = allMeso + mesoIncome - mesoExpense + allDajoMeso;
   const allNetColor = allNet > 0 ? '#ef4444' : allNet < 0 ? '#60a5fa' : '#C1C2C5';
 
+  // 순 메소 (재획 + 가계부)
+  const weekMesoNet = weekMeso + weekMesoIncome - weekMesoExpense;
+  const weekMesoNetColor = weekMesoNet > 0 ? '#ef4444' : weekMesoNet < 0 ? '#60a5fa' : '#C1C2C5';
+  const allMesoNet = allMeso + mesoIncome - mesoExpense;
+  const allMesoNetColor = allMesoNet > 0 ? '#ef4444' : allMesoNet < 0 ? '#60a5fa' : '#C1C2C5';
+  // 순 다조 (재획 + 가계부)
+  const weekDajoNet = weekDajo + weekDajoIncome - weekDajoExpense;
+  const allDajoNet = allDajoEarned + dajoIncome - dajoExpense;
+
   let html = '';
-  // 카드 1: 이번주 재획
-  html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">이번주 재획</div>`;
-  html += `<div class="dash-value income">${formatMeso(weekMeso)}</div>`;
-  html += `<div style="font-size:10px;color:#a78bfa"><img src="dajo.png" style="width:12px;height:12px;vertical-align:middle;margin-right:2px">${weekDajo}개 = ${formatMesoShort(weekDajo * dajoPrice)}</div>`;
+  // 카드 1: 이번주 순 메소
+  html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">이번주 메소</div>`;
+  html += `<div class="dash-value" style="color:${weekMesoNetColor}">${formatMeso(weekMesoNet)}</div>`;
+  html += `<div style="font-size:10px;color:#5c5f66">재획 ${formatMesoShort(weekMeso)}</div>`;
+  if (weekMesoIncome || weekMesoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${weekMesoIncome ? '+' + formatMesoShort(weekMesoIncome) : ''}${weekMesoExpense ? ' -' + formatMesoShort(weekMesoExpense) : ''}</div>`;
   html += `<div class="dash-sub">${thuStr} ~</div></div>`;
-  // 카드 2: 이번주 가계부
-  const weekLedgerNet = weekMesoIncome - weekMesoExpense;
-  const weekLedgerColor = weekLedgerNet > 0 ? '#ef4444' : weekLedgerNet < 0 ? '#60a5fa' : '#C1C2C5';
-  html += `<div class="dash-card"><div class="dash-label">💰 이번주 가계부</div>`;
-  html += `<div class="dash-value" style="color:${weekLedgerColor}">${formatMeso(weekLedgerNet)}</div>`;
-  html += `<div style="font-size:10px;color:#5c5f66">수입 ${formatMesoShort(weekMesoIncome)} / 지출 ${formatMesoShort(weekMesoExpense)}</div></div>`;
-  // 카드 3: 이번주 순이익
-  html += `<div class="dash-card"><div class="dash-label">이번주 순이익</div><div class="dash-value" style="color:${weekNetColor}">${formatMeso(weekNet)}</div>`;
-  html += `<div style="font-size:10px;color:#8F96A3">재획 ${formatMesoShort(weekMeso)} + 다조 ${weekTotalDajo}개</div>`;
-  if (weekMesoIncome || weekMesoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${formatMesoShort(weekLedgerNet)}</div>`;
+  // 카드 2: 이번주 순 다조
+  html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">이번주 다조</div>`;
+  html += `<div class="dash-value" style="color:#a78bfa">${weekDajoNet >= 0 ? '+' : ''}${weekDajoNet}개</div>`;
+  html += `<div style="font-size:10px;color:#5c5f66">재획 +${weekDajo}</div>`;
+  if (weekDajoIncome || weekDajoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${weekDajoIncome ? '+' + weekDajoIncome : ''}${weekDajoExpense ? ' -' + weekDajoExpense : ''}</div>`;
+  html += `<div class="dash-sub">${thuStr} ~</div></div>`;
+  // 카드 3: 전체 순 메소
+  html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">전체 메소</div>`;
+  html += `<div class="dash-value" style="color:${allMesoNetColor}">${formatMeso(allMesoNet)}</div>`;
+  html += `<div style="font-size:10px;color:#5c5f66">재획 ${formatMesoShort(allMeso)}</div>`;
+  if (mesoIncome || mesoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${mesoIncome ? '+' + formatMesoShort(mesoIncome) : ''}${mesoExpense ? ' -' + formatMesoShort(mesoExpense) : ''}</div>`;
   html += `</div>`;
-  // 카드 4: 전체 가계부
-  const allLedgerNet = mesoIncome - mesoExpense;
-  const allLedgerColor = allLedgerNet > 0 ? '#ef4444' : allLedgerNet < 0 ? '#60a5fa' : '#C1C2C5';
-  html += `<div class="dash-card"><div class="dash-label">💰 전체 가계부</div>`;
-  html += `<div class="dash-value" style="color:${allLedgerColor}">${formatMeso(allLedgerNet)}</div>`;
-  html += `<div style="font-size:10px;color:#5c5f66">수입 ${formatMesoShort(mesoIncome)} / 지출 ${formatMesoShort(mesoExpense)}</div></div>`;
-  // 카드 5: 전체 순이익
-  html += `<div class="dash-card"><div class="dash-label">전체 순이익</div><div class="dash-value" style="color:${allNetColor}">${formatMeso(allNet)}</div>`;
-  html += `<div style="font-size:10px;color:#8F96A3">재획 ${formatMesoShort(allMeso)} + 다조 ${allDajo}개</div>`;
-  if (mesoIncome || mesoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${formatMesoShort(allLedgerNet)}</div>`;
+  // 카드 4: 전체 순 다조
+  html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">전체 다조</div>`;
+  html += `<div class="dash-value" style="color:#a78bfa">${allDajoNet >= 0 ? '+' : ''}${allDajoNet}개</div>`;
+  html += `<div style="font-size:10px;color:#5c5f66">재획 +${allDajoEarned}</div>`;
+  if (dajoIncome || dajoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${dajoIncome ? '+' + dajoIncome : ''}${dajoExpense ? ' -' + dajoExpense : ''}</div>`;
   html += `</div>`;
 
   wrap.innerHTML = html;

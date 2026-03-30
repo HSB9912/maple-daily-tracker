@@ -394,16 +394,16 @@ async function cloudSave() {
       } catch (e) { console.warn('최신 데이터 로드 실패, 전체 덮어쓰기:', e); }
     }
 
-    // 2. 병합: 최신 데이터 기반 + 현재 유저 프로필만 교체
+    // 2. 병합: 로컬 기반 + 원격 다른 유저 프로필 갱신
     let merged;
     if (latest && latest.profiles) {
-      merged = latest;
-      // 현재 유저 프로필 교체
-      merged.profiles[username] = _cloudData.profiles[username];
-      // 유저 목록 동기화 (새 유저 추가된 경우)
-      if (!merged.users.includes(username)) merged.users.push(username);
-      // 로컬에도 최신 다른 유저 데이터 반영
-      _cloudData = merged;
+      merged = _cloudData;
+      // 원격의 다른 유저 프로필만 갱신 (로컬 유저 목록/삭제는 보존)
+      merged.users.forEach(u => {
+        if (u !== username && latest.profiles[u]) {
+          merged.profiles[u] = latest.profiles[u];
+        }
+      });
     } else {
       merged = _cloudData;
     }

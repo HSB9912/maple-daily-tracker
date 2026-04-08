@@ -46,8 +46,8 @@ h1 { color: #FFFFFF; font-size: 1.2em; letter-spacing: -0.5px; }
 .sheet { border-collapse: collapse; font-size: 12px; width: 100%; table-layout: fixed; }
 .sheet th, .sheet td { border: 1px solid #373A40; padding: 0; white-space: nowrap; }
 .sheet th { background: #1B2030; color: #9DA0AC; font-weight: 600; text-align: center; padding: 6px 4px; font-size: 12px; user-select: none; overflow: hidden; text-overflow: ellipsis; }
-.sheet th.corner { background: #1B2030; width: 50px; }
-.sheet td.row-header { background: #1B2030; color: #D7D8DD; padding: 2px 6px; font-size: 13px; font-weight: 700; width: 60px; white-space: nowrap; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; }
+.sheet th.corner { background: #1B2030; }
+.sheet td.row-header { background: #1B2030; color: #D7D8DD; padding: 2px 6px; font-size: 13px; font-weight: 700; white-space: nowrap; vertical-align: middle; }
 .sheet td.cell { padding: 0; position: relative; background: #131824; vertical-align: top; overflow: hidden; }
 .sheet td.cell .cell-stack { display: flex; flex-direction: column; }
 .sheet td.cell .cell-input-row { display: flex; align-items: center; }
@@ -898,8 +898,14 @@ function renderAssetCalendar() {
     if (thuMonth === month || (d <= 7 && thuMonth === month - 1)) {
       const firstThu = new Date(year, month, 1);
       while (firstThu.getDay() !== 4) firstThu.setDate(firstThu.getDate() + 1);
-      const weekNum = Math.floor((thuDate.getDate() - firstThu.getDate()) / 7) + 1;
-      const wk = Math.max(1, weekNum);
+      let wk;
+      if (thuMonth !== month) {
+        // 월 첫째 목요일 이전 날짜는 1주차에 포함
+        wk = 1;
+      } else {
+        const weekNum = Math.floor((thuDate.getDate() - firstThu.getDate()) / 7) + 1;
+        wk = Math.max(1, weekNum);
+      }
       if (!weeks[wk]) weeks[wk] = { meso: 0, dajo: 0 };
       weeks[wk].meso += dailyMeso[ds] || 0;
       weeks[wk].dajo += dailyDajo[ds] || 0;

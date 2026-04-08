@@ -824,6 +824,7 @@ function acMove(offset) {
   if (_acMonth < 0) { _acMonth = 11; _acYear--; }
   if (_acMonth > 11) { _acMonth = 0; _acYear++; }
   renderAssetCalendar();
+  renderLedger();
 }
 
 function acToday() {

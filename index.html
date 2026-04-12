@@ -192,6 +192,8 @@ input[type="file"] { display: none; }
 .asset-cal-cell .cal-dajo { font-size: 11px; color: #c4a5ff; line-height: 1.4; font-family: 'MaplestoryOTFLight', sans-serif; }
 .asset-cal-cell .cal-ledger-income { font-size: 10px; color: #34d399; line-height: 1.3; font-family: 'MaplestoryOTFLight', sans-serif; }
 .asset-cal-cell .cal-ledger-expense { font-size: 10px; color: #fb923c; line-height: 1.3; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell .cal-balance { font-size: 10px; color: #34d399; line-height: 1.3; font-family: 'MaplestoryOTFLight', sans-serif; }
+.asset-cal-cell .cal-balance.negative { color: #fb923c; }
 .asset-cal-cell-empty { min-height: 68px; }
 
 /* Inline ledger in journal tab */
@@ -231,6 +233,13 @@ input[type="file"] { display: none; }
         <span style="color:#5c5f66;font-size:11px;">캐릭터별 시작 전/후 재화 수급</span>
       </div>
       <div class="sheet-wrap" id="inputTableWrap"></div>
+    </div>
+    <div id="balanceSection" style="margin-top:16px;padding:12px;background:#0f1320;border:1px solid #1f2937;border-radius:6px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="color:#34d399;font-weight:700;font-size:14px;">📊 잔고 기록</span>
+        <span style="color:#5c5f66;font-size:11px;">끄기 전 총 잔고만 입력 → 전일 대비 자동 산출</span>
+      </div>
+      <div id="balanceContent"></div>
     </div>
     <div class="journal-ledger" id="journalLedgerWrap" style="margin-top:16px;padding:12px;background:#0f1320;border:1px solid #1f2937;border-radius:6px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -612,6 +621,7 @@ function refreshAll() {
   renderAssetCalendar();
   renderInputTable();
   renderLedger();
+  renderBalanceSection();
   renderHistory();
   renderSettings();
 }
@@ -799,7 +809,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById(tab.dataset.tab).classList.add('active');
-    if (tab.dataset.tab === 'journal') { renderAssetCalendar(); renderInputTable(); renderLedger(); }
+    if (tab.dataset.tab === 'journal') { renderAssetCalendar(); renderInputTable(); renderLedger(); renderBalanceSection(); }
     if (tab.dataset.tab === 'history') renderHistory();
     if (tab.dataset.tab === 'settings') renderSettings();
   });
@@ -844,6 +854,7 @@ function selectDate(ds) {
   renderAssetCalendar();
   renderInputTable();
   renderLedger();
+  renderBalanceSection();
 }
 
 function renderAssetCalendar() {
@@ -882,6 +893,21 @@ function renderAssetCalendar() {
         dailyLedgerIncome[entry.date] = (dailyLedgerIncome[entry.date] || 0) + (Number(entry.amount) || 0);
       } else {
         dailyLedgerExpense[entry.date] = (dailyLedgerExpense[entry.date] || 0) + (Number(entry.amount) || 0);
+      }
+    }
+  });
+
+  // Balance deltas for this month
+  const dailyBalMeso = {}, dailyBalDajo = {};
+  const balLog = data.balanceLog || {};
+  const balDates = Object.keys(balLog).sort();
+  balDates.forEach((bd, idx) => {
+    if (idx > 0) {
+      const [by, bm] = bd.split('-').map(Number);
+      if (by === year && bm === month + 1) {
+        const prevBd = balDates[idx - 1];
+        dailyBalMeso[bd] = (balLog[bd].meso || 0) - (balLog[prevBd].meso || 0);
+        dailyBalDajo[bd] = (balLog[bd].dajo || 0) - (balLog[prevBd].dajo || 0);
       }
     }
   });
@@ -996,6 +1022,8 @@ function renderAssetCalendar() {
     const dajo = dailyDajo[ds] || 0;
     const lIncome = dailyLedgerIncome[ds] || 0;
     const lExpense = dailyLedgerExpense[ds] || 0;
+    const balM = dailyBalMeso[ds] || 0;
+    const balD = dailyBalDajo[ds] || 0;
 
     html += `<div class="${cellCls}" onclick="selectDate('${ds}')">`;
     html += `<div class="${dateCls}">${d}</div>`;
@@ -1011,6 +1039,13 @@ function renderAssetCalendar() {
     }
     if (lExpense) {
       html += `<div class="cal-ledger-expense">💰-${formatMesoShort(lExpense)}</div>`;
+    }
+    if (balM || balD) {
+      const bc = balM >= 0 ? 'cal-balance' : 'cal-balance negative';
+      let balText = '📊';
+      if (balM) balText += `${balM > 0 ? '+' : ''}${formatMesoShort(balM)}`;
+      if (balD) balText += ` ${balD > 0 ? '+' : ''}${balD}개`;
+      html += `<div class="${bc}">${balText}</div>`;
     }
     html += `</div>`;
   }
@@ -1972,6 +2007,105 @@ function resetData() {
   renderDashboard();
 }
 
+// --- 잔고 기록 ---
+function saveBalance() {
+  const date = _selectedDate;
+  const mesoStr = document.getElementById('balanceMesoInput').value.trim();
+  const dajoStr = document.getElementById('balanceDajoInput').value.trim();
+  if (!mesoStr && !dajoStr) { toast('잔고를 입력하세요.', 'error'); return; }
+  const mesoVal = parseMeso(mesoStr);
+  const dajoVal = Math.round(Number(dajoStr.replace(/[^0-9.\-]/g, '')) || 0);
+  const data = loadData();
+  if (!data.balanceLog) data.balanceLog = {};
+  data.balanceLog[date] = { meso: mesoVal, dajo: dajoVal };
+  saveData(data);
+  renderBalanceSection();
+  renderAssetCalendar();
+  renderDashboard();
+  toast('잔고 기록됨');
+}
+
+function deleteBalance() {
+  const date = _selectedDate;
+  if (!confirm(`${date} 잔고 기록을 삭제하시겠습니까?`)) return;
+  const data = loadData();
+  if (data.balanceLog) delete data.balanceLog[date];
+  saveData(data);
+  renderBalanceSection();
+  renderAssetCalendar();
+  renderDashboard();
+  toast('삭제됨');
+}
+
+function renderBalanceSection() {
+  const wrap = document.getElementById('balanceContent');
+  if (!wrap) return;
+  const data = loadData();
+  const date = _selectedDate;
+  const current = (data.balanceLog || {})[date] || null;
+  const log = data.balanceLog || {};
+  const prevDates = Object.keys(log).filter(d => d < date).sort().reverse();
+  const prev = prevDates.length ? { date: prevDates[0], ...log[prevDates[0]] } : null;
+
+  let html = '';
+
+  // 이전 잔고 참조
+  if (prev) {
+    html += `<div style="display:flex;gap:12px;align-items:center;padding:6px 10px;background:#131822;border-radius:4px;margin-bottom:8px;font-size:12px;">`;
+    html += `<span style="color:#5c5f66;">이전 잔고 (${prev.date})</span>`;
+    html += `<span style="color:#8F96A3;"><img src="meso.png" style="width:12px;height:12px;vertical-align:middle;margin-right:2px">${formatMeso(prev.meso || 0)}</span>`;
+    html += `<span style="color:#a78bfa;"><img src="dajo.png" style="width:12px;height:12px;vertical-align:middle;margin-right:2px">${prev.dajo || 0}개</span>`;
+    html += `</div>`;
+  }
+
+  // 입력 필드
+  const mesoDisplay = current ? String((current.meso || 0) / 100000000) : '';
+  const dajoDisplay = current ? String(current.dajo || 0) : '';
+
+  html += `<div style="display:flex;gap:8px;align-items:stretch;">`;
+  html += `<div style="flex:1;background:#131822;border:1px solid #373A40;border-radius:6px;padding:8px;">`;
+  html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">`;
+  html += `<img src="meso.png" style="width:16px;height:16px">`;
+  html += `<span style="color:#8F96A3;font-size:11px;font-weight:600;">총 메소</span>`;
+  html += `</div>`;
+  html += `<input type="text" id="balanceMesoInput" placeholder="억 단위 (예: 152.3)" value="${mesoDisplay}" style="width:100%;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;text-align:right;">`;
+  html += `</div>`;
+  html += `<div style="flex:1;background:#131822;border:1px solid #373A40;border-radius:6px;padding:8px;">`;
+  html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">`;
+  html += `<img src="dajo.png" style="width:16px;height:16px">`;
+  html += `<span style="color:#8F96A3;font-size:11px;font-weight:600;">총 다조</span>`;
+  html += `</div>`;
+  html += `<input type="text" id="balanceDajoInput" placeholder="개수 (예: 350)" value="${dajoDisplay}" style="width:100%;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;text-align:right;">`;
+  html += `</div>`;
+  html += `<div style="display:flex;flex-direction:column;gap:4px;justify-content:flex-end;">`;
+  html += `<button class="btn-add" onclick="saveBalance()" style="padding:6px 20px;font-size:13px;">기록</button>`;
+  if (current) html += `<button onclick="deleteBalance()" style="padding:4px 12px;font-size:11px;border:1px solid #373A40;background:#131822;color:#8F96A3;border-radius:4px;cursor:pointer;font-family:inherit;">삭제</button>`;
+  html += `</div>`;
+  html += `</div>`;
+
+  // 변동 표시
+  if (current && prev) {
+    const deltaMeso = (current.meso || 0) - (prev.meso || 0);
+    const deltaDajo = (current.dajo || 0) - (prev.dajo || 0);
+    const mesoColor = deltaMeso > 0 ? '#ef4444' : deltaMeso < 0 ? '#60a5fa' : '#5c5f66';
+    const dajoColor = deltaDajo > 0 ? '#ef4444' : deltaDajo < 0 ? '#60a5fa' : '#5c5f66';
+    const dajoPrice = getDajoPrice();
+    const totalMeso = deltaMeso + deltaDajo * dajoPrice;
+    const totalColor = totalMeso > 0 ? '#ef4444' : totalMeso < 0 ? '#60a5fa' : '#5c5f66';
+
+    html += `<div style="display:flex;gap:16px;align-items:center;padding:8px 10px;background:#0d1a2e;border:1px solid #1971c2;border-radius:4px;margin-top:8px;flex-wrap:wrap;">`;
+    html += `<span style="color:#1971c2;font-weight:700;font-size:13px;">전일 대비</span>`;
+    html += `<span style="color:${mesoColor};font-family:'MaplestoryOTFBold',Consolas,monospace;font-size:14px;"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">${deltaMeso >= 0 ? '+' : ''}${formatMeso(deltaMeso)}</span>`;
+    html += `<span style="color:${dajoColor};font-family:'MaplestoryOTFBold',Consolas,monospace;font-size:14px;"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">${deltaDajo >= 0 ? '+' : ''}${deltaDajo}개</span>`;
+    html += `<span style="color:${totalColor};font-size:12px;margin-left:auto;">환산 ${totalMeso >= 0 ? '+' : ''}${formatMeso(totalMeso)}</span>`;
+    html += `</div>`;
+  } else if (current && !prev) {
+    html += `<div style="padding:6px 10px;color:#5c5f66;font-size:12px;margin-top:6px;">첫 잔고 기록! 다음 기록부터 변동이 표시됩니다.</div>`;
+  }
+
+  wrap.innerHTML = html;
+}
+
 // --- 대시보드 ---
 function renderDashboard() {
   const wrap = document.getElementById('dashboard');
@@ -2303,6 +2437,7 @@ renderDashboard();
 renderAssetCalendar();
 renderInputTable();
 renderLedger();
+renderBalanceSection();
 // 클라우드 동기화 (비동기)
 initCloud();
 

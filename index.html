@@ -6,6 +6,7 @@
 <title>메이플 일일 재화 관리</title>
 <link rel="icon" type="image/png" href="meso.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 @font-face { font-family: 'MaplestoryOTFBold'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryOTFBold.woff') format('woff'); font-weight: normal; font-style: normal; }
 @font-face { font-family: 'MaplestoryOTFLight'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryOTFLight.woff') format('woff'); font-weight: normal; font-style: normal; }
@@ -355,15 +356,11 @@ input[type="file"] { display: none; }
 
 <script>
 const APP_VERSION = 2;
-// --- GitHub Gist ---
-const GIST_API = 'https://api.github.com/gists';
-const _tk = [103,104,112,95,50,120,66,54,107,82,120,118,106,116,112,99,102,72,99,77,100,90,102,78,104,98,120,90,78,76,103,114,85,48,51,121,102,115,65,108];
-function getGistToken() {
-  return _tk.map(c => String.fromCharCode(c)).join('');
-}
-const GIST_FILE = 'maple-tracker-data.json';
-const FIXED_GIST_ID = 'ed1c7a037614886df9cf744decb9079a';
-let _gistId = FIXED_GIST_ID;
+// --- Supabase ---
+const SUPABASE_URL = 'https://lapxytabpabdkomjspta.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhcHh5dGFicGFiZGtvbWpzcHRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODM5OTcsImV4cCI6MjA5MTY1OTk5N30.tU4zbHkbM-fan_MIeV0bqjMu8Z_LKkj335YrdnKMVR8';
+const STATE_ROW_ID = 'main';
+const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let _cloudData = null;
 let _saving = false;
 let _saveQueued = false;
@@ -381,55 +378,41 @@ function getEmptyCloud() {
   return { users: ['기본'], profiles: { '기본': { characters: [], resources: [...DEFAULT_RESOURCES], records: {}, settlements: {} } } };
 }
 
-// --- Gist 저장/로드 ---
+// --- Supabase 저장/로드 ---
 async function cloudSave() {
   if (_saving) { _saveQueued = true; return; }
   if (!_cloudData) return;
   _saving = true;
   try {
     const username = getCurrentUser();
-    // 1. 최신 데이터를 Gist에서 불러오기 (다른 유저 변경사항 보존)
+    // 1. 최신 데이터를 Supabase에서 불러오기 (다른 유저 변경사항 보존)
     let latest = null;
-    if (_gistId) {
-      try {
-        const res = await fetch(GIST_API + '/' + _gistId, {
-          headers: { 'Authorization': 'token ' + getGistToken() }
-        });
-        if (res.ok) {
-          const g = await res.json();
-          const raw = g.files?.[GIST_FILE]?.content;
-          if (raw) latest = JSON.parse(raw);
-        }
-      } catch (e) { console.warn('최신 데이터 로드 실패, 전체 덮어쓰기:', e); }
-    }
+    try {
+      const { data, error } = await _supabase
+        .from('maple_state')
+        .select('data')
+        .eq('id', STATE_ROW_ID)
+        .single();
+      if (!error && data) latest = data.data;
+    } catch (e) { console.warn('최신 데이터 로드 실패, 전체 덮어쓰기:', e); }
 
     // 2. 병합: 로컬 기반 + 원격 다른 유저 프로필 갱신
-    let merged;
+    let merged = _cloudData;
     if (latest && latest.profiles) {
-      merged = _cloudData;
-      // 원격의 다른 유저 프로필만 갱신 (로컬 유저 목록/삭제는 보존)
       merged.users.forEach(u => {
         if (u !== username && latest.profiles[u]) {
           merged.profiles[u] = latest.profiles[u];
         }
       });
-    } else {
-      merged = _cloudData;
     }
 
     localStorage.setItem('maple_cloud_cache', JSON.stringify(merged));
-    const body = { files: { [GIST_FILE]: { content: JSON.stringify(merged) } } };
-    if (_gistId) {
-      await fetch(GIST_API + '/' + _gistId, {
-        method: 'PATCH',
-        headers: { 'Authorization': 'token ' + getGistToken(), 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-    } else {
-      console.error('Gist ID 없음 - 비정상 상태');
-    }
+    const { error: upsertError } = await _supabase
+      .from('maple_state')
+      .upsert({ id: STATE_ROW_ID, data: merged }, { onConflict: 'id' });
+    if (upsertError) console.error('Supabase 저장 실패:', upsertError);
   } catch (e) {
-    console.error('Gist 저장 실패:', e);
+    console.error('Supabase 저장 실패:', e);
   }
   _saving = false;
   if (_saveQueued) { _saveQueued = false; cloudSave(); }
@@ -485,39 +468,35 @@ function startPolling() {
 }
 
 async function cloudLoad() {
-  if (!_gistId) return null;
   try {
-    const res = await fetch(GIST_API + '/' + _gistId, {
-      headers: { 'Authorization': 'token ' + getGistToken() }
-    });
-    if (res.ok) {
-      const json = await res.json();
-      const content = json.files?.[GIST_FILE]?.content;
-      if (content) return JSON.parse(content);
-    }
+    const { data, error } = await _supabase
+      .from('maple_state')
+      .select('data')
+      .eq('id', STATE_ROW_ID)
+      .single();
+    if (error) { console.error('Supabase 로드 실패:', error); return null; }
+    return data?.data ?? null;
   } catch (e) {
-    console.error('Gist 로드 실패:', e);
+    console.error('Supabase 로드 실패:', e);
+    return null;
   }
-  return null;
 }
 
 async function initCloud() {
   const cached = localStorage.getItem('maple_cloud_cache');
   if (cached) _cloudData = JSON.parse(cached);
 
-  if (_gistId) {
-    const cloud = await cloudLoad();
-    if (cloud && cloud.users) {
-      // 서버 데이터에 최소 버전이 기록되어 있으면 체크
-      if (cloud._minVersion && APP_VERSION < cloud._minVersion) {
-        alert('앱이 업데이트되었습니다. 페이지를 새로고침합니다.');
-        location.reload(true);
-        return;
-      }
-      _cloudData = cloud;
-      _cloudData._minVersion = APP_VERSION;
-      localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
+  const cloud = await cloudLoad();
+  if (cloud && cloud.users) {
+    // 서버 데이터에 최소 버전이 기록되어 있으면 체크
+    if (cloud._minVersion && APP_VERSION < cloud._minVersion) {
+      alert('앱이 업데이트되었습니다. 페이지를 새로고침합니다.');
+      location.reload(true);
+      return;
     }
+    _cloudData = cloud;
+    _cloudData._minVersion = APP_VERSION;
+    localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
   }
 
   if (!_cloudData || !_cloudData.users) {

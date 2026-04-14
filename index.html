@@ -2130,6 +2130,22 @@ function renderDashboard() {
     }
   });
 
+  // 잔고 기록 전일대비 변동 합산
+  let allBalMeso = 0, allBalDajo = 0, weekBalMeso = 0, weekBalDajo = 0;
+  const balDates = Object.keys(data.balanceLog || {}).sort();
+  for (let i = 1; i < balDates.length; i++) {
+    const curr = data.balanceLog[balDates[i]];
+    const prev = data.balanceLog[balDates[i - 1]];
+    const dMeso = (curr.meso || 0) - (prev.meso || 0);
+    const dDajo = (curr.dajo || 0) - (prev.dajo || 0);
+    allBalMeso += dMeso;
+    allBalDajo += dDajo;
+    if (balDates[i] >= thuStr) {
+      weekBalMeso += dMeso;
+      weekBalDajo += dDajo;
+    }
+  }
+
   const dajoPrice = getDajoPrice();
   // 이번주 순이익
   const weekTotalDajo = weekDajo + weekDajoIncome - weekDajoExpense;
@@ -2142,14 +2158,14 @@ function renderDashboard() {
   const allNet = allMeso + mesoIncome - mesoExpense + allDajoMeso;
   const allNetColor = allNet > 0 ? '#ef4444' : allNet < 0 ? '#60a5fa' : '#C1C2C5';
 
-  // 순 메소 (재획 + 가계부)
-  const weekMesoNet = weekMeso + weekMesoIncome - weekMesoExpense;
+  // 순 메소 (재획 + 가계부 + 잔고 변동)
+  const weekMesoNet = weekMeso + weekMesoIncome - weekMesoExpense + weekBalMeso;
   const weekMesoNetColor = weekMesoNet > 0 ? '#ef4444' : weekMesoNet < 0 ? '#60a5fa' : '#C1C2C5';
-  const allMesoNet = allMeso + mesoIncome - mesoExpense;
+  const allMesoNet = allMeso + mesoIncome - mesoExpense + allBalMeso;
   const allMesoNetColor = allMesoNet > 0 ? '#ef4444' : allMesoNet < 0 ? '#60a5fa' : '#C1C2C5';
-  // 순 다조 (재획 + 가계부)
-  const weekDajoNet = weekDajo + weekDajoIncome - weekDajoExpense;
-  const allDajoNet = allDajoEarned + dajoIncome - dajoExpense;
+  // 순 다조 (재획 + 가계부 + 잔고 변동)
+  const weekDajoNet = weekDajo + weekDajoIncome - weekDajoExpense + weekBalDajo;
+  const allDajoNet = allDajoEarned + dajoIncome - dajoExpense + allBalDajo;
 
   let html = '';
   // 카드 1: 이번주 순 메소
@@ -2157,24 +2173,28 @@ function renderDashboard() {
   html += `<div class="dash-value" style="color:${weekMesoNetColor}">${formatMeso(weekMesoNet)}</div>`;
   html += `<div style="font-size:10px;color:#5c5f66">재획 ${formatMesoShort(weekMeso)}</div>`;
   if (weekMesoIncome || weekMesoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${weekMesoIncome ? '+' + formatMesoShort(weekMesoIncome) : ''}${weekMesoExpense ? ' -' + formatMesoShort(weekMesoExpense) : ''}</div>`;
+  if (weekBalMeso) html += `<div style="font-size:10px;color:#5c5f66">잔고 ${weekBalMeso >= 0 ? '+' : ''}${formatMesoShort(weekBalMeso)}</div>`;
   html += `<div class="dash-sub">${thuStr} ~</div></div>`;
   // 카드 2: 이번주 순 다조
   html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">이번주 다조</div>`;
   html += `<div class="dash-value" style="color:#a78bfa">${weekDajoNet >= 0 ? '+' : ''}${weekDajoNet}개</div>`;
   html += `<div style="font-size:10px;color:#5c5f66">재획 +${weekDajo}</div>`;
   if (weekDajoIncome || weekDajoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${weekDajoIncome ? '+' + weekDajoIncome : ''}${weekDajoExpense ? ' -' + weekDajoExpense : ''}</div>`;
+  if (weekBalDajo) html += `<div style="font-size:10px;color:#5c5f66">잔고 ${weekBalDajo >= 0 ? '+' : ''}${weekBalDajo}</div>`;
   html += `<div class="dash-sub">${thuStr} ~</div></div>`;
   // 카드 3: 전체 순 메소
   html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">전체 메소</div>`;
   html += `<div class="dash-value" style="color:${allMesoNetColor}">${formatMeso(allMesoNet)}</div>`;
   html += `<div style="font-size:10px;color:#5c5f66">재획 ${formatMesoShort(allMeso)}</div>`;
   if (mesoIncome || mesoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${mesoIncome ? '+' + formatMesoShort(mesoIncome) : ''}${mesoExpense ? ' -' + formatMesoShort(mesoExpense) : ''}</div>`;
+  if (allBalMeso) html += `<div style="font-size:10px;color:#5c5f66">잔고 ${allBalMeso >= 0 ? '+' : ''}${formatMesoShort(allBalMeso)}</div>`;
   html += `</div>`;
   // 카드 4: 전체 순 다조
   html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">전체 다조</div>`;
   html += `<div class="dash-value" style="color:#a78bfa">${allDajoNet >= 0 ? '+' : ''}${allDajoNet}개</div>`;
   html += `<div style="font-size:10px;color:#5c5f66">재획 +${allDajoEarned}</div>`;
   if (dajoIncome || dajoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${dajoIncome ? '+' + dajoIncome : ''}${dajoExpense ? ' -' + dajoExpense : ''}</div>`;
+  if (allBalDajo) html += `<div style="font-size:10px;color:#5c5f66">잔고 ${allBalDajo >= 0 ? '+' : ''}${allBalDajo}</div>`;
   html += `</div>`;
 
   // 카드 5,6: 현재 잔고 (최신 balanceLog 기준)

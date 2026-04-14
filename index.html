@@ -2177,6 +2177,21 @@ function renderDashboard() {
   if (dajoIncome || dajoExpense) html += `<div style="font-size:10px;color:#5c5f66">가계부 ${dajoIncome ? '+' + dajoIncome : ''}${dajoExpense ? ' -' + dajoExpense : ''}</div>`;
   html += `</div>`;
 
+  // 카드 5,6: 현재 잔고 (최신 balanceLog 기준)
+  const balLogDates = Object.keys(data.balanceLog || {}).sort();
+  const latestBalDate = balLogDates[balLogDates.length - 1];
+  const latestBal = latestBalDate ? data.balanceLog[latestBalDate] : null;
+  const currentMeso = latestBal ? (latestBal.meso || 0) : 0;
+  const currentDajo = latestBal ? (latestBal.dajo || 0) : 0;
+
+  html += `<div class="dash-card"><div class="dash-label"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">현재 메소</div>`;
+  html += `<div class="dash-value" style="color:#fbbf24">${formatMeso(currentMeso)}</div>`;
+  html += `<div class="dash-sub">${latestBalDate || '기록 없음'}</div></div>`;
+
+  html += `<div class="dash-card"><div class="dash-label"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">현재 다조</div>`;
+  html += `<div class="dash-value" style="color:#fbbf24">${currentDajo}개</div>`;
+  html += `<div class="dash-sub">${latestBalDate || '기록 없음'}</div></div>`;
+
   wrap.innerHTML = html;
 }
 

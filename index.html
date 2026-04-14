@@ -201,31 +201,172 @@ input[type="file"] { display: none; }
 .journal-ledger { margin-top: 16px; background: #131822; border: 1px solid #373A40; border-radius: 4px; padding: 14px; }
 .journal-ledger h4 { color: #FFFFFF; margin-bottom: 10px; font-size: 14px; }
 
+/* Boss distribution */
+.dist-section { background: #131822; border: 1px solid #373A40; border-radius: 6px; padding: 14px; margin-bottom: 12px; }
+.dist-section h3 { color: #FFFFFF; font-size: 14px; margin-bottom: 12px; }
+.dist-input-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+.dist-input-row label { color: #8F96A3; font-size: 12px; min-width: 90px; }
+.dist-input-row input[type="text"] { flex: 1; padding: 8px 10px; background: #1B2030; border: 1px solid #373A40; color: #C1C2C5; border-radius: 4px; font-family: inherit; font-size: 13px; text-align: right; min-width: 160px; }
+.dist-input-row input[type="text"]:focus { border-color: #1971c2; outline: none; }
+.dist-btn-group { display: flex; gap: 0; }
+.dist-btn-group button { padding: 6px 14px; border: 1px solid #373A40; background: #1B2030; color: #8F96A3; cursor: pointer; font-size: 12px; font-family: inherit; transition: all 0.15s; }
+.dist-btn-group button:first-child { border-radius: 4px 0 0 4px; }
+.dist-btn-group button:last-child { border-radius: 0 4px 4px 0; }
+.dist-btn-group button:not(:first-child) { border-left: none; }
+.dist-btn-group button:hover { color: #fff; }
+.dist-btn-group button.active { background: #1971c2; color: #fff; border-color: #1971c2; font-weight: 700; }
+.dist-result { background: #0f1a2e; border: 1px solid #1971c2; border-radius: 6px; padding: 14px; margin-top: 12px; }
+.dist-result-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1f2937; }
+.dist-result-row:last-child { border-bottom: none; }
+.dist-result-label { color: #8F96A3; font-size: 13px; }
+.dist-result-value { color: #ef4444; font-weight: 700; font-family: 'MaplestoryOTFBold', Consolas, monospace; font-size: 15px; }
+.dist-result-value.sub { color: #60a5fa; font-size: 13px; }
+.dist-result-value.err { color: #a78bfa; }
+
+/* Party cards */
+.party-card { background: #131822; border: 1px solid #373A40; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; }
+.party-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
+.party-name { color: #FFFFFF; font-weight: 700; font-size: 13px; cursor: pointer; border-bottom: 1px dashed #373A40; flex: 1; }
+.party-name:hover { color: #1971c2; border-color: #1971c2; }
+.party-delete { background: none; border: none; color: #5c5f66; cursor: pointer; font-size: 14px; padding: 0 4px; }
+.party-delete:hover { color: #ef4444; }
+.party-members { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.party-member { background: #1B2030; border: 1px solid #373A40; border-radius: 3px; padding: 4px 10px; font-size: 12px; color: #D7D8DD; display: flex; align-items: center; gap: 6px; }
+.party-member-remove { background: none; border: none; color: #5c5f66; cursor: pointer; font-size: 11px; padding: 0; }
+.party-member-remove:hover { color: #ef4444; }
+.party-member-add { padding: 4px 10px; font-size: 11px; background: transparent; border: 1px dashed #373A40; color: #5c5f66; border-radius: 3px; cursor: pointer; font-family: inherit; }
+.party-member-add:hover { border-color: #1971c2; color: #1971c2; }
+
+/* Settlement view */
+.settlement-member { background: #0f1320; border: 1px solid #1f2937; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; }
+.settlement-member-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.settlement-member-name { color: #FFFFFF; font-weight: 700; font-size: 14px; }
+.settlement-pending { color: #ef4444; font-size: 12px; font-weight: 600; }
+.settlement-done-total { color: #34d399; font-size: 12px; }
+.settlement-bulk-btn { margin-left: auto; background: #1971c2; color: #fff; border: none; border-radius: 3px; padding: 4px 12px; font-size: 11px; cursor: pointer; font-family: inherit; }
+.settlement-bulk-btn:hover { background: #1864ab; }
+.settlement-entries { display: flex; flex-direction: column; gap: 4px; }
+.settlement-entry { display: flex; align-items: center; gap: 10px; padding: 6px 8px; background: #131822; border-radius: 4px; font-size: 12px; }
+.settlement-entry.done { opacity: 0.55; }
+.settlement-entry .entry-date { color: #8F96A3; min-width: 42px; font-size: 11px; }
+.settlement-entry .entry-party { color: #C1C2C5; }
+.settlement-entry .entry-memo { color: #5c5f66; font-size: 11px; flex: 1; }
+.settlement-entry .entry-amount { color: #ef4444; font-family: 'MaplestoryOTFBold', Consolas, monospace; font-weight: 700; }
+.settlement-entry.done .entry-amount { color: #5c5f66; }
+.settlement-entry .entry-toggle { background: #1971c2; color: #fff; border: none; border-radius: 3px; padding: 4px 12px; font-size: 11px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.settlement-entry.done .entry-toggle { background: #373A40; color: #8F96A3; }
+.settlement-entry .entry-toggle:hover { opacity: 0.85; }
+
+/* Dist sub-tabs */
+.dist-subtabs { display: flex; gap: 0; margin-bottom: 12px; border-bottom: 1px solid #373A40; }
+.dist-subtab { padding: 10px 20px; background: transparent; border: none; color: #8F96A3; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; }
+.dist-subtab:hover { color: #C1C2C5; }
+.dist-subtab.active { color: #FFFFFF; border-bottom-color: #1971c2; font-weight: 700; }
+.dist-subpanel { display: none; }
+.dist-subpanel.active { display: block; }
+
+/* Drop cards */
+.drop-card { background: #131822; border: 1px solid #373A40; border-radius: 6px; padding: 12px 14px; margin-bottom: 8px; border-left: 4px solid #8F96A3; transition: border-color 0.2s; }
+.drop-card.status-dropped { border-left-color: #60a5fa; }
+.drop-card.status-listing { border-left-color: #fbbf24; }
+.drop-card.status-sold { border-left-color: #fb923c; }
+.drop-card.status-distributing { border-left-color: #a78bfa; }
+.drop-card.status-completed { border-left-color: #34d399; opacity: 0.75; }
+.drop-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.drop-status-badge { font-size: 11px; padding: 3px 10px; background: #1B2030; border-radius: 3px; color: #C1C2C5; font-weight: 600; border: 1px solid #373A40; }
+.drop-card.status-dropped .drop-status-badge { color: #60a5fa; border-color: #60a5fa; }
+.drop-card.status-listing .drop-status-badge { color: #fbbf24; border-color: #fbbf24; }
+.drop-card.status-sold .drop-status-badge { color: #fb923c; border-color: #fb923c; }
+.drop-card.status-distributing .drop-status-badge { color: #a78bfa; border-color: #a78bfa; }
+.drop-card.status-completed .drop-status-badge { color: #34d399; border-color: #34d399; }
+.drop-party-name { color: #FFFFFF; font-weight: 700; font-size: 13px; }
+.drop-date { color: #5c5f66; font-size: 11px; margin-left: auto; }
+.drop-delete-btn { background: none; border: none; color: #5c5f66; cursor: pointer; font-size: 14px; padding: 0 4px; }
+.drop-delete-btn:hover { color: #ef4444; }
+.drop-card-body { margin-bottom: 10px; padding-left: 4px; }
+.drop-item-line { color: #D7D8DD; font-size: 13px; }
+.drop-item-line strong { color: #FFFFFF; }
+.drop-item-line .drop-boss { color: #8F96A3; font-size: 11px; margin-left: 6px; }
+.drop-memo-line { color: #8F96A3; font-size: 11px; margin-top: 4px; font-style: italic; }
+.drop-sale-info { color: #fb923c; font-size: 12px; margin-top: 4px; font-family: 'MaplestoryOTFBold', Consolas, monospace; font-weight: 700; }
+.drop-card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.drop-card-actions button { padding: 6px 14px; font-size: 12px; background: #1971c2; color: #fff; border: none; border-radius: 3px; cursor: pointer; font-family: inherit; font-weight: 600; }
+.drop-card-actions button:hover { background: #1864ab; }
+.drop-card-actions button.secondary { background: #373A40; color: #8F96A3; }
+.drop-card-actions button.secondary:hover { background: #4a4e56; color: #fff; }
+.drop-card-actions button.danger { background: #c0392b; color: #fff; }
+.drop-card-actions button.danger:hover { background: #e74c3c; }
+
+/* Inline forms inside drop cards */
+.drop-inline-form { margin-top: 10px; padding: 10px 12px; background: #0d1a2e; border: 1px solid #1971c2; border-radius: 4px; }
+.drop-inline-form .form-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.drop-inline-form .form-row:last-child { margin-bottom: 0; }
+.drop-inline-form label { color: #8F96A3; font-size: 11px; min-width: 70px; }
+.drop-inline-form input[type="text"], .drop-inline-form select { flex: 1; padding: 6px 10px; background: #1B2030; border: 1px solid #373A40; color: #C1C2C5; border-radius: 4px; font-family: inherit; font-size: 12px; min-width: 120px; }
+.drop-inline-form .dist-btn-group button { padding: 4px 10px; font-size: 11px; }
+.drop-inline-form .preview-box { margin-top: 8px; padding: 8px 10px; background: #131822; border-radius: 4px; border: 1px solid #1f2937; }
+.drop-inline-form .preview-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; }
+.drop-inline-form .preview-label { color: #8F96A3; }
+.drop-inline-form .preview-value { color: #ef4444; font-family: 'MaplestoryOTFBold', monospace; font-weight: 700; }
+
+/* Settlement inside drop card */
+.drop-settle-list { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; padding: 8px 10px; background: #0f1320; border: 1px solid #1f2937; border-radius: 4px; }
+.drop-settle-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; background: #131822; border-radius: 3px; font-size: 11px; }
+.drop-settle-row.settled { opacity: 0.5; }
+.drop-settle-row.is-leader { background: #1B2030; }
+.drop-settle-row .s-name { color: #C1C2C5; flex: 1; }
+.drop-settle-row .s-name.leader-mark::before { content: '👑 '; }
+.drop-settle-row .s-amount { color: #ef4444; font-family: 'MaplestoryOTFBold', Consolas, monospace; font-weight: 700; }
+.drop-settle-row.settled .s-amount { color: #5c5f66; }
+.drop-settle-row button { padding: 3px 10px; font-size: 10px; background: #1971c2; color: #fff; border: none; border-radius: 3px; cursor: pointer; font-family: inherit; }
+.drop-settle-row.settled button { background: #373A40; color: #8F96A3; }
+
+/* Party members as editable inputs */
+.party-member-input-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+.party-member-input-row input { flex: 1; padding: 6px 10px; background: #1B2030; border: 1px solid #373A40; color: #C1C2C5; border-radius: 4px; font-family: inherit; font-size: 12px; }
+.party-member-input-row input:focus { border-color: #1971c2; outline: none; }
+.party-member-input-row .m-del { padding: 4px 10px; background: #373A40; color: #8F96A3; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; font-family: inherit; }
+.party-member-input-row .m-del:hover { background: #c0392b; color: #fff; }
+.party-member-add-row { margin-top: 6px; }
+.party-member-add-row button { padding: 6px 14px; background: transparent; border: 1px dashed #373A40; color: #5c5f66; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: inherit; }
+.party-member-add-row button:hover { border-color: #1971c2; color: #1971c2; }
+
+/* Top-level navigation */
+.top-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+.top-nav-tab { padding: 10px 18px; background: #131822; border: 1px solid #373A40; color: #8F96A3; border-radius: 4px; cursor: pointer; font-family: 'MaplestoryOTFBold', sans-serif; font-size: 14px; font-weight: 700; transition: all 0.15s; letter-spacing: -0.3px; }
+.top-nav-tab:hover { color: #fff; background: #1B2030; }
+.top-nav-tab.active { background: #1971c2; color: #fff; border-color: #1971c2; }
+body.top-bossdist .top-view-tracker { display: none !important; }
+body.top-bossdist #distribute { display: block !important; }
+
 .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 4px; color: #fff; font-size: 0.9em; opacity: 0; transition: opacity 0.3s; z-index: 100; font-family: inherit; }
 .toast.show { opacity: 1; }
 .toast.success { background: #1971c2; }
 .toast.error { background: #c0392b; }
 </style>
 </head>
-<body>
+<body class="top-tracker">
 <div class="app">
   <div class="header-bar">
-    <h1 style="font-family:'MaplestoryOTFBold',sans-serif;">메이플 일일 재화 관리</h1>
+    <div class="top-nav">
+      <button class="top-nav-tab active" data-view="tracker" onclick="setTopView('tracker')">📋 메이플 일일 재화 관리</button>
+      <button class="top-nav-tab" data-view="bossdist" onclick="setTopView('bossdist')">🗡️ 보스 분배 관리</button>
+    </div>
     <div class="cloud-bar">
       <button id="cloudSaveBtn" class="cloud-btn" onclick="manualCloudSave()">저장됨</button>
       <button id="cloudLoadBtn" class="cloud-btn cloud-btn-load" onclick="manualCloudLoad()">불러오기</button>
     </div>
   </div>
-  <div class="user-tabs" id="userTabs"></div>
-  <div class="dashboard" id="dashboard"></div>
-  <div class="tabs">
+  <div class="user-tabs top-view-tracker" id="userTabs"></div>
+  <div class="dashboard top-view-tracker" id="dashboard"></div>
+  <div class="tabs top-view-tracker">
     <button class="tab active" data-tab="journal">일지</button>
     <button class="tab" data-tab="history">부주 정산</button>
     <button class="tab" data-tab="settings">설정</button>
   </div>
 
   <!-- 일지 (캘린더 + 입력 + 가계부) -->
-  <div id="journal" class="panel active">
+  <div id="journal" class="panel active top-view-tracker">
     <input type="date" id="inputDate" style="display:none">
     <div id="assetCalendarWrap"></div>
     <div id="inputTableSection" style="margin-top:12px;">
@@ -290,7 +431,7 @@ input[type="file"] { display: none; }
   </div>
 
   <!-- 부주 정산 -->
-  <div id="history" class="panel">
+  <div id="history" class="panel top-view-tracker">
     <h3 style="margin:0 0 12px;color:#FFFFFF;font-size:1em;">캐릭터별 누적 정산</h3>
     <div class="sheet-wrap" id="settlementWrap"></div>
     <div style="margin:20px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -313,8 +454,79 @@ input[type="file"] { display: none; }
     <div class="sheet-wrap" id="historyTableWrap"></div>
   </div>
 
+  <!-- 보스 분배 -->
+  <div id="distribute" class="panel">
+    <div class="dist-subtabs">
+      <button class="dist-subtab active" data-subtab="drops" onclick="setDistSubtab('drops')">🎁 드랍 & 분배</button>
+      <button class="dist-subtab" data-subtab="settle" onclick="setDistSubtab('settle')">💰 정산 현황</button>
+      <button class="dist-subtab" data-subtab="party" onclick="setDistSubtab('party')">👥 파티 관리</button>
+    </div>
+
+    <!-- 드랍 & 분배 서브패널 -->
+    <div id="distSub_drops" class="dist-subpanel active">
+      <div class="dist-section">
+        <h3>➕ 드랍 추가</h3>
+        <div class="dist-input-row">
+          <label>파티</label>
+          <select id="dropParty" style="flex:1;padding:8px 10px;background:#1B2030;border:1px solid #373A40;color:#C1C2C5;border-radius:4px;font-family:inherit;font-size:13px;min-width:160px;">
+            <option value="">(파티 선택)</option>
+          </select>
+        </div>
+        <div class="dist-input-row">
+          <label>보스명</label>
+          <input type="text" id="dropBoss" placeholder="예: 검은마법사">
+        </div>
+        <div class="dist-input-row">
+          <label>아이템명</label>
+          <input type="text" id="dropItem" placeholder="예: 제네시스 뱃지">
+        </div>
+        <div class="dist-input-row">
+          <label>메모</label>
+          <input type="text" id="dropMemo" placeholder="선택사항">
+        </div>
+        <button class="btn-add" onclick="addDrop()" style="width:100%;margin-top:4px;padding:10px;font-size:14px;">+ 드랍 기록</button>
+      </div>
+
+      <div class="dist-section">
+        <h3>📦 진행중 (<span id="dropsInProgressCount">0</span>건)</h3>
+        <div id="dropsInProgressList"></div>
+      </div>
+
+      <div class="dist-section">
+        <h3 style="cursor:pointer;user-select:none;" onclick="toggleCompletedDrops()">✅ 완료 (<span id="dropsCompletedCount">0</span>건) <span id="dropsCompletedArrow" style="font-size:11px;color:#5c5f66;">▶</span></h3>
+        <div id="dropsCompletedList" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- 정산 현황 서브패널 -->
+    <div id="distSub_settle" class="dist-subpanel">
+      <div class="dist-section">
+        <h3>💰 파티원별 정산 현황</h3>
+        <div class="view-tabs" style="margin-bottom:10px;">
+          <button class="view-tab active" data-filter="unsettled" onclick="setDistFilter('unsettled')">미정산</button>
+          <button class="view-tab" data-filter="all" onclick="setDistFilter('all')">전체</button>
+        </div>
+        <div id="settlementWrap"></div>
+      </div>
+    </div>
+
+    <!-- 파티 관리 서브패널 -->
+    <div id="distSub_party" class="dist-subpanel">
+      <div class="dist-section">
+        <h3>👥 파티 관리</h3>
+        <div id="partyListWrap"></div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1f2937;">
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="newPartyName" placeholder="새 파티 이름 (예: 검은마법사팟)" style="flex:1;padding:8px 10px;background:#1B2030;border:1px solid #373A40;color:#C1C2C5;border-radius:4px;font-family:inherit;font-size:13px;">
+            <button class="btn-add" onclick="addParty()">+ 파티 추가</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 설정 -->
-  <div id="settings" class="panel">
+  <div id="settings" class="panel top-view-tracker">
     <div class="setting-section">
       <h3>캐릭터 관리</h3>
       <div class="item-list" id="charList"></div>
@@ -2443,6 +2655,688 @@ function renderLedger() {
   wrap.innerHTML = html;
 }
 
+// --- 최상단 네비게이션 (재화 관리 <-> 보스 분배) ---
+function setTopView(view) {
+  document.body.classList.remove('top-tracker', 'top-bossdist');
+  document.body.classList.add('top-' + view);
+  document.querySelectorAll('.top-nav-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === view);
+  });
+  if (view === 'bossdist') renderDistribute();
+  localStorage.setItem('maple_top_view', view);
+}
+
+// --- 보스 분배 ---
+let _distState = {
+  filter: 'unsettled',
+  subtab: 'drops',
+  editingDropId: null,
+  editingMode: null
+};
+
+// 분배 수식 (전송 수수료 반영)
+function calcDist(net, size, commission) {
+  if (!net || size < 2) return null;
+  const sendAmount = Math.floor(net / (size - commission) / 100) * 100;
+  const leaderShare = net - sendAmount * (size - 1);
+  const memberReceive = Math.floor(sendAmount * (1 - commission));
+  const error = leaderShare - memberReceive;
+  const errorRate = leaderShare > 0 ? (error / leaderShare * 100) : 0;
+  return { sendAmount, leaderShare, memberReceive, error, errorRate };
+}
+
+function toEokStr(raw) {
+  if (!raw) return '';
+  const eok = raw / 100000000;
+  return eok.toFixed(6).replace(/\.?0+$/, '');
+}
+
+function setDistSubtab(name) {
+  _distState.subtab = name;
+  document.querySelectorAll('.dist-subtab').forEach(b => b.classList.toggle('active', b.dataset.subtab === name));
+  document.querySelectorAll('.dist-subpanel').forEach(p => p.classList.toggle('active', p.id === 'distSub_' + name));
+  if (name === 'drops') renderDropsLists();
+  if (name === 'settle') renderSettlementList();
+  if (name === 'party') renderPartyList();
+}
+
+// ===== 드랍 관리 =====
+function renderDropPartyDropdown() {
+  const sel = document.getElementById('dropParty');
+  if (!sel) return;
+  const data = loadData();
+  const parties = data.parties || [];
+  const cur = sel.value;
+  let html = '<option value="">(파티 선택)</option>';
+  parties.forEach(p => {
+    html += `<option value="${p.id}">${p.name} (${(p.members || []).length}명)</option>`;
+  });
+  sel.innerHTML = html;
+  if (cur) sel.value = cur;
+}
+
+function addDrop() {
+  const partyId = document.getElementById('dropParty').value;
+  const bossName = document.getElementById('dropBoss').value.trim();
+  const itemName = document.getElementById('dropItem').value.trim();
+  const memo = document.getElementById('dropMemo').value.trim();
+  if (!partyId) { toast('파티를 선택하세요', 'error'); return; }
+  if (!bossName && !itemName) { toast('보스명 또는 아이템명을 입력하세요', 'error'); return; }
+  const data = loadData();
+  const party = (data.parties || []).find(p => String(p.id) === partyId);
+  if (!party) { toast('파티를 찾을 수 없습니다', 'error'); return; }
+  if ((party.members || []).length < 2) { toast('파티원이 2명 이상 필요합니다', 'error'); return; }
+  if (!data.drops) data.drops = [];
+  data.drops.unshift({
+    id: Date.now(),
+    date: todayStr(),
+    partyId: party.id,
+    partyName: party.name,
+    bossName,
+    itemName,
+    memo,
+    status: 'dropped',
+    salePrice: 0,
+    commission: 0.03,
+    netAmount: 0,
+    leaderMemberId: null,
+    distributionId: null
+  });
+  saveData(data);
+  document.getElementById('dropBoss').value = '';
+  document.getElementById('dropItem').value = '';
+  document.getElementById('dropMemo').value = '';
+  renderDropsLists();
+  toast(`드랍 기록됨 — ${party.name}`);
+  document.getElementById('dropBoss').focus();
+}
+
+function deleteDrop(id) {
+  if (!confirm('이 드랍 기록을 삭제하시겠습니까?')) return;
+  const data = loadData();
+  const drop = (data.drops || []).find(d => d.id === id);
+  if (drop && drop.distributionId) {
+    data.distributions = (data.distributions || []).filter(x => x.id !== drop.distributionId);
+  }
+  data.drops = (data.drops || []).filter(d => d.id !== id);
+  saveData(data);
+  renderDropsLists();
+  renderSettlementList();
+  toast('삭제됨');
+}
+
+function listDrop(id) {
+  const data = loadData();
+  const drop = (data.drops || []).find(d => d.id === id);
+  if (!drop) return;
+  drop.status = 'listing';
+  drop.listedAt = Date.now();
+  saveData(data);
+  renderDropsLists();
+  toast('판매 등록됨');
+}
+
+function revertDropStatus(id) {
+  const data = loadData();
+  const drop = (data.drops || []).find(d => d.id === id);
+  if (!drop) return;
+  const order = ['dropped', 'listing', 'sold', 'distributing', 'completed'];
+  const idx = order.indexOf(drop.status);
+  if (idx <= 0) return;
+  if (drop.status === 'distributing' && drop.distributionId) {
+    data.distributions = (data.distributions || []).filter(x => x.id !== drop.distributionId);
+    drop.distributionId = null;
+  }
+  drop.status = order[idx - 1];
+  saveData(data);
+  renderDropsLists();
+  renderSettlementList();
+}
+
+function openSellForm(id) {
+  _distState.editingDropId = id;
+  _distState.editingMode = 'sell';
+  renderDropsLists();
+}
+
+function saveSellInfo(id) {
+  const saleStr = document.getElementById('sellSaleInput_' + id).value.trim();
+  const netStr = document.getElementById('sellNetInput_' + id).value.trim();
+  if (!saleStr && !netStr) { toast('금액을 입력하세요', 'error'); return; }
+  const commBtn = document.querySelector(`#sellCommBtns_${id} .active`);
+  const commission = parseFloat(commBtn.dataset.val);
+  let sale = parseMeso(saleStr);
+  let net;
+  if (saleStr) {
+    net = Math.floor(sale * (1 - commission));
+  } else {
+    net = parseMeso(netStr);
+    sale = commission < 1 ? Math.ceil(net / (1 - commission)) : 0;
+  }
+  const data = loadData();
+  const drop = (data.drops || []).find(d => d.id === id);
+  if (!drop) return;
+  drop.salePrice = sale;
+  drop.netAmount = net;
+  drop.commission = commission;
+  drop.status = 'sold';
+  drop.soldAt = Date.now();
+  saveData(data);
+  _distState.editingDropId = null;
+  _distState.editingMode = null;
+  renderDropsLists();
+  toast('판매 완료');
+}
+
+function setSellComm(dropId, rate) {
+  document.querySelectorAll(`#sellCommBtns_${dropId} button`).forEach(b => {
+    b.classList.toggle('active', parseFloat(b.dataset.val) === rate);
+  });
+  onSellInputChange(dropId, 'sale');
+}
+
+function onSellInputChange(dropId, field) {
+  const saleInput = document.getElementById('sellSaleInput_' + dropId);
+  const netInput = document.getElementById('sellNetInput_' + dropId);
+  const commBtn = document.querySelector(`#sellCommBtns_${dropId} .active`);
+  if (!saleInput || !netInput || !commBtn) return;
+  const commission = parseFloat(commBtn.dataset.val);
+  if (field === 'sale') {
+    const sale = parseMeso(saleInput.value);
+    const net = Math.floor(sale * (1 - commission));
+    netInput.value = net ? toEokStr(net) : '';
+  } else {
+    const net = parseMeso(netInput.value);
+    const sale = commission < 1 ? Math.ceil(net / (1 - commission)) : 0;
+    saleInput.value = sale ? toEokStr(sale) : '';
+  }
+}
+
+function openDistributeForm(id) {
+  _distState.editingDropId = id;
+  _distState.editingMode = 'distribute';
+  renderDropsLists();
+}
+
+function saveDistributeInfo(id) {
+  const leaderSel = document.getElementById('distLeaderSel_' + id);
+  const leaderMemberId = leaderSel ? leaderSel.value : null;
+  if (!leaderMemberId) { toast('파티장을 선택하세요', 'error'); return; }
+  const data = loadData();
+  const drop = (data.drops || []).find(d => d.id === id);
+  if (!drop) return;
+  const party = (data.parties || []).find(p => p.id === drop.partyId);
+  if (!party || !party.members || party.members.length < 2) {
+    toast('파티원이 2명 이상 필요합니다', 'error');
+    return;
+  }
+  const result = calcDist(drop.netAmount, party.members.length, drop.commission);
+  if (!result) { toast('계산 오류', 'error'); return; }
+  const splits = party.members.map(m => {
+    const isLeader = String(m.id) === String(leaderMemberId);
+    return {
+      memberId: m.id,
+      memberName: m.name,
+      isLeader,
+      settled: isLeader,
+      settledAt: isLeader ? Date.now() : null
+    };
+  });
+  if (!data.distributions) data.distributions = [];
+  const distId = Date.now();
+  data.distributions.unshift({
+    id: distId,
+    date: drop.date,
+    dropId: drop.id,
+    partyId: party.id,
+    partyName: party.name,
+    memo: (drop.bossName ? drop.bossName + ' ' : '') + (drop.itemName || ''),
+    sale: drop.salePrice,
+    net: drop.netAmount,
+    commission: drop.commission,
+    partySize: party.members.length,
+    leaderMemberId: leaderMemberId,
+    leaderShare: result.leaderShare,
+    memberSend: result.sendAmount,
+    memberReceive: result.memberReceive,
+    error: result.error,
+    splits
+  });
+  drop.distributionId = distId;
+  drop.leaderMemberId = leaderMemberId;
+  drop.status = 'distributing';
+  saveData(data);
+  _distState.editingDropId = null;
+  _distState.editingMode = null;
+  renderDropsLists();
+  toast('분배 저장 — 파티원별 정산 시작');
+}
+
+function cancelDropEdit() {
+  _distState.editingDropId = null;
+  _distState.editingMode = null;
+  renderDropsLists();
+}
+
+function getDropStatusLabel(status) {
+  const labels = {
+    dropped: '🎁 드랍됨',
+    listing: '📋 판매중',
+    sold: '💰 판매완료',
+    distributing: '⚙️ 분배중',
+    completed: '✅ 완료'
+  };
+  return labels[status] || status;
+}
+
+function renderDropCard(drop, data) {
+  const distribution = drop.distributionId ? (data.distributions || []).find(d => d.id === drop.distributionId) : null;
+  let html = `<div class="drop-card status-${drop.status}">`;
+  html += `<div class="drop-card-header">`;
+  html += `<span class="drop-status-badge">${getDropStatusLabel(drop.status)}</span>`;
+  html += `<span class="drop-party-name">${drop.partyName}</span>`;
+  html += `<span class="drop-date">${drop.date}</span>`;
+  html += `<button class="drop-delete-btn" onclick="deleteDrop(${drop.id})" title="삭제">✕</button>`;
+  html += `</div>`;
+  html += `<div class="drop-card-body">`;
+  if (drop.itemName || drop.bossName) {
+    html += `<div class="drop-item-line"><strong>${drop.itemName || '-'}</strong>`;
+    if (drop.bossName) html += `<span class="drop-boss">(${drop.bossName})</span>`;
+    html += `</div>`;
+  }
+  if (drop.memo) html += `<div class="drop-memo-line">${drop.memo}</div>`;
+  if (drop.salePrice > 0) {
+    html += `<div class="drop-sale-info">판매 ${formatMeso(drop.salePrice)} → 실수령 ${formatMeso(drop.netAmount)} (수수료 ${(drop.commission * 100).toFixed(0)}%)</div>`;
+  }
+  html += `</div>`;
+  if (_distState.editingDropId === drop.id && _distState.editingMode === 'sell') {
+    html += renderSellForm(drop);
+  } else if (_distState.editingDropId === drop.id && _distState.editingMode === 'distribute') {
+    html += renderDistributeForm(drop, data);
+  } else {
+    html += renderDropActions(drop);
+  }
+  if ((drop.status === 'distributing' || drop.status === 'completed') && distribution) {
+    html += renderDropSettlement(drop, distribution);
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderDropActions(drop) {
+  let html = `<div class="drop-card-actions">`;
+  if (drop.status === 'dropped') {
+    html += `<button onclick="listDrop(${drop.id})">📋 판매 등록</button>`;
+    html += `<button class="secondary" onclick="openSellForm(${drop.id})">💰 바로 판매완료</button>`;
+  } else if (drop.status === 'listing') {
+    html += `<button onclick="openSellForm(${drop.id})">💰 판매 완료</button>`;
+    html += `<button class="secondary" onclick="revertDropStatus(${drop.id})">↩ 대기로</button>`;
+  } else if (drop.status === 'sold') {
+    html += `<button onclick="openDistributeForm(${drop.id})">🧮 분배 계산</button>`;
+    html += `<button class="secondary" onclick="revertDropStatus(${drop.id})">↩ 판매중으로</button>`;
+  } else if (drop.status === 'distributing') {
+    html += `<button class="secondary" onclick="revertDropStatus(${drop.id})">↩ 되돌리기</button>`;
+  } else if (drop.status === 'completed') {
+    html += `<button class="secondary" onclick="revertDropStatus(${drop.id})">↩ 되돌리기</button>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderSellForm(drop) {
+  let html = `<div class="drop-inline-form">`;
+  html += `<div class="form-row"><label>판매액</label>`;
+  html += `<input type="text" id="sellSaleInput_${drop.id}" placeholder="억 단위 (예: 100)" value="${drop.salePrice ? toEokStr(drop.salePrice) : ''}" oninput="onSellInputChange(${drop.id},'sale')">`;
+  html += `</div>`;
+  html += `<div class="form-row"><label>실수령</label>`;
+  html += `<input type="text" id="sellNetInput_${drop.id}" placeholder="자동 계산" value="${drop.netAmount ? toEokStr(drop.netAmount) : ''}" oninput="onSellInputChange(${drop.id},'net')">`;
+  html += `</div>`;
+  html += `<div class="form-row"><label>수수료</label>`;
+  html += `<div class="dist-btn-group" id="sellCommBtns_${drop.id}">`;
+  [0.05, 0.03, 0].forEach(r => {
+    const activeR = drop.commission !== undefined && drop.commission !== null ? drop.commission : 0.03;
+    const active = activeR === r ? 'active' : '';
+    html += `<button class="${active}" data-val="${r}" onclick="setSellComm(${drop.id},${r})">${(r * 100).toFixed(0)}%</button>`;
+  });
+  html += `</div></div>`;
+  html += `<div class="form-row" style="justify-content:flex-end;gap:6px;">`;
+  html += `<button onclick="cancelDropEdit()" style="padding:6px 14px;font-size:12px;background:#373A40;color:#8F96A3;border:none;border-radius:3px;cursor:pointer;font-family:inherit;">취소</button>`;
+  html += `<button class="btn-add" onclick="saveSellInfo(${drop.id})" style="padding:6px 20px;font-size:12px;">저장</button>`;
+  html += `</div></div>`;
+  return html;
+}
+
+function renderDistributeForm(drop, data) {
+  const party = (data.parties || []).find(p => p.id === drop.partyId);
+  if (!party) return '<div class="drop-inline-form">파티 정보가 없습니다.</div>';
+  const size = party.members.length;
+  const result = calcDist(drop.netAmount, size, drop.commission);
+  let html = `<div class="drop-inline-form">`;
+  html += `<div class="form-row"><label>파티장</label>`;
+  html += `<select id="distLeaderSel_${drop.id}">`;
+  party.members.forEach(m => { html += `<option value="${m.id}">${m.name}</option>`; });
+  html += `</select></div>`;
+  if (result) {
+    html += `<div class="preview-box">`;
+    html += `<div class="preview-row"><span class="preview-label">실수령</span><span class="preview-value">${formatMeso(drop.netAmount)}</span></div>`;
+    html += `<div class="preview-row"><span class="preview-label">파티장 최종 몫</span><span class="preview-value">${formatMeso(result.leaderShare)}</span></div>`;
+    html += `<div class="preview-row"><span class="preview-label">파티원 보낼 금액 × ${size - 1}</span><span class="preview-value" style="color:#60a5fa;">${formatMeso(result.sendAmount)}</span></div>`;
+    html += `<div class="preview-row"><span class="preview-label">↳ 파티원 실수령</span><span class="preview-value" style="color:#60a5fa;">${formatMeso(result.memberReceive)}</span></div>`;
+    html += `<div class="preview-row"><span class="preview-label">오차</span><span class="preview-value" style="color:#a78bfa;">${formatMeso(result.error)}</span></div>`;
+    html += `</div>`;
+  }
+  html += `<div class="form-row" style="justify-content:flex-end;gap:6px;margin-top:8px;">`;
+  html += `<button onclick="cancelDropEdit()" style="padding:6px 14px;font-size:12px;background:#373A40;color:#8F96A3;border:none;border-radius:3px;cursor:pointer;font-family:inherit;">취소</button>`;
+  html += `<button class="btn-add" onclick="saveDistributeInfo(${drop.id})" style="padding:6px 20px;font-size:12px;">분배 저장</button>`;
+  html += `</div></div>`;
+  return html;
+}
+
+function renderDropSettlement(drop, distribution) {
+  let html = `<div class="drop-settle-list">`;
+  (distribution.splits || []).forEach(s => {
+    const isLeader = s.isLeader;
+    const amount = isLeader ? distribution.leaderShare : distribution.memberSend;
+    const statusClass = s.settled ? 'settled' : '';
+    const leaderClass = isLeader ? 'is-leader' : '';
+    html += `<div class="drop-settle-row ${statusClass} ${leaderClass}">`;
+    html += `<span class="s-name ${isLeader ? 'leader-mark' : ''}">${s.memberName}${isLeader ? ' (파티장)' : ''}</span>`;
+    html += `<span class="s-amount">${formatMeso(amount)}</span>`;
+    if (!isLeader) {
+      const mid = s.memberId != null ? s.memberId : 'null';
+      html += `<button onclick="toggleSettle(${distribution.id},${mid},'${s.memberName.replace(/'/g,"\\'")}')">${s.settled ? '↩ 취소' : '✓ 정산'}</button>`;
+    } else {
+      html += `<span style="font-size:10px;color:#5c5f66;">자동</span>`;
+    }
+    html += `</div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderDropsLists() {
+  renderDropPartyDropdown();
+  const data = loadData();
+  const drops = data.drops || [];
+  const inProgress = drops.filter(d => d.status !== 'completed');
+  const completed = drops.filter(d => d.status === 'completed');
+  const countInProg = document.getElementById('dropsInProgressCount');
+  const countDone = document.getElementById('dropsCompletedCount');
+  if (countInProg) countInProg.textContent = inProgress.length;
+  if (countDone) countDone.textContent = completed.length;
+  const inProgressWrap = document.getElementById('dropsInProgressList');
+  if (inProgressWrap) {
+    if (!inProgress.length) {
+      inProgressWrap.innerHTML = '<div class="no-data">진행중인 드랍이 없습니다.</div>';
+    } else {
+      const order = { distributing: 0, sold: 1, listing: 2, dropped: 3 };
+      inProgress.sort((a, b) => (order[a.status] || 99) - (order[b.status] || 99) || b.id - a.id);
+      inProgressWrap.innerHTML = inProgress.map(d => renderDropCard(d, data)).join('');
+    }
+  }
+  const completedWrap = document.getElementById('dropsCompletedList');
+  if (completedWrap) {
+    if (!completed.length) {
+      completedWrap.innerHTML = '<div class="no-data">완료된 드랍이 없습니다.</div>';
+    } else {
+      completed.sort((a, b) => b.id - a.id);
+      completedWrap.innerHTML = completed.slice(0, 20).map(d => renderDropCard(d, data)).join('');
+    }
+  }
+}
+
+function toggleCompletedDrops() {
+  const el = document.getElementById('dropsCompletedList');
+  const arrow = document.getElementById('dropsCompletedArrow');
+  if (!el) return;
+  if (el.style.display === 'none') {
+    el.style.display = '';
+    if (arrow) arrow.textContent = '▼';
+  } else {
+    el.style.display = 'none';
+    if (arrow) arrow.textContent = '▶';
+  }
+}
+
+// ===== 파티 관리 (인라인 input 필드) =====
+function renderPartyList() {
+  const wrap = document.getElementById('partyListWrap');
+  if (!wrap) return;
+  const data = loadData();
+  const parties = data.parties || [];
+  if (!parties.length) {
+    wrap.innerHTML = '<div class="no-data">등록된 파티가 없습니다. 아래에서 추가하세요.</div>';
+    return;
+  }
+  let html = '';
+  parties.forEach(p => {
+    html += `<div class="party-card">`;
+    html += `<div class="party-card-header">`;
+    html += `<input type="text" value="${p.name.replace(/"/g, '&quot;')}" onblur="renamePartyDirect(${p.id},this.value)" style="flex:1;padding:6px 10px;background:#1B2030;border:1px solid #373A40;color:#FFFFFF;border-radius:4px;font-family:inherit;font-size:13px;font-weight:700;">`;
+    html += `<span style="color:#5c5f66;font-size:11px;white-space:nowrap;">${(p.members||[]).length}명</span>`;
+    html += `<button class="party-delete" onclick="deleteParty(${p.id})" title="파티 삭제">✕</button>`;
+    html += `</div>`;
+    (p.members || []).forEach(m => {
+      html += `<div class="party-member-input-row">`;
+      html += `<input type="text" value="${(m.name || '').replace(/"/g, '&quot;')}" placeholder="멤버 이름" onblur="renameMemberDirect(${p.id},${m.id},this.value)">`;
+      html += `<button class="m-del" onclick="removeMember(${p.id},${m.id})">✕</button>`;
+      html += `</div>`;
+    });
+    html += `<div class="party-member-add-row">`;
+    html += `<button onclick="addMemberInline(${p.id})">+ 멤버 추가</button>`;
+    html += `</div>`;
+    html += `</div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+function renamePartyDirect(id, newName) {
+  newName = (newName || '').trim();
+  if (!newName) return;
+  const data = loadData();
+  const p = (data.parties || []).find(x => x.id === id);
+  if (!p || p.name === newName) return;
+  p.name = newName;
+  (data.drops || []).forEach(d => { if (d.partyId === id) d.partyName = newName; });
+  (data.distributions || []).forEach(d => { if (d.partyId === id) d.partyName = newName; });
+  saveData(data);
+  renderDropPartyDropdown();
+}
+
+function renameMemberDirect(partyId, memberId, newName) {
+  newName = (newName || '').trim();
+  if (!newName) return;
+  const data = loadData();
+  const p = (data.parties || []).find(x => x.id === partyId);
+  if (!p) return;
+  const m = (p.members || []).find(x => x.id === memberId);
+  if (!m || m.name === newName) return;
+  m.name = newName;
+  saveData(data);
+}
+
+function addParty() {
+  const input = document.getElementById('newPartyName');
+  const name = input.value.trim();
+  if (!name) { toast('파티 이름을 입력하세요', 'error'); return; }
+  const data = loadData();
+  if (!data.parties) data.parties = [];
+  data.parties.push({ id: Date.now(), name, members: [] });
+  saveData(data);
+  input.value = '';
+  renderPartyList();
+  renderDropPartyDropdown();
+  toast(`"${name}" 추가됨`);
+}
+
+function deleteParty(id) {
+  if (!confirm('이 파티를 삭제하시겠습니까? (기존 드랍/분배 기록은 유지됩니다)')) return;
+  const data = loadData();
+  data.parties = (data.parties || []).filter(p => p.id !== id);
+  saveData(data);
+  renderPartyList();
+  renderDropPartyDropdown();
+  toast('파티 삭제됨');
+}
+
+function addMemberInline(partyId) {
+  const data = loadData();
+  const p = (data.parties || []).find(x => x.id === partyId);
+  if (!p) return;
+  if (!p.members) p.members = [];
+  p.members.push({ id: Date.now(), name: '' });
+  saveData(data);
+  renderPartyList();
+  setTimeout(() => {
+    const cards = document.querySelectorAll('#partyListWrap .party-card');
+    const partyIdx = data.parties.findIndex(x => x.id === partyId);
+    if (cards[partyIdx]) {
+      const inputs = cards[partyIdx].querySelectorAll('.party-member-input-row input');
+      const last = inputs[inputs.length - 1];
+      if (last) last.focus();
+    }
+  }, 50);
+}
+
+function removeMember(partyId, memberId) {
+  const data = loadData();
+  const p = (data.parties || []).find(x => x.id === partyId);
+  if (!p || !p.members) return;
+  p.members = p.members.filter(m => m.id !== memberId);
+  saveData(data);
+  renderPartyList();
+  renderDropPartyDropdown();
+}
+
+// ===== 정산 현황 =====
+function renderSettlementList() {
+  const wrap = document.getElementById('settlementWrap');
+  if (!wrap) return;
+  const data = loadData();
+  const dists = data.distributions || [];
+  if (!dists.length) {
+    wrap.innerHTML = '<div class="no-data">분배 기록이 없습니다.</div>';
+    return;
+  }
+  const memberMap = {};
+  dists.forEach(d => {
+    (d.splits || []).forEach(s => {
+      if (s.isLeader) return;
+      const key = s.memberId != null ? 'id_' + s.memberId : 'name_' + s.memberName;
+      if (!memberMap[key]) {
+        memberMap[key] = { name: s.memberName, entries: [], unsettled: 0, settledTotal: 0 };
+      }
+      memberMap[key].entries.push({ dist: d, split: s });
+      const amount = d.memberSend || 0;
+      if (s.settled) memberMap[key].settledTotal += amount;
+      else memberMap[key].unsettled += amount;
+    });
+  });
+  const filter = _distState.filter || 'unsettled';
+  let members = Object.values(memberMap);
+  if (filter === 'unsettled') members = members.filter(m => m.unsettled > 0);
+  if (!members.length) {
+    wrap.innerHTML = '<div class="no-data">해당하는 기록이 없습니다.</div>';
+    return;
+  }
+  members.sort((a, b) => b.unsettled - a.unsettled);
+  let html = '';
+  members.forEach(m => {
+    const unsettledCount = m.entries.filter(e => !e.split.settled).length;
+    const encodedName = m.name.replace(/'/g, "\\'");
+    html += `<div class="settlement-member">`;
+    html += `<div class="settlement-member-header">`;
+    html += `<span class="settlement-member-name">${m.name}</span>`;
+    if (m.unsettled > 0) html += `<span class="settlement-pending">미정산 ${formatMeso(m.unsettled)} (${unsettledCount}건)</span>`;
+    if (m.settledTotal > 0) html += `<span class="settlement-done-total">정산완료 ${formatMeso(m.settledTotal)}</span>`;
+    if (unsettledCount > 0) html += `<button class="settlement-bulk-btn" onclick="settleAllForMember('${encodedName}')">모두 정산완료</button>`;
+    html += `</div>`;
+    html += `<div class="settlement-entries">`;
+    const showEntries = filter === 'unsettled' ? m.entries.filter(e => !e.split.settled) : m.entries;
+    showEntries.forEach(e => {
+      const statusClass = e.split.settled ? 'done' : 'pending';
+      html += `<div class="settlement-entry ${statusClass}">`;
+      html += `<span class="entry-date">${e.dist.date.slice(5)}</span>`;
+      html += `<span class="entry-party">${e.dist.partyName}</span>`;
+      html += `<span class="entry-memo">${e.dist.memo || ''}</span>`;
+      html += `<span class="entry-amount">${formatMeso(e.dist.memberSend)}</span>`;
+      const midArg = e.split.memberId != null ? e.split.memberId : 'null';
+      html += `<button class="entry-toggle" onclick="toggleSettle(${e.dist.id},${midArg},'${e.split.memberName.replace(/'/g,"\\'")}')">${e.split.settled ? '↩ 취소' : '✓ 정산'}</button>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+    html += `</div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+function toggleSettle(distId, memberId, memberName) {
+  const data = loadData();
+  const dist = (data.distributions || []).find(d => d.id === distId);
+  if (!dist) return;
+  const split = (dist.splits || []).find(s => {
+    if (s.isLeader) return false;
+    if (memberId !== null && memberId !== 'null') return s.memberId === memberId;
+    return s.memberName === memberName;
+  });
+  if (!split) return;
+  split.settled = !split.settled;
+  split.settledAt = split.settled ? Date.now() : null;
+  updateDropStatusFromSplits(data, dist);
+  saveData(data);
+  renderSettlementList();
+  renderDropsLists();
+}
+
+function updateDropStatusFromSplits(data, dist) {
+  if (!dist.dropId) return;
+  const drop = (data.drops || []).find(d => d.id === dist.dropId);
+  if (!drop) return;
+  const allSettled = (dist.splits || []).every(s => s.settled);
+  if (allSettled && drop.status === 'distributing') {
+    drop.status = 'completed';
+  } else if (!allSettled && drop.status === 'completed') {
+    drop.status = 'distributing';
+  }
+}
+
+function settleAllForMember(memberName) {
+  if (!confirm(`${memberName}의 모든 미정산 건을 정산완료 처리할까요?`)) return;
+  const data = loadData();
+  (data.distributions || []).forEach(d => {
+    (d.splits || []).forEach(s => {
+      if (!s.isLeader && s.memberName === memberName && !s.settled) {
+        s.settled = true;
+        s.settledAt = Date.now();
+      }
+    });
+    updateDropStatusFromSplits(data, d);
+  });
+  saveData(data);
+  renderSettlementList();
+  renderDropsLists();
+  toast(`${memberName} 정산완료`);
+}
+
+function setDistFilter(filter) {
+  _distState.filter = filter;
+  document.querySelectorAll('#distSub_settle .view-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === filter);
+  });
+  renderSettlementList();
+}
+
+function renderDistribute() {
+  renderDropPartyDropdown();
+  renderDropsLists();
+  renderPartyList();
+  renderSettlementList();
+}
+
+function initDistribute() {
+  // 인라인 폼 사용 — 전역 리스너 불필요
+}
+
 // --- Init ---
 const _cachedBoot = localStorage.getItem('maple_cloud_cache');
 if (_cachedBoot) _cloudData = JSON.parse(_cachedBoot);
@@ -2452,6 +3346,11 @@ renderAssetCalendar();
 renderInputTable();
 renderLedger();
 renderBalanceSection();
+renderDistribute();
+initDistribute();
+// 저장된 최상단 뷰 복원
+const _savedTopView = localStorage.getItem('maple_top_view');
+if (_savedTopView === 'bossdist') setTopView('bossdist');
 // 클라우드 동기화 (비동기)
 initCloud();
 

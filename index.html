@@ -435,6 +435,15 @@ body.top-bossdist #distribute { display: block !important; }
   <div id="history" class="panel top-view-tracker">
     <h3 style="margin:0 0 12px;color:#FFFFFF;font-size:1em;">캐릭터별 누적 정산</h3>
     <div class="sheet-wrap" id="settlementWrap"></div>
+
+    <!-- 정산 이력 모아보기 -->
+    <div style="margin-top:24px;padding:14px 16px;background:#0d1320;border:1px solid #1f2937;border-radius:6px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+        <h3 style="margin:0;color:#fff;font-size:14px;">📋 정산 이력 (실수로 정산했으면 체크해서 한번에 취소)</h3>
+        <button id="deleteSelectedEntriesBtn" onclick="deleteSelectedEntries()" style="margin-left:auto;padding:5px 14px;border:1px solid #3a1010;background:#1a0e0e;color:#c0392b;font-size:12px;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:600;" disabled>↩ 선택 취소 (0)</button>
+      </div>
+      <div id="allEntriesWrap"></div>
+    </div>
     <div style="margin:20px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <div class="view-tabs">
         <button class="view-tab active" data-view="daily" onclick="switchView('daily')">일별</button>
@@ -590,6 +599,7 @@ body.top-bossdist #distribute { display: block !important; }
     <h3 id="settleModalTitle" style="color:#ffd76b;font-size:17px;font-weight:700;margin:0 0 4px;">정산</h3>
     <div style="color:#8F96A3;font-size:12px;margin-bottom:14px;">정산 방식을 선택하고 금액을 입력하세요. 부분정산이 가능합니다.</div>
     <div id="settleModalBalance" style="background:#0a1a30;border:1px solid #1971c2;border-radius:5px;padding:10px 12px;margin-bottom:14px;"></div>
+    <div id="settleModalHistory" style="display:none;"></div>
     <div id="settleModalTabs" style="display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid #1f2937;flex-wrap:wrap;"></div>
     <div id="settleModalBody"></div>
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
@@ -625,8 +635,17 @@ const APP_VERSION = 2;
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-05-27';
+const CHANGELOG_VERSION = '2026-05-27.2';
 const CHANGELOG = [
+  {
+    version: '2026-05-27.2',
+    title: '📋 정산 이력 모아보기 추가',
+    items: [
+      '부주정산 탭 아래에 <strong>전체 정산 이력</strong> 섹션 추가',
+      '실수로 정산했으면 <strong>체크박스</strong>로 여러 건 선택 → 한번에 ↩취소',
+      '캐릭터명 옆 "▶ 이력 N건" 버튼도 더 눈에 띄게 변경',
+    ],
+  },
   {
     version: '2026-05-27',
     title: '💰 부주정산 대규모 업데이트',
@@ -637,7 +656,6 @@ const CHANGELOG = [
       '<strong>부분정산</strong> 지원 — 받은 만큼 누적에서 차감 (여러 번 가능)',
       '<strong>메소로 정산</strong> 모드 — 현금 대신 메소로 받기',
       '<strong>선금(까먹기)</strong> 모드 — 미리 지급하면 마이너스 누적으로 표시',
-      '캐릭터명 옆 ▶ 눌러 정산 이력 펼치기 + 개별 ↩되돌리기',
     ],
   },
 ];
@@ -1920,6 +1938,34 @@ function renderSettleModal() {
 
   // 헤더 정보
   document.getElementById('settleModalTitle').textContent = `💰 ${ch} 정산`;
+
+  // 최근 정산 이력 (entries가 있으면 표시)
+  const histBox = document.getElementById('settleModalHistory');
+  if (st.entries.length) {
+    let h = '<div style="background:#0a0e15;border:1px solid #1f2937;border-radius:5px;padding:10px 12px;margin-bottom:12px;">';
+    h += `<div style="color:#8F96A3;font-size:11px;font-weight:600;margin-bottom:6px;">📋 최근 정산 이력 (${st.entries.length}건) — 잘못 기록했으면 ↩되돌리기</div>`;
+    st.entries.slice().reverse().slice(0, 5).forEach(e => {
+      const typeLabel = e.type === 'cash' ? '<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#3a1010;color:#ff8a65;margin-right:6px;">현금</span>'
+        : e.type === 'meso' ? '<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#3a3010;color:#ffd76b;margin-right:6px;">메소</span>'
+        : e.type === 'advance' ? '<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a3a;color:#7ed4d4;margin-right:6px;">선금</span>'
+        : '<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a1a;color:#7ec97e;margin-right:6px;">전체</span>';
+      let amtTxt = '';
+      if (e.type === 'cash' || (e.type === 'advance' && e.subType === 'cash')) amtTxt = `${Number(e.amount).toLocaleString()}원 (${formatMeso(e.mesoEquiv)})`;
+      else amtTxt = `${formatMeso(e.mesoEquiv)} 메소`;
+      h += `<div style="padding:3px 0;font-size:11px;color:#cdd6f4;display:flex;align-items:center;gap:4px;">`;
+      h += `<span style="color:#5c5f66;font-family:Consolas,monospace;min-width:80px;">${e.date}</span>${typeLabel}<span>${amtTxt}</span>`;
+      if (e.memo) h += `<span style="color:#5c5f66;font-size:10px;">— ${e.memo}</span>`;
+      h += `<button onclick="deleteSettlementEntry('${ch.replace(/'/g,"\\'")}',${e.id});setTimeout(renderSettleModal,50)" style="background:none;border:1px solid #3a1010;color:#c0392b;font-size:10px;cursor:pointer;margin-left:auto;font-family:inherit;border-radius:3px;padding:2px 8px;">↩ 되돌리기</button>`;
+      h += `</div>`;
+    });
+    if (st.entries.length > 5) h += `<div style="font-size:10px;color:#5c5f66;margin-top:4px;text-align:center;">+ ${st.entries.length - 5}건 더 (표에서 ▶ 펼치기)</div>`;
+    h += '</div>';
+    histBox.innerHTML = h;
+    histBox.style.display = '';
+  } else {
+    histBox.style.display = 'none';
+  }
+
   const balBox = document.getElementById('settleModalBalance');
   balBox.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
@@ -2172,11 +2218,111 @@ function deleteSettlementEntry(ch, entryId) {
   toast('정산 기록 되돌림');
 }
 
+// 전체 정산 이력 모아보기 + 체크박스로 일괄 취소
+function renderAllEntries() {
+  const wrap = document.getElementById('allEntriesWrap');
+  if (!wrap) return;
+  const data = loadData();
+  // 모든 캐릭터의 entries를 모아 시간순 정렬
+  const all = [];
+  (data.characters || []).forEach(ch => {
+    const entries = data.settlements?.[ch]?.entries || [];
+    entries.forEach(e => all.push({ ch, ...e }));
+  });
+  all.sort((a, b) => (b.date + b.id).localeCompare(a.date + a.id));
+
+  if (!all.length) {
+    wrap.innerHTML = '<div style="color:#5c5f66;font-size:12px;padding:14px;text-align:center;">정산 이력이 없습니다.</div>';
+    updateDeleteSelectedBtn();
+    return;
+  }
+
+  let h = '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+  h += '<thead><tr style="background:#131822;color:#8F96A3;font-size:11px;">';
+  h += '<th style="padding:6px 8px;text-align:center;width:32px;"><input type="checkbox" id="entryCheckAll" onchange="toggleAllEntryCheck(this.checked)"></th>';
+  h += '<th style="padding:6px 8px;text-align:left;">날짜</th>';
+  h += '<th style="padding:6px 8px;text-align:left;">캐릭터</th>';
+  h += '<th style="padding:6px 8px;text-align:center;">구분</th>';
+  h += '<th style="padding:6px 8px;text-align:right;">금액</th>';
+  h += '<th style="padding:6px 8px;text-align:right;">메소 환산</th>';
+  h += '<th style="padding:6px 8px;text-align:left;">메모</th>';
+  h += '</tr></thead><tbody>';
+  all.forEach(e => {
+    const typeLabel = e.type === 'cash' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#3a1010;color:#ff8a65;">💵 현금</span>'
+      : e.type === 'meso' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#3a3010;color:#ffd76b;">💰 메소</span>'
+      : e.type === 'advance' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a3a;color:#7ed4d4;">🔵 선금</span>'
+      : '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a1a;color:#7ec97e;">✅ 전체</span>';
+    let amtTxt = '';
+    if (e.type === 'cash' || (e.type === 'advance' && e.subType === 'cash')) {
+      amtTxt = `${Number(e.amount).toLocaleString()} 원`;
+    } else if (e.type === 'meso' || (e.type === 'advance' && e.subType === 'meso')) {
+      amtTxt = `${formatNum(e.amount)} 메소`;
+    } else {
+      amtTxt = e.subType === 'cash' ? `${Number(e.amount).toLocaleString()} 원` : `${formatNum(e.amount)} 메소`;
+    }
+    h += `<tr style="border-bottom:1px solid #1f2937;">`;
+    h += `<td style="padding:7px 8px;text-align:center;"><input type="checkbox" class="entry-check" data-ch="${e.ch}" data-id="${e.id}" onchange="updateDeleteSelectedBtn()"></td>`;
+    h += `<td style="padding:7px 8px;color:#8F96A3;font-family:Consolas,monospace;font-size:12px;">${e.date}</td>`;
+    h += `<td style="padding:7px 8px;color:#fff;font-weight:600;">${e.ch}</td>`;
+    h += `<td style="padding:7px 8px;text-align:center;">${typeLabel}</td>`;
+    h += `<td style="padding:7px 8px;text-align:right;color:#cdd6f4;font-family:Consolas,monospace;">${amtTxt}</td>`;
+    h += `<td style="padding:7px 8px;text-align:right;color:#ffd76b;font-family:Consolas,monospace;font-size:12px;">${formatNum(e.mesoEquiv)}</td>`;
+    h += `<td style="padding:7px 8px;color:#8F96A3;font-size:12px;">${e.memo || '-'}</td>`;
+    h += `</tr>`;
+  });
+  h += '</tbody></table>';
+  wrap.innerHTML = h;
+  updateDeleteSelectedBtn();
+}
+
+function toggleAllEntryCheck(checked) {
+  document.querySelectorAll('#allEntriesWrap .entry-check').forEach(cb => { cb.checked = checked; });
+  updateDeleteSelectedBtn();
+}
+
+function updateDeleteSelectedBtn() {
+  const btn = document.getElementById('deleteSelectedEntriesBtn');
+  if (!btn) return;
+  const checked = document.querySelectorAll('#allEntriesWrap .entry-check:checked');
+  btn.textContent = `↩ 선택 취소 (${checked.length})`;
+  btn.disabled = checked.length === 0;
+}
+
+function deleteSelectedEntries() {
+  const checked = document.querySelectorAll('#allEntriesWrap .entry-check:checked');
+  if (!checked.length) return;
+  if (!confirm(`선택한 ${checked.length}건의 정산 기록을 취소하시겠습니까?`)) return;
+  const data = loadData();
+  let removed = 0;
+  checked.forEach(cb => {
+    const ch = cb.dataset.ch;
+    const id = Number(cb.dataset.id);
+    const arr = data.settlements?.[ch]?.entries || [];
+    const idx = arr.findIndex(e => e.id === id);
+    if (idx >= 0) {
+      const entry = arr[idx];
+      arr.splice(idx, 1);
+      // full 타입 취소 시 history / lastDate 함께 롤백
+      if (entry.type === 'full') {
+        const hist = data.settlements[ch].history || [];
+        const hIdx = hist.findIndex(h => h.date === entry.date);
+        if (hIdx >= 0) hist.splice(hIdx, 1);
+        if (hist.length) data.settlements[ch].lastDate = hist[hist.length - 1].date;
+        else data.settlements[ch].lastDate = '';
+      }
+      removed++;
+    }
+  });
+  saveData(data);
+  renderHistory();
+  toast(`${removed}건 취소 완료`);
+}
+
 function toggleSettleHistory(ch) {
   const el = document.querySelector(`tr[data-settle-hist="${CSS.escape(ch)}"]`);
   if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
-  const arrow = document.querySelector(`span[data-settle-arrow="${CSS.escape(ch)}"]`);
-  if (arrow) arrow.textContent = arrow.textContent === '▶' ? '▼' : '▶';
+  const btn = document.querySelector(`button[data-settle-arrow="${CSS.escape(ch)}"]`);
+  if (btn) btn.textContent = btn.textContent.startsWith('▶') ? btn.textContent.replace('▶', '▼') : btn.textContent.replace('▼', '▶');
 }
 
 function rollbackSettle(ch) {
@@ -2255,15 +2401,13 @@ function renderHistory() {
       const remCash = state.remainingCash;
       const isNeg = remMeso < 0;
       const hasHist = state.entries.length > 0;
-      const arrowChar = hasHist ? '▶' : '·';
-      const arrowStyle = hasHist ? 'cursor:pointer;color:#cdd6f4;' : 'color:#373A40;';
       sh += `<tr><td class="row-header">`;
+      sh += `<div style="display:flex;align-items:center;gap:6px;">`;
+      sh += `<span>${ch}</span>`;
       if (hasHist) {
-        sh += `<span data-settle-arrow="${ch}" onclick="toggleSettleHistory('${ch.replace(/'/g,"\\'")}')" style="${arrowStyle}margin-right:4px;display:inline-block;width:12px;">${arrowChar}</span>`;
-      } else {
-        sh += `<span style="${arrowStyle}margin-right:4px;display:inline-block;width:12px;">·</span>`;
+        sh += `<button data-settle-arrow="${ch}" onclick="toggleSettleHistory('${ch.replace(/'/g,"\\'")}')" style="background:#1a3a1a;border:1px solid #2a5a3a;color:#7ec97e;font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px;cursor:pointer;font-family:inherit;">▶ 이력 ${state.entries.length}건</button>`;
       }
-      sh += `${ch}</td>`;
+      sh += `</div></td>`;
       data.resources.forEach(r => {
         const qty = totals[r] || 0;
         const price = getResourcePrice(r);
@@ -2348,6 +2492,7 @@ function renderHistory() {
   sh += '</tbody></table>';
   settleWrap.innerHTML = sh;
 
+  renderAllEntries();
   renderRecordView(data, wrap);
 }
 

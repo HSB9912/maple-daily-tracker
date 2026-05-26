@@ -353,6 +353,7 @@ body.top-bossdist #distribute { display: block !important; }
       <button class="top-nav-tab" data-view="bossdist" onclick="setTopView('bossdist')">🗡️ 보스 분배 관리</button>
     </div>
     <div class="cloud-bar">
+      <button id="changelogBtn" class="cloud-btn" onclick="openChangelog()" title="업데이트 내역" style="position:relative;">🔔 업데이트<span id="changelogDot" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;background:#ef4444;border-radius:50%;"></span></button>
       <button id="cloudSaveBtn" class="cloud-btn" onclick="manualCloudSave()">저장됨</button>
       <button id="cloudLoadBtn" class="cloud-btn cloud-btn-load" onclick="manualCloudLoad()">불러오기</button>
     </div>
@@ -568,6 +569,21 @@ body.top-bossdist #distribute { display: block !important; }
 
 <div class="toast" id="toast"></div>
 
+<!-- 업데이트 내역 모달 -->
+<div id="changelogModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1001;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target.id==='changelogModal')closeChangelog()">
+  <div style="background:#0d1320;border:1px solid #3a2a10;border-radius:10px;padding:24px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <span style="font-size:20px;">🆕</span>
+      <h3 style="color:#ffd76b;font-size:18px;font-weight:700;margin:0;">업데이트 내역</h3>
+    </div>
+    <div style="color:#8F96A3;font-size:12px;margin-bottom:16px;">마지막으로 확인한 이후의 변경 사항입니다.</div>
+    <div id="changelogBody"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end;">
+      <button onclick="closeChangelog()" style="padding:8px 22px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:#1971c2;color:#fff;">확인했어요</button>
+    </div>
+  </div>
+</div>
+
 <!-- 정산 모달 -->
 <div id="settleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target.id==='settleModal')closeSettleModal()">
   <div style="background:#0d1320;border:1px solid #1f2937;border-radius:8px;padding:22px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;">
@@ -605,6 +621,58 @@ body.top-bossdist #distribute { display: block !important; }
 
 <script>
 const APP_VERSION = 2;
+
+// === 업데이트 내역 ===
+// 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
+// CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
+const CHANGELOG_VERSION = '2026-05-27';
+const CHANGELOG = [
+  {
+    version: '2026-05-27',
+    title: '💰 부주정산 대규모 업데이트',
+    items: [
+      '재화별 메소 단가 설정 (설정 탭 → 재화 시세 설정)',
+      '메소 1억당 현금 시세 입력 → 정산 현금 자동 계산',
+      '부주정산 표에 <strong style="color:#ffd76b">합산 메소</strong> + <strong style="color:#ff8a65">정산 현금</strong> 컬럼 추가',
+      '<strong>부분정산</strong> 지원 — 받은 만큼 누적에서 차감 (여러 번 가능)',
+      '<strong>메소로 정산</strong> 모드 — 현금 대신 메소로 받기',
+      '<strong>선금(까먹기)</strong> 모드 — 미리 지급하면 마이너스 누적으로 표시',
+      '캐릭터명 옆 ▶ 눌러 정산 이력 펼치기 + 개별 ↩되돌리기',
+    ],
+  },
+];
+
+function openChangelog() {
+  const body = document.getElementById('changelogBody');
+  let html = '';
+  CHANGELOG.forEach(entry => {
+    html += `<div style="margin-bottom:18px;padding:14px;background:#131822;border:1px solid #1f2937;border-radius:6px;">`;
+    html += `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;flex-wrap:wrap;gap:6px;">`;
+    html += `<div style="color:#fff;font-size:14px;font-weight:700;">${entry.title}</div>`;
+    html += `<div style="color:#5c5f66;font-size:11px;font-family:Consolas,monospace;">${entry.version}</div>`;
+    html += `</div>`;
+    html += `<ul style="margin:0;padding-left:18px;color:#cdd6f4;font-size:13px;line-height:1.7;">`;
+    entry.items.forEach(it => html += `<li>${it}</li>`);
+    html += `</ul></div>`;
+  });
+  body.innerHTML = html;
+  document.getElementById('changelogModal').style.display = 'flex';
+  localStorage.setItem('maple_seen_changelog', CHANGELOG_VERSION);
+  const dot = document.getElementById('changelogDot');
+  if (dot) dot.style.display = 'none';
+}
+function closeChangelog() {
+  document.getElementById('changelogModal').style.display = 'none';
+}
+function checkChangelogOnLoad() {
+  const seen = localStorage.getItem('maple_seen_changelog') || '';
+  if (seen < CHANGELOG_VERSION) {
+    const dot = document.getElementById('changelogDot');
+    if (dot) dot.style.display = '';
+    // 첫 방문 자동 표시 (1초 후, 다른 초기화와 안 겹치게)
+    setTimeout(() => openChangelog(), 1000);
+  }
+}
 // --- Supabase ---
 const SUPABASE_URL = 'https://lapxytabpabdkomjspta.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhcHh5dGFicGFiZGtvbWpzcHRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODM5OTcsImV4cCI6MjA5MTY1OTk5N30.tU4zbHkbM-fan_MIeV0bqjMu8Z_LKkj335YrdnKMVR8';
@@ -774,6 +842,7 @@ async function initCloud() {
   renderUserSelect();
   refreshAll();
   startPolling();
+  checkChangelogOnLoad();
 }
 
 // --- 유저 관리 ---

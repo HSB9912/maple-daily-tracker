@@ -544,12 +544,14 @@ body.top-bossdist #distribute { display: block !important; }
       </div>
     </div>
     <div class="setting-section">
-      <h3>재화 시세 설정</h3>
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;">
-        <img src="dajo.png" style="width:20px;height:20px">
-        <span style="color:#C1C2C5;font-size:13px;">다조 1개 =</span>
-        <input type="text" id="dajoPriceInput" placeholder="680만" style="width:120px;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;" oninput="saveDajoPrice()">
-        <span style="color:#5c5f66;font-size:12px;">메소</span>
+      <h3>재화 시세 설정 <span style="font-size:11px;color:#5c5f66;font-weight:400;">— 비우면 합산에서 제외</span></h3>
+      <div id="resourcePriceList"></div>
+      <div style="margin-top:14px;padding:12px 14px;background:#1a1410;border:1px solid #3a2a10;border-radius:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="color:#ffd76b;font-size:13px;font-weight:600;">💵 메소 → 현금 시세</span>
+        <span style="color:#cdd6f4;font-size:13px;">메소 1억 =</span>
+        <input type="text" id="cashRateInput" placeholder="예: 1500" style="width:120px;padding:6px 10px;background:#0a0a0a;border:1px solid #3a2a10;border-radius:4px;color:#ffd76b;font-family:inherit;font-size:14px;text-align:right;" oninput="saveCashRate()">
+        <span style="color:#8F96A3;font-size:12px;">원</span>
+        <span style="color:#5c5f66;font-size:11px;margin-left:auto;">부주정산 표에 정산 현금이 표시됩니다</span>
       </div>
     </div>
     <div class="setting-section">
@@ -930,26 +932,101 @@ function formatMeso(n) {
   return sign + (parts.length ? parts.join(' ') : '0');
 }
 
-// 다조 시세 관리
+// 다조 시세 관리 (호환)
 const DEFAULT_DAJO_PRICE = 6800000; // 680만 메소
 function getDajoPrice() {
-  const data = loadData();
-  return Number(data.dajoPrice) || DEFAULT_DAJO_PRICE;
+  return getResourcePrice('다조') || DEFAULT_DAJO_PRICE;
 }
-function saveDajoPrice() {
-  const input = document.getElementById('dajoPriceInput');
-  if (!input) return;
-  const raw = input.value.replace(/[^0-9]/g, '');
+
+// 재화별 메소 단가 (data.prices = { 재화명: 메소단가 })
+// '매소'는 항상 1:1, '경험치'는 항상 합산 제외
+function getResourcePrice(res) {
+  if (res === '매소') return 1;
+  if (res === '경험치') return 0;
   const data = loadData();
-  data.dajoPrice = Number(raw) || 0;
+  // 마이그레이션: 기존 data.dajoPrice → data.prices['다조']
+  if (!data.prices) data.prices = {};
+  if (data.dajoPrice && !data.prices['다조']) {
+    data.prices['다조'] = Number(data.dajoPrice) || 0;
+  }
+  return Number(data.prices[res]) || 0;
+}
+
+function setResourcePrice(res, value) {
+  const data = loadData();
+  if (!data.prices) data.prices = {};
+  data.prices[res] = Number(value) || 0;
+  // 호환: 다조는 dajoPrice도 동기화
+  if (res === '다조') data.dajoPrice = data.prices[res];
   saveData(data);
   renderDashboard();
 }
-function initDajoPriceInput() {
-  const input = document.getElementById('dajoPriceInput');
+
+// 메소→현금 시세 (메소 1억당 원)
+function getCashRate() {
+  const data = loadData();
+  return Number(data.cashRate) || 0;
+}
+function saveCashRate() {
+  const input = document.getElementById('cashRateInput');
   if (!input) return;
-  const price = getDajoPrice();
-  if (price > 0) input.value = formatMeso(price);
+  const raw = input.value.replace(/[^0-9]/g, '');
+  const data = loadData();
+  data.cashRate = Number(raw) || 0;
+  saveData(data);
+  renderHistory();
+}
+
+// 합산 메소 계산 (totals: 재화별 누적량)
+function calcSettlementMeso(totals) {
+  let sum = 0;
+  Object.keys(totals).forEach(res => {
+    if (res === '경험치') return;
+    const price = getResourcePrice(res);
+    if (!price) return;
+    sum += (totals[res] || 0) * price;
+  });
+  return sum;
+}
+// 정산 현금 계산 (메소 → 원)
+function calcSettlementCash(meso) {
+  const rate = getCashRate();
+  if (!rate) return 0;
+  return Math.round(meso / 100000000 * rate);
+}
+
+// 재화 시세 입력 UI 렌더링
+function renderResourcePriceList() {
+  const wrap = document.getElementById('resourcePriceList');
+  if (!wrap) return;
+  const data = loadData();
+  const resIcons = { '매소': 'meso.png', '다조': 'dajo.png' };
+  let html = '<div style="display:grid;grid-template-columns:130px 1fr;gap:6px 12px;align-items:center;">';
+  (data.resources || []).forEach(res => {
+    const icon = resIcons[res] ? `<img src="${resIcons[res]}" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">` : '';
+    html += `<div style="color:#C1C2C5;font-size:13px;">${icon}${res}</div>`;
+    if (res === '매소') {
+      html += `<div><span style="display:inline-block;background:#1a2a1a;color:#7ec97e;font-size:11px;padding:3px 9px;border-radius:3px;">1 메소 = 1 메소 (고정)</span></div>`;
+    } else if (res === '경험치') {
+      html += `<div><span style="color:#5c5f66;font-size:12px;font-style:italic;">메소 가치 없음 (합산 제외)</span></div>`;
+    } else {
+      const price = Number(data.prices?.[res]) || 0;
+      const val = price ? formatMeso(price) : '';
+      html += `<div><input type="text" data-res-price="${res}" value="${val}" placeholder="(미입력)" oninput="onResourcePriceInput(this)" style="width:140px;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;"><span style="color:#5c5f66;font-size:12px;margin-left:6px;">메소</span></div>`;
+    }
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+
+  const rate = getCashRate();
+  const rateInput = document.getElementById('cashRateInput');
+  if (rateInput && rate) rateInput.value = rate.toLocaleString();
+}
+function onResourcePriceInput(el) {
+  const res = el.dataset.resPrice;
+  const raw = el.value.replace(/[^0-9]/g, '');
+  setResourcePrice(res, raw);
+  renderHistory();
 }
 
 // 캘린더용 축약 포맷 (5.2억, 1234만)
@@ -1734,9 +1811,14 @@ function renderHistory() {
     return;
   }
 
+  const cashRate = getCashRate();
   let sh = '<table class="sheet"><thead><tr><th class="corner">캐릭터</th>';
   data.resources.forEach(r => sh += `<th>${r}</th>`);
+  sh += '<th style="min-width:110px;background:#1a2a1a;color:#ffd76b;">💰 합산 메소</th>';
+  sh += `<th style="min-width:100px;background:#2a1010;color:#ff8a65;">💵 정산 현금${cashRate ? `<div style="font-size:10px;color:#8F96A3;font-weight:400">1억=${cashRate.toLocaleString()}원</div>` : ''}</th>`;
   sh += '<th style="min-width:100px">정산</th></tr></thead><tbody>';
+
+  const totalCols = data.resources.length + 4; // 캐릭터 + 재화들 + 합산메소 + 정산현금 + 정산버튼
 
   const unsettled = [];
   const settled = [];
@@ -1757,26 +1839,47 @@ function renderHistory() {
   });
 
   if (unsettled.length) {
-    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#1971c2;background:#0d1a30;border:1px solid #373A40;">미정산 (${unsettled.length})</td></tr>`;
+    sh += `<tr><td colspan="${totalCols}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#1971c2;background:#0d1a30;border:1px solid #373A40;">미정산 (${unsettled.length})</td></tr>`;
+    let sumMeso = 0, sumCash = 0;
     unsettled.forEach(({ ch, totals, lastDate, lastAmounts }) => {
       sh += `<tr><td class="row-header">${ch}</td>`;
       data.resources.forEach(r => {
-        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:13px;color:#1971c2">${r === '경험치' ? (totals[r] ? totals[r].toFixed(3) + '%' : '') : formatNum(totals[r])}</td>`;
+        const qty = totals[r] || 0;
+        const price = getResourcePrice(r);
+        const mesoVal = (r !== '경험치' && price) ? qty * price : 0;
+        const sub = mesoVal ? `<div style="font-size:10px;color:#5c5f66;">=${formatMeso(mesoVal)}</div>` : '';
+        const main = r === '경험치' ? (qty ? qty.toFixed(3) + '%' : '') : formatNum(qty);
+        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:13px;color:#1971c2">${main}${sub}</td>`;
       });
+      const totalMeso = calcSettlementMeso(totals);
+      const totalCash = calcSettlementCash(totalMeso);
+      sumMeso += totalMeso; sumCash += totalCash;
+      sh += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:13px;background:#0a1a10;color:#ffd76b;font-weight:700">${formatNum(totalMeso)}<div style="font-size:10px;color:#8F96A3;font-weight:400">메소</div></td>`;
+      sh += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:14px;background:#1a0e0e;color:#ff8a65;font-weight:700">${cashRate ? totalCash.toLocaleString() + '원' : '<span style="font-size:11px;color:#5c5f66">시세 미설정</span>'}</td>`;
       sh += `<td style="text-align:center;padding:4px 6px;">`;
       sh += `<button onclick="settleChar('${ch}')" style="padding:5px 14px;border:none;border-radius:4px;cursor:pointer;font-size:13px;background:#1971c2;color:#fff;font-weight:600;font-family:inherit;">정산하기</button>`;
       if (lastDate) sh += `<div style="font-size:10px;color:#5c5f66;margin-top:3px">이전: ${lastDate}</div>`;
       sh += `</td></tr>`;
     });
+    if (unsettled.length > 1) {
+      sh += `<tr style="background:#0d1418"><td style="text-align:right;color:#8F96A3;font-weight:600;padding:6px 8px" colspan="${data.resources.length + 1}">미정산 합계</td>`;
+      sh += `<td style="text-align:right;padding:6px 8px;font-family:Consolas,monospace;font-size:13px;background:#0a1a10;color:#ffd76b;font-weight:700">${formatNum(sumMeso)}<div style="font-size:10px;color:#8F96A3;font-weight:400">메소</div></td>`;
+      sh += `<td style="text-align:right;padding:6px 8px;font-family:Consolas,monospace;font-size:14px;background:#1a0e0e;color:#ff8a65;font-weight:700">${cashRate ? sumCash.toLocaleString() + '원' : '-'}</td>`;
+      sh += `<td></td></tr>`;
+    }
   }
 
   if (settled.length) {
-    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#ef4444;background:#0a1a10;border:1px solid #373A40;">정산 완료 (${settled.length})</td></tr>`;
+    sh += `<tr><td colspan="${totalCols}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#ef4444;background:#0a1a10;border:1px solid #373A40;">정산 완료 (${settled.length})</td></tr>`;
     settled.forEach(({ ch, totals, lastDate, lastAmounts }) => {
       sh += `<tr style="opacity:0.5"><td class="row-header" style="color:#ef4444">${ch}</td>`;
       data.resources.forEach(r => {
         sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:12px;color:#ef4444;text-decoration:line-through">${formatNum((lastAmounts?.[r]) || 0)}</td>`;
       });
+      const lastMeso = calcSettlementMeso(lastAmounts || {});
+      const lastCash = calcSettlementCash(lastMeso);
+      sh += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:12px;color:#ef4444;text-decoration:line-through">${formatNum(lastMeso)}</td>`;
+      sh += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:12px;color:#ef4444;text-decoration:line-through">${cashRate ? lastCash.toLocaleString() + '원' : '-'}</td>`;
       sh += `<td style="text-align:center;padding:4px 6px;">`;
       sh += `<div style="font-size:11px;color:#ef4444">${lastDate} 정산완료</div>`;
       sh += `<button onclick="rollbackSettle('${ch}')" style="margin-top:3px;padding:3px 10px;border:1px solid #373A40;border-radius:4px;cursor:pointer;font-size:11px;background:#131822;color:#c0392b;font-family:inherit;">되돌리기</button>`;
@@ -1785,10 +1888,11 @@ function renderHistory() {
   }
 
   if (noRecord.length) {
-    sh += `<tr><td colspan="${data.resources.length + 2}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#5c5f66;background:#0C1019;border:1px solid #373A40;">기록 없음 (${noRecord.length})</td></tr>`;
+    sh += `<tr><td colspan="${totalCols}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#5c5f66;background:#0C1019;border:1px solid #373A40;">기록 없음 (${noRecord.length})</td></tr>`;
     noRecord.forEach(({ ch }) => {
       sh += `<tr><td class="row-header" style="color:#5c5f66">${ch}</td>`;
       data.resources.forEach(() => sh += `<td></td>`);
+      sh += `<td></td><td></td>`;
       sh += `<td style="text-align:center;color:#373A40;font-size:12px">-</td></tr>`;
     });
   }
@@ -2014,7 +2118,7 @@ function renderSettings() {
   const data = loadData();
   renderList('charList', data.characters, 'char');
   renderList('resList', data.resources, 'res');
-  initDajoPriceInput();
+  renderResourcePriceList();
 }
 
 function renderList(containerId, items, type) {

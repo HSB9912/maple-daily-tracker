@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>부분정산 + 선금 까먹기 — 미리보기</title>
+<style>
+  body { background:#0C1019; color:#C1C2C5; font-family:'Pretendard',sans-serif; padding:24px; margin:0; }
+  h2 { color:#fff; margin:0 0 6px; }
+  .desc { color:#8F96A3; font-size:13px; margin-bottom:18px; }
+  .section { background:#131822; border:1px solid #1f2937; border-radius:6px; padding:16px; margin-bottom:20px; }
+  .section h3 { margin:0 0 12px; color:#fff; font-size:14px; }
+
+  /* 모달 스타일 */
+  .modal { background:#0d1320; border:1px solid #1f2937; border-radius:8px; padding:20px; max-width:540px; }
+  .modal-title { color:#ffd76b; font-size:16px; font-weight:700; margin:0 0 4px; }
+  .modal-sub { color:#8F96A3; font-size:12px; margin-bottom:14px; }
+  .info-box { background:#0a1a30; border:1px solid #1971c2; border-radius:5px; padding:10px 12px; margin-bottom:14px; }
+  .info-box .label { color:#8F96A3; font-size:11px; }
+  .info-box .val { color:#1971c2; font-size:14px; font-weight:700; font-family:Consolas,monospace; }
+  .info-box .val.cash { color:#ff8a65; }
+
+  .tab-row { display:flex; gap:0; margin-bottom:14px; border-bottom:1px solid #1f2937; }
+  .tab-row .mode-tab { padding:8px 16px; background:transparent; border:none; color:#5c5f66; font-family:inherit; font-size:13px; cursor:pointer; border-bottom:2px solid transparent; }
+  .tab-row .mode-tab.active { color:#ffd76b; border-bottom-color:#ffd76b; }
+
+  .input-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .input-row label { color:#C1C2C5; font-size:13px; min-width:90px; }
+  .input-row input, .input-row select { background:#1B2030; border:1px solid #373A40; color:#C1C2C5; border-radius:4px; padding:7px 10px; font-size:13px; font-family:inherit; flex:1; }
+  .input-row .unit { color:#5c5f66; font-size:12px; }
+  .input-row .quick-btn { padding:6px 10px; background:#1f2937; border:1px solid #373A40; color:#cdd6f4; border-radius:4px; cursor:pointer; font-size:11px; font-family:inherit; }
+
+  .preview-box { background:#0a1a10; border:1px solid #1a3a20; border-radius:5px; padding:12px; margin-top:10px; font-family:Consolas,monospace; font-size:13px; }
+  .preview-box .line { display:flex; justify-content:space-between; padding:3px 0; }
+  .preview-box .line .key { color:#8F96A3; }
+  .preview-box .line .val { color:#cdd6f4; font-weight:600; }
+  .preview-box .line.highlight .val { color:#7ec97e; }
+  .preview-box .line.minus .val { color:#ff8a65; }
+  .preview-box .divider { border-top:1px dashed #1f2937; margin:6px 0; }
+
+  .btn { padding:8px 18px; border:none; border-radius:5px; cursor:pointer; font-size:13px; font-weight:600; font-family:inherit; }
+  .btn-primary { background:#1971c2; color:#fff; }
+  .btn-warn { background:#a16207; color:#fff; }
+  .btn-cancel { background:#1f2937; color:#8F96A3; }
+
+  /* 정산 표 */
+  table.sheet { width:100%; border-collapse:collapse; font-size:13px; }
+  table.sheet th, table.sheet td { border:1px solid #1f2937; padding:6px 8px; }
+  table.sheet th { background:#0d1a30; color:#cdd6f4; font-weight:600; font-size:12px; }
+  .row-header { background:#131822; color:#fff; font-weight:600; }
+  .cell-num { text-align:right; font-family:Consolas,monospace; color:#1971c2; }
+  .total-meso { background:#0a1a10; text-align:right; font-family:Consolas,monospace; }
+  .total-meso .pos { color:#ffd76b; font-weight:700; }
+  .total-meso .neg { color:#ef4444; font-weight:700; }
+  .total-cash { background:#1a0e0e; color:#ff8a65; font-weight:700; text-align:right; font-family:Consolas,monospace; font-size:14px; }
+  .action-cell { text-align:center; }
+  .small-note { font-size:10px; color:#5c5f66; }
+
+  /* 정산 이력 행 */
+  .hist-row { background:#0a0e15; }
+  .hist-row td { font-size:11px; color:#8F96A3; padding:3px 8px; }
+  .hist-row .hist-type { display:inline-block; padding:2px 6px; border-radius:3px; font-size:10px; font-weight:600; margin-right:6px; }
+  .ht-cash { background:#3a1010; color:#ff8a65; }
+  .ht-meso { background:#3a3010; color:#ffd76b; }
+  .ht-advance { background:#1a3a3a; color:#7ed4d4; }
+
+  code { background:#0a0a0a; padding:2px 6px; border-radius:3px; color:#cdd6f4; font-size:12px; }
+</style>
+</head>
+<body>
+
+<h2>부분정산 + 선금 까먹기 — 미리보기</h2>
+<p class="desc">"정산하기" 버튼을 누르면 모달이 뜨고, 4가지 정산 모드 중 선택해서 누적 메소를 일부씩 까나갑니다.</p>
+
+<!-- 1. 정산 모달 -->
+<div class="section">
+  <h3>① "정산하기" 버튼 → 새 정산 모달</h3>
+  <div class="modal">
+    <h4 class="modal-title">💰 캐릭터A 정산</h4>
+    <div class="modal-sub">누적 메소를 까나가는 방식을 선택하세요. 0이 될 때까지 여러 번 나눠서 처리 가능.</div>
+
+    <div class="info-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div class="label">남은 누적 메소</div>
+          <div class="val">190,600,000 메소</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="label">현금 환산</div>
+          <div class="val cash">2,859 원</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-row">
+      <button class="mode-tab active">💵 현금으로 받기</button>
+      <button class="mode-tab">💰 메소로 받기</button>
+      <button class="mode-tab">🔵 선금 지급(까먹기)</button>
+      <button class="mode-tab">✅ 전체 정산</button>
+    </div>
+
+    <!-- 현금 받기 -->
+    <div class="input-row">
+      <label>받은 금액</label>
+      <input type="text" value="1,500">
+      <span class="unit">원</span>
+    </div>
+    <div class="input-row">
+      <label></label>
+      <button class="quick-btn">전체(2,859원)</button>
+      <button class="quick-btn">절반</button>
+      <button class="quick-btn">1억메소만큼</button>
+    </div>
+    <div class="input-row">
+      <label>메모</label>
+      <input type="text" placeholder="예: 통장입금, 페이코 등">
+    </div>
+
+    <div class="preview-box">
+      <div class="line"><span class="key">받은 현금</span><span class="val">1,500 원</span></div>
+      <div class="line"><span class="key">→ 메소 환산 (시세 1억=1500원)</span><span class="val">100,000,000 메소</span></div>
+      <div class="divider"></div>
+      <div class="line"><span class="key">정산 전 누적</span><span class="val">190,600,000 메소</span></div>
+      <div class="line minus"><span class="key">차감</span><span class="val">- 100,000,000 메소</span></div>
+      <div class="line highlight"><span class="key">정산 후 남은 누적</span><span class="val">90,600,000 메소</span></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+      <button class="btn btn-cancel">취소</button>
+      <button class="btn btn-primary">정산 기록</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 메소로 받기 모드 -->
+<div class="section">
+  <h3>② 메소로 받기 모드</h3>
+  <div class="modal" style="max-width:540px;">
+    <div class="tab-row">
+      <button class="mode-tab">💵 현금으로 받기</button>
+      <button class="mode-tab active">💰 메소로 받기</button>
+      <button class="mode-tab">🔵 선금 지급(까먹기)</button>
+      <button class="mode-tab">✅ 전체 정산</button>
+    </div>
+    <div class="input-row">
+      <label>받은 메소</label>
+      <input type="text" value="50,000,000">
+      <span class="unit">메소</span>
+    </div>
+    <div class="input-row">
+      <label></label>
+      <button class="quick-btn">전체(190,600,000)</button>
+      <button class="quick-btn">1억</button>
+      <button class="quick-btn">5천만</button>
+    </div>
+    <div class="preview-box">
+      <div class="line"><span class="key">받은 메소</span><span class="val">50,000,000 메소</span></div>
+      <div class="divider"></div>
+      <div class="line"><span class="key">정산 전 누적</span><span class="val">190,600,000 메소</span></div>
+      <div class="line minus"><span class="key">차감</span><span class="val">- 50,000,000 메소</span></div>
+      <div class="line highlight"><span class="key">정산 후 남은 누적</span><span class="val">140,600,000 메소</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 선금 지급 모드 -->
+<div class="section">
+  <h3>③ 선금 지급(까먹기) 모드 — 누적이 0 또는 그 이하라도 미리 지급 가능</h3>
+  <div class="modal" style="max-width:540px;">
+    <div class="tab-row">
+      <button class="mode-tab">💵 현금으로 받기</button>
+      <button class="mode-tab">💰 메소로 받기</button>
+      <button class="mode-tab active">🔵 선금 지급(까먹기)</button>
+      <button class="mode-tab">✅ 전체 정산</button>
+    </div>
+    <div style="background:#1a3a3a;border:1px solid #2a5a5a;border-radius:5px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#7ed4d4;">
+      💡 선금: 누적 메소가 없어도 미리 지급. 이후 누적이 쌓이면 자동으로 차감되어 까먹습니다.
+    </div>
+    <div class="input-row">
+      <label>지급 방식</label>
+      <select>
+        <option>현금으로 지급</option>
+        <option>메소로 지급</option>
+      </select>
+    </div>
+    <div class="input-row">
+      <label>지급 금액</label>
+      <input type="text" value="3,000">
+      <span class="unit">원</span>
+    </div>
+    <div class="input-row">
+      <label>메모</label>
+      <input type="text" value="다음주 부주값 선지급">
+    </div>
+    <div class="preview-box">
+      <div class="line"><span class="key">선지급 금액</span><span class="val">3,000 원 (= 200,000,000 메소)</span></div>
+      <div class="divider"></div>
+      <div class="line"><span class="key">정산 전 누적</span><span class="val">190,600,000 메소</span></div>
+      <div class="line minus"><span class="key">차감</span><span class="val">- 200,000,000 메소</span></div>
+      <div class="line"><span class="key">정산 후 남은 누적</span><span style="color:#ef4444;font-weight:700">-9,400,000 메소 (마이너스 = 더 줘야 할 빚)</span></div>
+    </div>
+    <div style="font-size:11px;color:#5c5f66;margin-top:8px;">
+      ※ 정산 후 누적이 마이너스가 됨 → 다음에 부주 누적이 쌓이면 이 마이너스부터 채워집니다.
+    </div>
+  </div>
+</div>
+
+<!-- 4. 정산 표 UI 변경 -->
+<div class="section">
+  <h3>④ 부주정산 표 — 마이너스 누적 표시 + 정산 이력 펼치기</h3>
+  <table class="sheet">
+    <thead>
+      <tr>
+        <th>캐릭터</th>
+        <th>매소</th>
+        <th>다조</th>
+        <th>...</th>
+        <th style="background:#1a2a1a;color:#ffd76b;">💰 합산 메소</th>
+        <th style="background:#2a1010;color:#ff8a65;">💵 정산 현금</th>
+        <th>정산</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="row-header"><span style="cursor:pointer">▶</span> 캐릭터A</td>
+        <td class="cell-num">52,000,000</td>
+        <td class="cell-num">15</td>
+        <td class="cell-num">...</td>
+        <td class="total-meso"><div class="pos">90,600,000</div><div class="small-note">메소 (3회 정산 후)</div></td>
+        <td class="total-cash">1,359 원</td>
+        <td class="action-cell"><button class="btn btn-primary" style="padding:5px 14px;font-size:12px">정산하기</button></td>
+      </tr>
+      <!-- 펼쳐진 이력 -->
+      <tr class="hist-row"><td colspan="7" style="padding-left:30px">
+        <div style="padding:4px 0"><span class="hist-type ht-cash">현금</span> 2026-05-25 — 1,500원 받음 (100,000,000 메소 차감) <span style="color:#5c5f66">— 통장입금</span> <button style="background:none;border:none;color:#c0392b;font-size:11px;cursor:pointer;margin-left:8px">↩되돌리기</button></div>
+        <div style="padding:4px 0"><span class="hist-type ht-meso">메소</span> 2026-05-22 — 50,000,000 메소 받음 <span style="color:#5c5f66">— 직거래</span> <button style="background:none;border:none;color:#c0392b;font-size:11px;cursor:pointer;margin-left:8px">↩되돌리기</button></div>
+        <div style="padding:4px 0"><span class="hist-type ht-advance">선금</span> 2026-05-20 — 750원 선지급 (50,000,000 메소 차감) <span style="color:#5c5f66">— 다음주 부주값</span> <button style="background:none;border:none;color:#c0392b;font-size:11px;cursor:pointer;margin-left:8px">↩되돌리기</button></div>
+      </td></tr>
+
+      <tr>
+        <td class="row-header"><span style="cursor:pointer">▶</span> 캐릭터B</td>
+        <td class="cell-num">8,500,000</td>
+        <td class="cell-num">3</td>
+        <td class="cell-num">...</td>
+        <td class="total-meso"><div class="neg">-9,400,000</div><div class="small-note" style="color:#ef4444">메소 (선금 초과)</div></td>
+        <td class="total-cash" style="color:#ef4444">-141 원</td>
+        <td class="action-cell">
+          <button class="btn btn-primary" style="padding:5px 14px;font-size:12px;background:#a16207">선금 추가</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="font-size:11px;color:#5c5f66;margin-top:10px;line-height:1.7">
+    • 캐릭터명 옆 <strong style="color:#cdd6f4">▶</strong> 클릭 → 정산 이력 펼치기/접기<br>
+    • 합산 메소가 <strong style="color:#ef4444">마이너스</strong>면 빨간색 표시 (선금이 누적보다 많음 = 부주가 줘야 할 빚)<br>
+    • 합산 메소가 <strong style="color:#7ec97e">0</strong>이 되면 자동으로 "정산 완료" 섹션으로 이동 (전체 정산과 동일)<br>
+    • 각 이력 항목별로 ↩되돌리기 가능 (기존 전체 롤백 대신)
+  </div>
+</div>
+
+<!-- 5. 데이터 구조 -->
+<div class="section" style="background:#1a1410;border-color:#3a2a10;">
+  <h3 style="color:#ffd76b;">📝 구현 요약</h3>
+  <ul style="margin:0;padding-left:20px;line-height:1.9;color:#cdd6f4;font-size:13px;">
+    <li>데이터 구조 확장:
+      <br><code>settlements[ch].entries = [
+        <br>&nbsp;&nbsp;{ id, date, type: 'cash'|'meso'|'advance', amount, mesoEquiv, memo },
+        <br>&nbsp;&nbsp;...
+      <br>]</code>
+    </li>
+    <li><strong>잔여 누적 메소</strong> = (전체 누적 메소) − (entries의 mesoEquiv 합)</li>
+    <li><strong>전체 정산</strong> = 현재 잔여만큼 'cash' 또는 'meso' entry 1개 추가</li>
+    <li><strong>부분정산</strong> = 사용자 입력 금액만큼 entry 추가 (여러 번 가능)</li>
+    <li><strong>선금</strong> = 잔여가 음수가 되어도 entry 추가 가능 (마이너스 누적 허용)</li>
+    <li>각 entry는 개별 <strong>되돌리기</strong> 가능 (entries.splice)</li>
+    <li>마지막 정산일(<code>lastDate</code>) 개념 유지 — 이전 잔여 = 0이 됐던 가장 최근 시점</li>
+    <li>기존 <code>history[]</code> 구조와 호환되도록 마이그레이션</li>
+  </ul>
+</div>
+
+</body>
+</html>

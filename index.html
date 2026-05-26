@@ -635,8 +635,17 @@ const APP_VERSION = 2;
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-05-27.2';
+const CHANGELOG_VERSION = '2026-05-27.3';
 const CHANGELOG = [
+  {
+    version: '2026-05-27.3',
+    title: '🐛 경험치 획득량 표시 수정',
+    items: [
+      '레벨업했을 때 표시가 헷갈리던 문제 수정',
+      '예전: <code>1Lv +1.124%</code> (101.124% 채운 것처럼 보임)',
+      '변경: <code>+1.267% (1Lv up)</code> — 실제 증가량을 메인으로 표시',
+    ],
+  },
   {
     version: '2026-05-27.2',
     title: '📋 정산 이력 모아보기 추가',
@@ -1462,6 +1471,7 @@ function renderAssetCalendar() {
 }
 
 // 경험치 획득량 (레벨+% 방식)
+// 실제 증가량(totalPct)을 메인으로 표시. 레벨업 여부는 옆에 작게 표기.
 function getExpEarned(rec) {
   if (typeof rec !== 'object' || rec === null) return '';
   const bLv = rec.beforeLv, bPct = rec.beforePct, aLv = rec.afterLv, aPct = rec.afterPct;
@@ -1470,9 +1480,10 @@ function getExpEarned(rec) {
   const lvDiff = Number(aLv) - Number(bLv);
   const pctDiff = ((Number(aPct) || 0) - (Number(bPct) || 0)).toFixed(3);
   const totalPct = (lvDiff * 100 + Number(pctDiff)).toFixed(3);
-  if (lvDiff > 0) return `${lvDiff}Lv +${(Number(aPct)||0).toFixed(3)}% (${totalPct}%)`;
-  if (lvDiff === 0) return `+${pctDiff}%`;
-  return `${totalPct}%`;
+  const sign = Number(totalPct) >= 0 ? '+' : '';
+  if (lvDiff > 0) return `${sign}${totalPct}% (${lvDiff}Lv up)`;
+  if (lvDiff < 0) return `${totalPct}% (${lvDiff}Lv 하락)`;
+  return `${sign}${pctDiff}%`;
 }
 
 // 경험치 획득량 숫자값 (정산용)

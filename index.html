@@ -598,6 +598,7 @@ body.top-bossdist #distribute { display: block !important; }
   <div style="background:#0d1320;border:1px solid #1f2937;border-radius:8px;padding:22px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;">
     <h3 id="settleModalTitle" style="color:#ffd76b;font-size:17px;font-weight:700;margin:0 0 4px;">정산</h3>
     <div style="color:#8F96A3;font-size:12px;margin-bottom:14px;">정산 방식을 선택하고 금액을 입력하세요. 부분정산이 가능합니다.</div>
+    <div id="settleModalPrices" style="display:none;"></div>
     <div id="settleModalBalance" style="background:#0a1a30;border:1px solid #1971c2;border-radius:5px;padding:10px 12px;margin-bottom:14px;"></div>
     <div id="settleModalHistory" style="display:none;"></div>
     <div id="settleModalTabs" style="display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid #1f2937;flex-wrap:wrap;"></div>
@@ -635,36 +636,19 @@ const APP_VERSION = 2;
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-05-27.3';
+const CHANGELOG_VERSION = '2026-05-27';
 const CHANGELOG = [
-  {
-    version: '2026-05-27.3',
-    title: '🐛 경험치 획득량 표시 수정',
-    items: [
-      '레벨업했을 때 표시가 헷갈리던 문제 수정',
-      '예전: <code>1Lv +1.124%</code> (101.124% 채운 것처럼 보임)',
-      '변경: <code>+1.267% (1Lv up)</code> — 실제 증가량을 메인으로 표시',
-    ],
-  },
-  {
-    version: '2026-05-27.2',
-    title: '📋 정산 이력 모아보기 추가',
-    items: [
-      '부주정산 탭 아래에 <strong>전체 정산 이력</strong> 섹션 추가',
-      '실수로 정산했으면 <strong>체크박스</strong>로 여러 건 선택 → 한번에 ↩취소',
-      '캐릭터명 옆 "▶ 이력 N건" 버튼도 더 눈에 띄게 변경',
-    ],
-  },
   {
     version: '2026-05-27',
     title: '💰 부주정산 대규모 업데이트',
     items: [
-      '재화별 메소 단가 설정 (설정 탭 → 재화 시세 설정)',
-      '메소 1억당 현금 시세 입력 → 정산 현금 자동 계산',
+      '<strong>재화별 메소 단가</strong> + <strong>메소 1억당 현금 시세</strong> 설정 (설정 탭)',
       '부주정산 표에 <strong style="color:#ffd76b">합산 메소</strong> + <strong style="color:#ff8a65">정산 현금</strong> 컬럼 추가',
-      '<strong>부분정산</strong> 지원 — 받은 만큼 누적에서 차감 (여러 번 가능)',
-      '<strong>메소로 정산</strong> 모드 — 현금 대신 메소로 받기',
-      '<strong>선금(까먹기)</strong> 모드 — 미리 지급하면 마이너스 누적으로 표시',
+      '<strong>부분정산</strong>: 현금/메소로 받은 만큼 차감 (여러 번 가능)',
+      '<strong>선금(까먹기)</strong>: 미리 지급하면 누적이 마이너스로 표시',
+      '<strong>정산 이력 모아보기</strong> + 체크박스로 일괄 ↩취소',
+      '정산하기 누르면 <strong>현재 시세 확인창</strong>이 같이 떠서 경매장 변동가 즉시 수정 가능',
+      '경험치 표시 로직 수정: <code>1Lv +1.124%</code> → <code>+1.267% (1Lv up)</code>',
     ],
   },
 ];
@@ -1093,6 +1077,26 @@ function setResourcePrice(res, value) {
   renderDashboard();
 }
 
+// 재화 시세 고정/변동 (true면 경매장 변동가, 미설정/false면 고정가)
+// 기본값: 우유/이슬은 고정, 다른 메소가치 있는 재화는 변동
+const DEFAULT_FIXED = ['우유', '이슬'];
+function isPriceFixed(res) {
+  if (res === '매소' || res === '경험치') return true;
+  const data = loadData();
+  if (data.priceLocked && Object.prototype.hasOwnProperty.call(data.priceLocked, res)) {
+    return !!data.priceLocked[res];
+  }
+  return DEFAULT_FIXED.includes(res);
+}
+function togglePriceFixed(res) {
+  const data = loadData();
+  if (!data.priceLocked) data.priceLocked = {};
+  data.priceLocked[res] = !isPriceFixed(res);
+  saveData(data);
+  if (document.getElementById('settleModal')?.style.display === 'flex') renderSettleModal();
+  renderResourcePriceList();
+}
+
 // 메소→현금 시세 (메소 1억당 원)
 function getCashRate() {
   const data = loadData();
@@ -1143,7 +1147,11 @@ function renderResourcePriceList() {
     } else {
       const price = Number(data.prices?.[res]) || 0;
       const val = price ? formatMeso(price) : '';
-      html += `<div><input type="text" data-res-price="${res}" value="${val}" placeholder="(미입력)" oninput="onResourcePriceInput(this)" style="width:140px;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;"><span style="color:#5c5f66;font-size:12px;margin-left:6px;">메소</span></div>`;
+      const fixed = isPriceFixed(res);
+      const badge = fixed
+        ? `<button onclick="togglePriceFixed('${res.replace(/'/g,"\\'")}')" title="고정가 — 클릭하면 변동가로 변경" style="background:#1a3a1a;color:#7ec97e;font-size:10px;padding:3px 9px;border-radius:3px;border:none;cursor:pointer;font-family:inherit;font-weight:600;margin-left:8px;">🔒 고정가</button>`
+        : `<button onclick="togglePriceFixed('${res.replace(/'/g,"\\'")}')" title="변동가 (경매장 시세) — 클릭하면 고정가로 변경" style="background:#3a1010;color:#ff8a65;font-size:10px;padding:3px 9px;border-radius:3px;border:none;cursor:pointer;font-family:inherit;font-weight:600;margin-left:8px;">📈 변동가</button>`;
+      html += `<div><input type="text" data-res-price="${res}" value="${val}" placeholder="(미입력)" oninput="onResourcePriceInput(this)" style="width:140px;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;"><span style="color:#5c5f66;font-size:12px;margin-left:6px;">메소</span>${badge}</div>`;
     }
   });
   html += '</div>';
@@ -1158,6 +1166,41 @@ function onResourcePriceInput(el) {
   const raw = el.value.replace(/[^0-9]/g, '');
   setResourcePrice(res, raw);
   renderHistory();
+}
+
+// 정산 모달 안 시세 인라인 수정 (디바운스)
+let _modalPriceTimer = null;
+function onModalPriceInput(el) {
+  const res = el.dataset.modalPrice;
+  const raw = Number(el.value.replace(/[^0-9]/g, '')) || 0;
+  setResourcePrice(res, raw);
+  // 잔여 박스/이력/모드별 미리보기 재계산
+  if (_modalPriceTimer) clearTimeout(_modalPriceTimer);
+  _modalPriceTimer = setTimeout(() => {
+    const ch = _currentSettleChar;
+    if (!ch) return;
+    const data = loadData();
+    const st = getSettlementState(data, ch);
+    const cashRate = getCashRate();
+    const isNeg = st.remainingMeso < 0;
+    const balBox = document.getElementById('settleModalBalance');
+    if (balBox) balBox.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="color:#8F96A3;font-size:11px;">남은 누적 메소</div>
+          <div style="color:${isNeg ? '#ef4444' : '#ffd76b'};font-size:16px;font-weight:700;font-family:Consolas,monospace;">${formatNum(st.remainingMeso)} 메소</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="color:#8F96A3;font-size:11px;">현금 환산 ${cashRate ? `(1억=${cashRate.toLocaleString()}원)` : '(시세 미설정)'}</div>
+          <div style="color:${isNeg ? '#ef4444' : '#ff8a65'};font-size:16px;font-weight:700;font-family:Consolas,monospace;">${cashRate ? st.remainingCash.toLocaleString() + ' 원' : '-'}</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid #1f2937;font-size:11px;color:#5c5f66;">
+        누적 메소 ${formatNum(st.grossMeso)} − 기지급 ${formatNum(st.paidMeso)} = 잔여 ${formatNum(st.remainingMeso)}
+      </div>
+    `;
+    liveSettleInput();
+  }, 200);
 }
 
 // 캘린더용 축약 포맷 (5.2억, 1234만)
@@ -1949,6 +1992,38 @@ function renderSettleModal() {
 
   // 헤더 정보
   document.getElementById('settleModalTitle').textContent = `💰 ${ch} 정산`;
+
+  // 시세 확인 박스 (변동가 재화 있으면 강조)
+  const priceBox = document.getElementById('settleModalPrices');
+  const pricedRes = (data.resources || []).filter(r => r !== '매소' && r !== '경험치' && getResourcePrice(r) > 0);
+  if (pricedRes.length) {
+    const variableRes = pricedRes.filter(r => !isPriceFixed(r));
+    let p = `<div style="background:#1a1410;border:1px solid #3a2a10;border-radius:6px;padding:10px 12px;margin-bottom:12px;">`;
+    p += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">`;
+    p += `<span style="color:#ffd76b;font-size:12px;font-weight:600;">📊 현재 시세 확인</span>`;
+    p += `<span style="color:#8F96A3;font-size:11px;">— 경매장 변동가 재화는 정산 전에 한번 확인</span>`;
+    if (variableRes.length) p += `<span style="background:#3a1010;color:#ff8a65;font-size:10px;padding:2px 7px;border-radius:3px;margin-left:auto;font-weight:600;">변동 ${variableRes.length}건 확인 필요</span>`;
+    p += `</div>`;
+    p += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;">`;
+    pricedRes.forEach(r => {
+      const fixed = isPriceFixed(r);
+      const price = getResourcePrice(r);
+      p += `<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:${fixed ? '#0a0e15' : '#2a1610'};border:1px solid ${fixed ? '#1f2937' : '#5a2a10'};border-radius:4px;">`;
+      p += `<span style="color:${fixed ? '#8F96A3' : '#ffd76b'};font-size:12px;min-width:54px;">${r}</span>`;
+      p += `<input type="text" value="${formatMeso(price)}" data-modal-price="${r}" oninput="onModalPriceInput(this)" style="flex:1;background:transparent;border:none;color:${fixed ? '#cdd6f4' : '#ffd76b'};font-family:Consolas,monospace;font-size:12px;text-align:right;padding:2px 4px;font-weight:600;">`;
+      p += `<span style="color:#5c5f66;font-size:10px;">메소</span>`;
+      if (fixed) p += `<span style="background:#1a3a1a;color:#7ec97e;font-size:9px;padding:1px 5px;border-radius:2px;font-weight:600;" title="고정가">🔒</span>`;
+      else p += `<span style="background:#3a1010;color:#ff8a65;font-size:9px;padding:1px 5px;border-radius:2px;font-weight:600;" title="변동가 (경매장 시세)">📈</span>`;
+      p += `</div>`;
+    });
+    p += `</div>`;
+    p += `<div style="font-size:10px;color:#5c5f66;margin-top:6px;">🔒 고정가 / 📈 변동가 — 설정 탭에서 변경 가능. 시세 수정 시 잔여 메소 자동 재계산.</div>`;
+    p += `</div>`;
+    priceBox.innerHTML = p;
+    priceBox.style.display = '';
+  } else {
+    priceBox.style.display = 'none';
+  }
 
   // 최근 정산 이력 (entries가 있으면 표시)
   const histBox = document.getElementById('settleModalHistory');

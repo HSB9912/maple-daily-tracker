@@ -1200,7 +1200,11 @@ function autoPromoteLastDate(data, ch) {
     .sort()
     .reverse();
 
+  // 사용자가 명시적으로 풀어둔 날짜는 다시 자동 정리하지 않음
+  const skipUpTo = settle._unlockedDate || '';
+
   for (const cutoff of sortedDescDates) {
+    if (skipUpTo && cutoff <= skipUpTo) continue;
     // oldLastDate < date <= cutoff 기간의 부분 누적
     const partialTotals = {};
     (data.resources || []).forEach(r => partialTotals[r] = 0);
@@ -2535,6 +2539,9 @@ function recordSettlement() {
   }
 
   data.settlements[ch].entries.push({ id, date, type, subType, amount, mesoEquiv, memo, cashRateAtTime: cashRate, priceSnapshot: capturePriceSnapshot(data) });
+  // 사용자가 새 정산 entry를 추가하면 unlock 의도는 해소됨
+  // (unlock은 옛 데이터에 대한 거고, 새 정산은 명시적 의도이므로 자동 정리 동작)
+  delete data.settlements[ch]._unlockedDate;
   const promoted = autoPromoteLastDate(data, ch);
   saveData(data);
   closeSettleModal();
@@ -2545,42 +2552,65 @@ function recordSettlement() {
   toast(msg);
 }
 
-// 개별 entry 되돌리기
+// 개별 entry 되돌리기 — 활성 entries[] 또는 잠긴 history[].entries 둘 다 처리
 function deleteSettlementEntry(ch, entryId) {
-  if (!confirm('이 정산 기록을 되돌리시겠습니까?')) return;
   const data = loadData();
-  const arr = data.settlements?.[ch]?.entries || [];
+  const settle = data.settlements?.[ch];
+  if (!settle) return;
+  const arr = settle.entries || [];
+  // 1) 활성 entries에 있으면 그것만 제거
   const idx = arr.findIndex(e => e.id === entryId);
-  if (idx < 0) return;
-  const entry = arr[idx];
-  arr.splice(idx, 1);
-  // full 타입 되돌릴 때는 lastDate / history도 함께 롤백
-  if (entry.type === 'full') {
-    const hist = data.settlements[ch].history || [];
-    if (hist.length) {
-      const lastH = hist[hist.length - 1];
-      if (lastH.date === entry.date) hist.pop();
+  if (idx >= 0) {
+    if (!confirm('이 정산 기록을 되돌리시겠습니까?')) return;
+    const entry = arr[idx];
+    arr.splice(idx, 1);
+    // full 타입은 history도 같이 롤백
+    if (entry.type === 'full') {
+      const hist = settle.history || [];
+      const hIdx = hist.findIndex(h => h.date === entry.date);
+      if (hIdx >= 0) hist.splice(hIdx, 1);
+      settle.lastDate = hist.length ? hist[hist.length - 1].date : '';
     }
-    if (hist.length) data.settlements[ch].lastDate = hist[hist.length - 1].date;
-    else data.settlements[ch].lastDate = '';
+    saveData(data);
+    renderHistory();
+    toast('정산 기록 되돌림');
+    return;
   }
+  // 2) 잠긴 entry — 잠금 해제 + 그 entry는 완전 삭제 (같은 history의 다른 entries는 active로 복원)
+  const hist = settle.history || [];
+  const hIdx = hist.findIndex(h => (h.entries || []).some(e => e.id === entryId));
+  if (hIdx < 0) return;
+  const histItem = hist[hIdx];
+  const restored = (histItem.entries || []).filter(e => e.id !== entryId);
+  const msg = restored.length > 0
+    ? `이 정산은 ${histItem.date}까지 자동 정리된 잠긴 이력입니다.\n해당 entry는 삭제되고, 같은 이력의 다른 ${restored.length}건은 활성 상태로 복원됩니다. 진행할까요?`
+    : `이 잠긴 정산을 취소하시겠습니까?\n${histItem.date}까지의 정산 완료 상태가 해제되고 entry가 삭제됩니다.`;
+  if (!confirm(msg)) return;
+  // 같은 history의 다른 entries만 active로 복원, 해당 entry는 버림
+  restored.forEach(e => arr.push(e));
+  hist.splice(hIdx, 1);
+  settle.lastDate = hist.length ? hist[hist.length - 1].date : '';
+  settle._unlockedDate = histItem.date;
+  arr.sort((a, b) => a.date.localeCompare(b.date));
   saveData(data);
   renderHistory();
-  toast('정산 기록 되돌림');
+  const note = restored.length ? ` (다른 ${restored.length}건은 복원)` : '';
+  toast(`잠긴 정산 취소${note}`);
 }
 
-// 전체 정산 이력 모아보기 + 체크박스로 일괄 취소
+// 전체 정산 이력 모아보기 + 체크박스로 일괄 취소 (활성 + 잠긴 entries 모두)
 function renderAllEntries() {
   const wrap = document.getElementById('allEntriesWrap');
   if (!wrap) return;
   const data = loadData();
-  // 모든 캐릭터의 entries를 모아 시간순 정렬
   const all = [];
   (data.characters || []).forEach(ch => {
-    const entries = data.settlements?.[ch]?.entries || [];
-    entries.forEach(e => all.push({ ch, ...e }));
+    (data.settlements?.[ch]?.entries || []).forEach(e => all.push({ ch, ...e, _locked: false }));
+    (data.settlements?.[ch]?.history || []).forEach(h => {
+      (h.entries || []).forEach(e => all.push({ ch, ...e, _locked: true, _lockedAt: h.date }));
+    });
   });
-  all.sort((a, b) => (b.date + b.id).localeCompare(a.date + a.id));
+  all.sort((a, b) => (b.date + String(b.id)).localeCompare(a.date + String(a.id)));
 
   if (!all.length) {
     wrap.innerHTML = '<div style="color:#5c5f66;font-size:12px;padding:14px;text-align:center;">정산 이력이 없습니다.</div>';
@@ -2611,13 +2641,14 @@ function renderAllEntries() {
     } else {
       amtTxt = e.subType === 'cash' ? `${Number(e.amount).toLocaleString()} 원` : `${formatNum(e.amount)} 메소`;
     }
-    h += `<tr style="border-bottom:1px solid #1f2937;">`;
-    h += `<td style="padding:7px 8px;text-align:center;"><input type="checkbox" class="entry-check" data-ch="${e.ch}" data-id="${e.id}" onchange="updateDeleteSelectedBtn()"></td>`;
-    h += `<td style="padding:7px 8px;color:#8F96A3;font-family:Consolas,monospace;font-size:12px;">${e.date}</td>`;
-    h += `<td style="padding:7px 8px;color:#fff;font-weight:600;">${e.ch}</td>`;
+    const lockBadge = e._locked ? `<span title="자동 정리로 잠김 (${e._lockedAt}까지 정산 완료) — 되돌리면 해당 잠금 해제" style="background:#1a2a3a;color:#7ed4d4;font-size:9px;padding:1px 6px;border-radius:3px;margin-left:4px;font-weight:600;">🔒</span>` : '';
+    h += `<tr style="border-bottom:1px solid #1f2937;${e._locked ? 'background:#0a0e15;' : ''}">`;
+    h += `<td style="padding:7px 8px;text-align:center;"><input type="checkbox" class="entry-check" data-ch="${e.ch}" data-id="${e.id}" data-locked="${e._locked ? 1 : 0}" onchange="updateDeleteSelectedBtn()"></td>`;
+    h += `<td style="padding:7px 8px;color:#8F96A3;font-family:Consolas,monospace;font-size:12px;">${e.date}${lockBadge}</td>`;
+    h += `<td style="padding:7px 8px;color:${e._locked ? '#8F96A3' : '#fff'};font-weight:600;">${e.ch}</td>`;
     h += `<td style="padding:7px 8px;text-align:center;">${typeLabel}</td>`;
-    h += `<td style="padding:7px 8px;text-align:right;color:#cdd6f4;font-family:Consolas,monospace;">${amtTxt}</td>`;
-    h += `<td style="padding:7px 8px;text-align:right;color:#ffd76b;font-family:Consolas,monospace;font-size:12px;">${formatNum(e.mesoEquiv)}</td>`;
+    h += `<td style="padding:7px 8px;text-align:right;color:${e._locked ? '#8F96A3' : '#cdd6f4'};font-family:Consolas,monospace;">${amtTxt}</td>`;
+    h += `<td style="padding:7px 8px;text-align:right;color:${e._locked ? '#8F96A3' : '#ffd76b'};font-family:Consolas,monospace;font-size:12px;">${formatNum(e.mesoEquiv)}</td>`;
     h += `<td style="padding:7px 8px;color:#8F96A3;font-size:12px;">${e.memo || '-'}</td>`;
     h += `</tr>`;
   });
@@ -2642,31 +2673,53 @@ function updateDeleteSelectedBtn() {
 function deleteSelectedEntries() {
   const checked = document.querySelectorAll('#allEntriesWrap .entry-check:checked');
   if (!checked.length) return;
-  if (!confirm(`선택한 ${checked.length}건의 정산 기록을 취소하시겠습니까?`)) return;
+  const lockedCount = [...checked].filter(cb => cb.dataset.locked === '1').length;
+  const msg = lockedCount > 0
+    ? `선택한 ${checked.length}건 (잠긴 ${lockedCount}건 포함)을 취소합니다.\n잠긴 이력 해제 시 같은 잠금 안의 다른 entries도 함께 활성 복원됩니다. 진행할까요?`
+    : `선택한 ${checked.length}건의 정산 기록을 취소하시겠습니까?`;
+  if (!confirm(msg)) return;
   const data = loadData();
   let removed = 0;
+  // 잠금 해제는 같은 history 항목 중복 처리 방지를 위해 처리한 키 추적
+  const releasedHistoryKeys = new Set();
   checked.forEach(cb => {
     const ch = cb.dataset.ch;
     const id = Number(cb.dataset.id);
-    const arr = data.settlements?.[ch]?.entries || [];
+    const settle = data.settlements?.[ch];
+    if (!settle) return;
+    const arr = settle.entries || [];
     const idx = arr.findIndex(e => e.id === id);
     if (idx >= 0) {
       const entry = arr[idx];
       arr.splice(idx, 1);
-      // full 타입 취소 시 history / lastDate 함께 롤백
       if (entry.type === 'full') {
-        const hist = data.settlements[ch].history || [];
+        const hist = settle.history || [];
         const hIdx = hist.findIndex(h => h.date === entry.date);
         if (hIdx >= 0) hist.splice(hIdx, 1);
-        if (hist.length) data.settlements[ch].lastDate = hist[hist.length - 1].date;
-        else data.settlements[ch].lastDate = '';
+        settle.lastDate = hist.length ? hist[hist.length - 1].date : '';
       }
       removed++;
+      return;
     }
+    // 잠긴 entry — history 항목 통째로 해제
+    const hist = settle.history || [];
+    const hIdx = hist.findIndex(h => (h.entries || []).some(e => e.id === id));
+    if (hIdx < 0) return;
+    const key = `${ch}@${hIdx}`;
+    if (releasedHistoryKeys.has(key)) { removed++; return; }
+    releasedHistoryKeys.add(key);
+    const histItem = hist[hIdx];
+    // 해당 entry는 삭제, 같은 history의 다른 entries는 active로 복원
+    (histItem.entries || []).filter(e => e.id !== id).forEach(e => arr.push(e));
+    hist.splice(hIdx, 1);
+    settle.lastDate = hist.length ? hist[hist.length - 1].date : '';
+    settle._unlockedDate = histItem.date;
+    arr.sort((a, b) => a.date.localeCompare(b.date));
+    removed++;
   });
   saveData(data);
   renderHistory();
-  toast(`${removed}건 취소 완료`);
+  toast(`${removed}건 취소 완료${releasedHistoryKeys.size ? ` (잠금 ${releasedHistoryKeys.size}건 해제)` : ''}`);
 }
 
 function toggleSettleHistory(ch) {

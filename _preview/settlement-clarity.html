@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>정산 명확화 — 3가지 시안</title>
+<style>
+  body { background:#0C1019; color:#C1C2C5; font-family:'Pretendard',sans-serif; padding:24px; margin:0; line-height:1.55; }
+  h1 { color:#fff; margin:0 0 6px; font-size:22px; }
+  .lead { color:#8F96A3; font-size:13px; margin-bottom:24px; max-width:820px; }
+  .lead strong { color:#ffd76b; }
+
+  .problem-box { background:#1a0e0e; border:1px solid #5a1a1a; border-radius:6px; padding:14px 18px; margin-bottom:28px; }
+  .problem-box h3 { color:#ff8a65; margin:0 0 8px; font-size:14px; }
+  .problem-box ol { margin:0; padding-left:20px; color:#cdd6f4; font-size:13px; }
+  .problem-box li { margin:4px 0; }
+  .problem-box code { background:#0a0a0a; color:#ffd76b; padding:1px 6px; border-radius:3px; font-size:12px; }
+
+  .variant { background:#131822; border:1px solid #1f2937; border-radius:8px; padding:22px; margin-bottom:30px; }
+  .variant-head { display:flex; align-items:baseline; gap:12px; margin-bottom:6px; flex-wrap:wrap; }
+  .variant-num { background:#1971c2; color:#fff; font-size:12px; font-weight:700; padding:3px 9px; border-radius:3px; }
+  .variant-title { color:#fff; font-size:17px; font-weight:700; margin:0; }
+  .variant-axis { color:#7ed4d4; font-size:11px; font-weight:600; background:#0a1a1a; border:1px solid #1f3a3a; padding:2px 8px; border-radius:3px; }
+  .variant-sub { color:#8F96A3; font-size:12px; margin-bottom:18px; }
+
+  /* 공용 — 부주정산 표 */
+  table.sheet { width:100%; border-collapse:collapse; font-size:13px; }
+  table.sheet th, table.sheet td { border:1px solid #1f2937; padding:6px 8px; }
+  table.sheet th { background:#0d1a30; color:#cdd6f4; font-weight:600; font-size:12px; }
+  .row-header { background:#131822; color:#fff; font-weight:600; }
+  .cell-num { text-align:right; font-family:Consolas,monospace; color:#1971c2; padding:4px 6px; }
+  .cell-num .sub { font-size:10px; color:#5c5f66; display:block; }
+  .total-meso { background:#0a1a10; text-align:right; font-family:Consolas,monospace; padding:4px 8px; }
+  .total-meso .val { color:#ffd76b; font-weight:700; font-size:13px; }
+  .total-cash { background:#1a0e0e; text-align:right; font-family:Consolas,monospace; padding:4px 8px; color:#ff8a65; font-weight:700; font-size:14px; }
+  .btn { padding:5px 14px;border:none;border-radius:4px;cursor:pointer;font-size:12px;background:#1971c2;color:#fff;font-weight:600;font-family:inherit; }
+  .btn-mini { padding:3px 9px;font-size:11px; }
+  .legend { color:#5c5f66; font-size:11px; margin-top:10px; line-height:1.7; }
+  .legend strong { color:#cdd6f4; }
+  code { background:#0a0a0a; padding:1px 6px; border-radius:3px; color:#cdd6f4; font-size:12px; }
+
+  /* 시안 1 — 스냅샷 락 */
+  .lock-banner { background:#0a1a30; border:1px solid #1971c2; border-radius:5px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; gap:10px; font-size:12px; color:#cdd6f4; }
+  .lock-banner .ico { font-size:18px; }
+  .lock-banner .accent { color:#ffd76b; font-weight:700; }
+  .entry-card { background:#0a0e15; border:1px solid #1f2937; border-radius:5px; padding:10px 12px; margin:6px 0; display:grid; grid-template-columns:80px 70px 1fr auto; gap:10px; align-items:center; font-size:12px; }
+  .entry-card .pill { background:#0a1a30; color:#7ec97e; font-size:10px; font-weight:700; padding:3px 8px; border-radius:3px; text-align:center; }
+  .entry-card .pill.locked { background:#1a2a3a; color:#7ec97e; }
+  .entry-card .pill.locked::before { content:'🔒 '; }
+  .entry-card .date { color:#8F96A3; font-family:Consolas,monospace; }
+  .entry-card .body { color:#cdd6f4; }
+  .entry-card .body .snapshot { color:#5c5f66; font-size:10px; margin-top:2px; display:block; }
+  .entry-card .body .snapshot strong { color:#7ed4d4; font-family:Consolas,monospace; }
+
+  /* 시안 2 — 정산 후 시각 마킹 */
+  .marked-row { background:#0a0e15 !important; opacity:0.55; }
+  .marked-row td { color:#5c5f66 !important; }
+  .marked-row .cell-num { color:#3a4a60; text-decoration:line-through; text-decoration-color:#3a4a60; text-decoration-thickness:1px; }
+  .marked-row .row-header { color:#5c5f66 !important; background:#0a0e15 !important; }
+  .day-divider { background:#1a2a1a; color:#7ec97e; font-size:11px; font-weight:700; padding:5px 12px; }
+  .day-divider td { background:#1a2a1a; border-color:#2a5a3a; color:#7ec97e; font-weight:700; }
+
+  /* 시안 3 — 분할 표시 */
+  .split-cell { display:flex; flex-direction:column; gap:1px; padding:3px 6px; align-items:flex-end; font-family:Consolas,monospace; }
+  .split-cell .paid { color:#5c5f66; font-size:10px; text-decoration:line-through; }
+  .split-cell .open { color:#1971c2; font-size:13px; font-weight:700; }
+  .split-cell .open.zero { color:#5c5f66; }
+  .scope-tab { display:inline-flex; gap:0; margin-bottom:10px; border-radius:4px; overflow:hidden; }
+  .scope-tab button { background:#0a0e15; border:1px solid #1f2937; color:#8F96A3; padding:5px 14px; font-size:12px; font-family:inherit; cursor:pointer; border-left:none; }
+  .scope-tab button:first-child { border-left:1px solid #1f2937; }
+  .scope-tab button.active { background:#1971c2; color:#fff; border-color:#1971c2; font-weight:700; }
+
+  /* 공통 — 시세 변동 경고 */
+  .price-warn { background:#1a1410; border:1px solid #5a3a10; border-radius:5px; padding:8px 12px; margin-bottom:10px; font-size:12px; color:#ffd76b; display:flex; align-items:center; gap:8px; }
+  .price-warn .delta { color:#ff8a65; font-family:Consolas,monospace; font-weight:700; }
+
+  .compare { background:#0a0e15; border:1px solid #1f2937; border-radius:6px; padding:14px; margin-top:18px; }
+  .compare h4 { margin:0 0 8px; color:#ffd76b; font-size:13px; }
+  .compare table { width:100%; border-collapse:collapse; font-size:12px; }
+  .compare th, .compare td { padding:6px 10px; border-bottom:1px solid #1f2937; text-align:left; color:#cdd6f4; }
+  .compare th { color:#8F96A3; font-weight:600; }
+  .compare .good { color:#7ec97e; }
+  .compare .meh { color:#ffd76b; }
+  .compare .bad { color:#ff8a65; }
+</style>
+</head>
+<body>
+
+<h1>정산 명확화 — 3가지 시안</h1>
+<p class="lead">
+변동가 재화(다조·이슬 등 경매장 시세) 때문에 <strong>잔여 메소가 출렁이고</strong>,
+부분정산 후에도 부주정산 표가 <strong>파란 누적</strong> 그대로 보여서
+"이거 정산해야 되나?" → "아니네" 가 반복되는 문제를 해결하는 시안들.
+</p>
+
+<div class="problem-box">
+  <h3>🐛 현재 동작이 만드는 혼란 — 코드 기준</h3>
+  <ol>
+    <li><code>grossMeso = Σ(qty × 현재 단가)</code> → 단가 바꾸면 <strong>전체가 즉시 재계산</strong></li>
+    <li><code>paidMeso</code>는 entry에 메소 값으로 박혀있어서 안 변함 → 잔여 = gross − paid 가 <strong>한쪽만 흔들림</strong> → 잔여가 갑자기 마이너스로 갈 수 있음</li>
+    <li>부분정산(현금/메소/선금)은 <code>lastDate</code>를 건드리지 않아 → 일별 입력 그리드와 부주정산 표의 재화 수량은 <strong>처음 누적부터 그대로</strong> 파란색으로 표시</li>
+    <li>그래서 표만 슥 보면 "어 다 그대로 쌓여있네, 정산해야겠다" → 펼쳐보고 "아 이미 100M 받았네" 의 반복</li>
+  </ol>
+</div>
+
+<!-- ============ 시안 1 ============ -->
+<div class="variant">
+  <div class="variant-head">
+    <span class="variant-num">시안 1</span>
+    <h2 class="variant-title">정산 스냅샷 락 — 정산 시점의 시세를 entry에 고정</h2>
+    <span class="variant-axis">축: 데이터 모델</span>
+  </div>
+  <p class="variant-sub">
+    정산 버튼 누르는 순간 그 시점의 <strong>재화 단가 전체</strong>와 <strong>당시 grossMeso</strong>를 entry에 저장.
+    이후 단가를 아무리 바꿔도 이 정산만큼은 영향 없음. 새로 쌓이는 부주만 새 단가로 계산.
+  </p>
+
+  <div class="lock-banner">
+    <span class="ico">🔒</span>
+    <div>
+      <span class="accent">캐릭터A · 잔여 122,600,000 메소</span>
+      <span style="color:#8F96A3"> = 현재 누적 222,600,000 − 정산된 100,000,000 (스냅샷 잠금)</span>
+    </div>
+  </div>
+
+  <div style="background:#0a0e15;border:1px solid #1f2937;border-radius:5px;padding:12px;">
+    <div style="color:#8F96A3;font-size:11px;font-weight:600;margin-bottom:8px;">📋 정산 이력 — 각 entry는 <span style="color:#7ed4d4">당시 시세를 박제</span></div>
+
+    <div class="entry-card">
+      <span class="date">2026-05-25</span>
+      <span class="pill locked">현금</span>
+      <div class="body">
+        1,500원 받음 → 100,000,000 메소 차감
+        <span class="snapshot">스냅샷: 다조 <strong>6,800,000</strong>, 우유 <strong>800,000</strong>, 1억=<strong>1,500원</strong></span>
+      </div>
+      <button class="btn btn-mini" style="background:#3a1010">↩ 되돌리기</button>
+    </div>
+
+    <div class="entry-card">
+      <span class="date">2026-05-22</span>
+      <span class="pill locked">메소</span>
+      <div class="body">
+        50,000,000 메소 받음
+        <span class="snapshot">스냅샷: (메소만 받았으므로 단가 영향 없음)</span>
+      </div>
+      <button class="btn btn-mini" style="background:#3a1010">↩ 되돌리기</button>
+    </div>
+  </div>
+
+  <div class="price-warn" style="margin-top:14px;">
+    <span>⚠</span>
+    <div>
+      다조 시세가 <span class="delta">6,800,000 → 7,200,000</span> 변경됨 —
+      <span style="color:#cdd6f4">기록된 정산은 영향 없음</span>,
+      <span style="color:#cdd6f4">현재 미정산 분만 재계산됨 (+6,000,000 메소)</span>
+    </div>
+  </div>
+
+  <div class="compare">
+    <h4>이 시안의 효과</h4>
+    <table>
+      <tr><th>상황</th><th>현재</th><th>시안 1</th></tr>
+      <tr><td>정산 후 다조 시세 변동</td><td class="bad">잔여 메소가 같이 흔들림 (이미 받은 분도)</td><td class="good">받은 분은 고정, 미정산 분만 흔들림</td></tr>
+      <tr><td>이력에 "그때 얼마짜리였지?" 추적</td><td class="bad">cashRateAtTime만 있음</td><td class="good">전 단가 스냅샷 + 모달에서 표시</td></tr>
+      <tr><td>마이너스 잔여 발생</td><td class="bad">시세 변동만으로도 마이너스 가능</td><td class="meh">선금 모드일 때만 발생 (정상 동작)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ============ 시안 2 ============ -->
+<div class="variant">
+  <div class="variant-head">
+    <span class="variant-num">시안 2</span>
+    <h2 class="variant-title">정산 후 시각 마킹 — 이미 받은 만큼은 회색·취소선</h2>
+    <span class="variant-axis">축: 시각 디자인</span>
+  </div>
+  <p class="variant-sub">
+    부분정산 entry가 추가되면, 그 entry에 해당하는 <strong>가장 오래된 일별 기록부터</strong> "처리됨"으로 마킹.
+    파란 글씨 → 회색·취소선으로 바뀌어서 표만 봐도 "여기까지는 이미 줬다"가 한눈에 보임.
+  </p>
+
+  <table class="sheet">
+    <thead>
+      <tr>
+        <th style="min-width:90px">날짜</th>
+        <th>매소</th><th>다조</th><th>우유</th><th>이슬</th>
+        <th style="background:#1a2a1a;color:#ffd76b;">합산 메소</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="day-divider"><td colspan="6">✓ 2026-05-25 정산 처리됨 — 100,000,000 메소 차감 분</td></tr>
+      <tr class="marked-row"><td class="row-header">05-20</td><td class="cell-num">15,000,000</td><td class="cell-num">5</td><td class="cell-num">4</td><td class="cell-num">10</td><td class="cell-num">52,200,000</td></tr>
+      <tr class="marked-row"><td class="row-header">05-21</td><td class="cell-num">12,000,000</td><td class="cell-num">4</td><td class="cell-num">3</td><td class="cell-num">8</td><td class="cell-num">45,600,000</td></tr>
+      <tr class="marked-row"><td class="row-header">05-22 일부</td><td class="cell-num">2,200,000</td><td class="cell-num">0</td><td class="cell-num">0</td><td class="cell-num">0</td><td class="cell-num">2,200,000</td></tr>
+      <tr class="day-divider" style="background:#0d1a30;color:#1971c2;border-color:#1971c2;"><td colspan="6" style="background:#0d1a30;color:#1971c2;">▶ 정산 대기 — 아래부터 잔여</td></tr>
+      <tr><td class="row-header">05-22 잔여</td><td class="cell-num">5,800,000</td><td class="cell-num">3</td><td class="cell-num">2</td><td class="cell-num">4</td><td class="cell-num">29,000,000</td></tr>
+      <tr><td class="row-header">05-23</td><td class="cell-num">10,000,000</td><td class="cell-num">4</td><td class="cell-num">5</td><td class="cell-num">8</td><td class="cell-num">45,200,000</td></tr>
+      <tr><td class="row-header">05-24</td><td class="cell-num">7,500,000</td><td class="cell-num">3</td><td class="cell-num">3</td><td class="cell-num">6</td><td class="cell-num">33,300,000</td></tr>
+      <tr style="background:#0a1a10"><td colspan="5" class="row-header" style="background:#0a1a10;color:#ffd76b;text-align:right">잔여 합산</td><td class="cell-num" style="color:#ffd76b;font-weight:700">107,500,000</td></tr>
+    </tbody>
+  </table>
+
+  <p class="legend">
+    • 정산 entry의 <strong>mesoEquiv</strong>만큼을 일별 합산 메소에서 위에서부터 차감 → 다 차감된 행은 "처리됨" 표시<br>
+    • 일별 입력 그리드(메인 화면)에서도 정산 처리된 셀은 회색·취소선 → <strong>지금 "정 산 완 료" 오버레이를 부분정산 단위로 확장</strong><br>
+    • 변동가 재화는 정산 시점 단가로 일별 메소값을 박제(시안 1과 결합 시)
+  </p>
+</div>
+
+<!-- ============ 시안 3 ============ -->
+<div class="variant">
+  <div class="variant-head">
+    <span class="variant-num">시안 3</span>
+    <h2 class="variant-title">잔여 중심 뷰 — 표는 "줘야 할 것"만 보여줌</h2>
+    <span class="variant-axis">축: 상호작용 / 정보 구조</span>
+  </div>
+  <p class="variant-sub">
+    부주정산 표의 재화 수량을 <strong>"미정산분만"</strong>으로 기본 표시.
+    이미 정산된 만큼은 작은 회색 취소선으로 위에 살짝 보여줘서 "총 누적 - 받은 분 = 줄 분"이 셀 하나에서 다 보임.
+    상단 토글로 "전체 누적" / "잔여만" 전환.
+  </p>
+
+  <div class="scope-tab">
+    <button class="active">잔여만 (기본)</button>
+    <button>전체 누적</button>
+    <button>정산된 분만</button>
+  </div>
+
+  <table class="sheet">
+    <thead>
+      <tr>
+        <th>캐릭터</th>
+        <th>매소</th><th>다조</th><th>우유</th><th>이슬</th>
+        <th style="background:#1a2a1a;color:#ffd76b;">💰 잔여 메소</th>
+        <th style="background:#2a1010;color:#ff8a65;">💵 잔여 현금</th>
+        <th>정산</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="row-header">캐릭터A <span style="color:#7ed4d4;font-size:10px;font-weight:400">2건 받음</span></td>
+        <td class="cell-num"><div class="split-cell"><span class="paid">52,000,000</span><span class="open">17,000,000</span></div></td>
+        <td class="cell-num"><div class="split-cell"><span class="paid">15</span><span class="open">9</span></div></td>
+        <td class="cell-num"><div class="split-cell"><span class="paid">12</span><span class="open">7</span></div></td>
+        <td class="cell-num"><div class="split-cell"><span class="paid">30</span><span class="open">18</span></div></td>
+        <td class="total-meso"><div class="val">90,600,000</div><div style="font-size:10px;color:#5c5f66">메소</div></td>
+        <td class="total-cash">1,359 원</td>
+        <td style="text-align:center"><button class="btn">정산하기</button></td>
+      </tr>
+      <tr>
+        <td class="row-header">캐릭터B</td>
+        <td class="cell-num"><div class="split-cell"><span class="open">8,500,000</span></div></td>
+        <td class="cell-num"><div class="split-cell"><span class="open">3</span></div></td>
+        <td class="cell-num"><div class="split-cell"><span class="open">0</span></div></td>
+        <td class="cell-num"><div class="split-cell"><span class="open">10</span></div></td>
+        <td class="total-meso"><div class="val">36,900,000</div><div style="font-size:10px;color:#5c5f66">메소</div></td>
+        <td class="total-cash">554 원</td>
+        <td style="text-align:center"><button class="btn">정산하기</button></td>
+      </tr>
+      <tr>
+        <td class="row-header" style="color:#5c5f66">캐릭터C <span style="color:#7ec97e;font-size:10px">전체 정산</span></td>
+        <td class="cell-num"><div class="split-cell"><span class="paid">5,000,000</span><span class="open zero">0</span></div></td>
+        <td class="cell-num"><div class="split-cell"><span class="paid">2</span><span class="open zero">0</span></div></td>
+        <td class="cell-num"><div class="split-cell"><span class="paid">3</span><span class="open zero">0</span></div></td>
+        <td class="cell-num"><div class="split-cell"><span class="paid">5</span><span class="open zero">0</span></div></td>
+        <td class="total-meso"><div class="val" style="color:#5c5f66">0</div></td>
+        <td class="total-cash" style="color:#5c5f66">0 원</td>
+        <td style="text-align:center"><span style="color:#7ec97e;font-size:11px">✓ 완료</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="legend">
+    • 각 셀: <strong>위 회색·취소선 = 이미 받은 분</strong>, <strong>아래 파란색 = 남은 분</strong> (둘 다 한 칸에)<br>
+    • 정산 entry의 mesoEquiv를 재화별로 안분(비율로 나눠서 차감)해서 "이만큼 받은 거임" 표시<br>
+    • 변동가 재화 시세 바뀌어도 "받은 분"은 entry 메소값으로 고정 → 위 회색 숫자는 안 흔들림<br>
+    • 토글로 <strong>전체 누적 / 잔여만 / 정산된 분만</strong> 3가지 뷰 전환
+  </p>
+</div>
+
+<!-- ============ 비교 / 추천 ============ -->
+<div class="variant" style="background:#1a1410;border-color:#3a2a10;">
+  <h2 style="color:#ffd76b;margin:0 0 6px;font-size:17px;">🎯 추천 조합 — 시안 1 + 시안 3</h2>
+  <p style="color:#cdd6f4;font-size:13px;margin:0 0 14px;">
+    <strong>시안 1(스냅샷 락)</strong>으로 데이터 무결성을 잡고,
+    <strong>시안 3(잔여 중심 뷰)</strong>로 표의 혼란을 동시에 잡는 게 가장 효율적.
+    시안 2는 일별 그리드까지 손대야 해서 작업량이 큼.
+  </p>
+
+  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead>
+      <tr style="border-bottom:1px solid #3a2a10;">
+        <th style="text-align:left;padding:8px 10px;color:#ffd76b;">시안</th>
+        <th style="text-align:left;padding:8px 10px;color:#ffd76b;">해결하는 것</th>
+        <th style="text-align:left;padding:8px 10px;color:#ffd76b;">손대는 범위</th>
+        <th style="text-align:left;padding:8px 10px;color:#ffd76b;">위험</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #2a1c08;">
+        <td style="padding:8px 10px;color:#cdd6f4;">1 · 스냅샷 락</td>
+        <td style="padding:8px 10px;color:#cdd6f4;">변동성 → 잔여 출렁임</td>
+        <td style="padding:8px 10px;color:#7ec97e;">entry 구조 확장 + 마이그레이션, 모달 표시 추가</td>
+        <td style="padding:8px 10px;color:#7ec97e;">낮음 — 기존 entry는 cashRateAtTime만 있어도 fallback 가능</td>
+      </tr>
+      <tr style="border-bottom:1px solid #2a1c08;">
+        <td style="padding:8px 10px;color:#cdd6f4;">2 · 일별 마킹</td>
+        <td style="padding:8px 10px;color:#cdd6f4;">시각 혼란 (메인 그리드까지)</td>
+        <td style="padding:8px 10px;color:#ff8a65;">renderSheet + getAccumulated 전반 손봐야 함</td>
+        <td style="padding:8px 10px;color:#ff8a65;">높음 — "어떻게 차감을 일자별로 안분?" 정의 필요</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 10px;color:#cdd6f4;">3 · 잔여 중심 뷰</td>
+        <td style="padding:8px 10px;color:#cdd6f4;">시각 혼란 (부주정산 표만)</td>
+        <td style="padding:8px 10px;color:#7ec97e;">renderHistory의 셀 렌더링 + 토글 추가</td>
+        <td style="padding:8px 10px;color:#ffd76b;">중간 — 재화별 안분 방식 정해야 함 (메소비중 안분 추천)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:16px;padding:12px 14px;background:#0a1a10;border:1px solid #1a3a20;border-radius:5px;font-size:12px;color:#cdd6f4;">
+    <strong style="color:#7ec97e;">진행 순서 제안:</strong>
+    ① 시안 1만 먼저 적용 → 데이터부터 정리 →
+    ② 잔여 뷰(시안 3) 추가 →
+    ③ 쓰다가 일별 그리드까지 마킹 원하면 시안 2.
+  </div>
+</div>
+
+</body>
+</html>

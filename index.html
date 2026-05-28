@@ -343,6 +343,32 @@ body.top-bossdist #distribute { display: block !important; }
 .toast.show { opacity: 1; }
 .toast.success { background: #1971c2; }
 .toast.error { background: #c0392b; }
+
+/* 정산 잔여 중심 뷰 — split cell */
+.split-cell { display: flex; flex-direction: column; gap: 1px; padding: 3px 6px; align-items: flex-end; font-family: Consolas, monospace; line-height: 1.2; }
+.split-cell .paid { color: #5c5f66; font-size: 10px; text-decoration: line-through; }
+.split-cell .open { color: #1971c2; font-size: 13px; font-weight: 700; }
+.split-cell .open.zero { color: #5c5f66; font-weight: 400; }
+.split-cell .meso-sub { font-size: 9px; color: #5c5f66; font-weight: 400; }
+.split-cell.no-price .open { color: #1971c2; }
+
+/* 정산 표 상단 — scope toggle / drift banner */
+.settle-scope-bar { display: flex; align-items: center; gap: 12px; margin: 0 0 8px; flex-wrap: wrap; }
+.scope-tab-group { display: inline-flex; border-radius: 4px; overflow: hidden; border: 1px solid #1f2937; }
+.scope-tab-group button { background: #0a0e15; border: none; color: #8F96A3; padding: 5px 14px; font-size: 12px; font-family: inherit; cursor: pointer; border-left: 1px solid #1f2937; }
+.scope-tab-group button:first-child { border-left: none; }
+.scope-tab-group button.active { background: #1971c2; color: #fff; font-weight: 700; }
+.scope-tab-group button:hover:not(.active) { background: #131822; color: #cdd6f4; }
+.price-drift-banner { background: #1a1410; border: 1px solid #5a3a10; border-radius: 5px; padding: 6px 12px; font-size: 12px; color: #ffd76b; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.price-drift-banner .delta-item { color: #ff8a65; font-family: Consolas, monospace; font-weight: 700; }
+.price-drift-banner .delta-item .from { color: #5c5f66; text-decoration: line-through; font-weight: 400; margin-right: 2px; }
+
+/* 정산 entry 스냅샷 표시 */
+.entry-snap { display: block; color: #5c5f66; font-size: 10px; margin-top: 2px; font-family: Consolas, monospace; line-height: 1.4; }
+.entry-snap .lock { color: #7ed4d4; margin-right: 4px; font-weight: 700; }
+.entry-snap .snap-item { color: #7ed4d4; margin-right: 8px; white-space: nowrap; }
+.entry-snap .snap-item .k { color: #5c5f66; margin-right: 1px; }
+.entry-snap.empty { color: #5c5f66; font-style: italic; }
 </style>
 </head>
 <body class="top-tracker">
@@ -434,6 +460,16 @@ body.top-bossdist #distribute { display: block !important; }
   <!-- 부주 정산 -->
   <div id="history" class="panel top-view-tracker">
     <h3 style="margin:0 0 12px;color:#FFFFFF;font-size:1em;">캐릭터별 누적 정산</h3>
+    <div class="settle-scope-bar">
+      <span style="color:#8F96A3;font-size:12px;">보기:</span>
+      <div class="scope-tab-group" id="settleScopeTabs">
+        <button data-scope="remaining" class="active" onclick="setSettleScope('remaining')">잔여만</button>
+        <button data-scope="all" onclick="setSettleScope('all')">전체 누적</button>
+        <button data-scope="paid" onclick="setSettleScope('paid')">정산된 분</button>
+      </div>
+      <span style="color:#5c5f66;font-size:11px;">잔여만 = 받은 만큼 차감 (변동가 → 고정가 → 매소 순으로 떨굼)</span>
+      <div id="settlePriceDriftBanner" style="margin-left:auto;"></div>
+    </div>
     <div class="sheet-wrap" id="settlementWrap"></div>
 
     <!-- 정산 이력 모아보기 -->
@@ -636,8 +672,20 @@ const APP_VERSION = 2;
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-05-27';
+const CHANGELOG_VERSION = '2026-05-28';
 const CHANGELOG = [
+  {
+    version: '2026-05-28',
+    title: '🧹 정산 명확화 — 시세 변동·시각 혼란 잡기',
+    items: [
+      '<strong style="color:#7ed4d4">🔒 정산 스냅샷 락</strong>: 정산 시점의 재화 단가·현금 시세를 entry에 박제 → 이후 시세 바꿔도 이미 받은 정산은 영향 없음',
+      '<strong style="color:#ff8a65">⚠ 시세 변동 경고</strong>: 직전 정산 이후 단가가 바뀐 재화가 있으면 정산 모달과 표 상단에 자동 알림 (예: 다조 680만 ↑ 750만)',
+      '<strong style="color:#ffd76b">📊 잔여 중심 뷰</strong>: 부주정산 표 셀이 "받은 분(회색 취소선) + 남은 분(파랑)" 두 줄로 분할. <code>잔여만 / 전체 누적 / 정산된 분</code> 토글로 전환',
+      '<strong>우선순위 차감</strong>: 받은 메소는 <strong>변동가 → 고정가 → 매소</strong> 순으로 차감. 시세 흔들리는 재화부터 잠가서 잔여가 매소 위주로 안정화',
+      '<strong style="color:#7ec97e">✨ 자동 정리</strong>: 정산받은 금액이 그 날짜까지의 누적을 cover하면 <code>lastDate</code>를 자동 갱신. 부분정산이라도 사실상 전체 정산이면 시각이 깔끔하게 정리됨 (오늘 분량만 잔여로 표시)',
+      '정산 이력 각 항목에 🔒 박제 표시 — 그때의 단가가 한 줄로 보임 (옛 정산은 "스냅샷 없음" 폴백)',
+    ],
+  },
   {
     version: '2026-05-27',
     title: '💰 부주정산 대규모 업데이트',
@@ -1122,6 +1170,176 @@ function calcSettlementMeso(totals) {
     sum += (totals[res] || 0) * price;
   });
   return sum;
+}
+
+// [시안 1] 현재 시세 스냅샷 (정산 entry에 박제용)
+function capturePriceSnapshot(data) {
+  const prices = {};
+  (data.resources || []).forEach(r => {
+    if (r === '매소' || r === '경험치') return;
+    const p = getResourcePrice(r);
+    if (p > 0) prices[r] = p;
+  });
+  return { prices, cashRate: getCashRate() };
+}
+
+// [자동 정리] entry의 mesoEquiv가 그 entry 날짜까지의 누적 grossMeso를 cover하면
+// lastDate를 entry 날짜로 자동 promote. 그 entry는 history로 이동.
+// → 부분정산(현금/메소)이 사실상 그 시점까지의 전체 정산일 때 자동으로 시각 정리.
+function autoPromoteLastDate(data, ch) {
+  const settle = data.settlements?.[ch];
+  if (!settle) return false;
+  const allEntries = settle.entries || [];
+  if (!allEntries.length) return false;
+
+  const oldLastDate = settle.lastDate || '';
+  // 후보 cutoff 날짜 = entries의 날짜들 중 oldLastDate보다 큰 것, 늦은 순
+  const sortedDescDates = [...new Set(allEntries.map(e => e.date))]
+    .filter(d => d > oldLastDate)
+    .sort()
+    .reverse();
+
+  for (const cutoff of sortedDescDates) {
+    // oldLastDate < date <= cutoff 기간의 부분 누적
+    const partialTotals = {};
+    (data.resources || []).forEach(r => partialTotals[r] = 0);
+    Object.keys(data.records || {}).forEach(date => {
+      if (date > oldLastDate && date <= cutoff) {
+        (data.resources || []).forEach(r => {
+          if (r === '경험치') partialTotals[r] += getExpEarnedNum(data.records[date]?.[ch]?.[r]);
+          else partialTotals[r] += getEarned(data.records[date]?.[ch]?.[r]);
+        });
+      }
+    });
+    const partialGross = calcSettlementMeso(partialTotals);
+    if (partialGross <= 0) continue;
+
+    // cutoff 시점까지의 entries의 mesoEquiv 합
+    const paidUpTo = allEntries
+      .filter(e => e.date <= cutoff)
+      .reduce((s, e) => s + (Number(e.mesoEquiv) || 0), 0);
+
+    // paidUpTo ≥ partialGross * 0.99 (1% 오차 허용 — 시세 미세 차이, 반올림)
+    if (paidUpTo >= partialGross * 0.99) {
+      settle.lastDate = cutoff;
+      settle.history = settle.history || [];
+      settle.history.push({ date: cutoff, amounts: partialTotals });
+      // cutoff 이전 entries 모두 제거 (잠긴 거)
+      settle.entries = allEntries.filter(e => e.date > cutoff);
+      return true;
+    }
+  }
+  return false;
+}
+
+// [시안 1] 시세 변동 감지 (현재 시세 vs 마지막 entry의 스냅샷)
+function detectPriceDrift(data, ch) {
+  const entries = data.settlements?.[ch]?.entries || [];
+  if (!entries.length) return [];
+  // 가장 최근 스냅샷 있는 entry 찾기
+  let snap = null;
+  for (let i = entries.length - 1; i >= 0; i--) {
+    if (entries[i].priceSnapshot?.prices) { snap = entries[i].priceSnapshot; break; }
+  }
+  if (!snap) return [];
+  const drift = [];
+  Object.keys(snap.prices || {}).forEach(r => {
+    const cur = getResourcePrice(r);
+    const old = Number(snap.prices[r]) || 0;
+    if (cur > 0 && old > 0 && cur !== old) {
+      drift.push({ res: r, from: old, to: cur, diff: cur - old });
+    }
+  });
+  return drift;
+}
+
+// [시안 3+] paidMeso 차감을 우선순위 순서로 — 변동가 → 고정가 → 매소(마지막)
+// 이유: 변동가 재화는 정산 시점 가치로 먼저 잠그고, 나머지는 시세 변동 없는 매소로 남겨야
+//       이후 시세가 흔들려도 잔여 메소가 안정적임.
+function allocatePaidToResources(data, totals, paidMeso) {
+  const result = {};
+  (data.resources || []).forEach(r => {
+    result[r] = { qty: totals[r] || 0, paidQty: 0, remainingQty: totals[r] || 0, hasPrice: false, mesoVal: 0 };
+  });
+  if (paidMeso <= 0) return result;
+
+  (data.resources || []).forEach(r => {
+    if (r === '경험치') return;
+    const price = getResourcePrice(r);
+    if (!price) return;
+    const v = (totals[r] || 0) * price;
+    result[r].hasPrice = true;
+    result[r].mesoVal = v;
+  });
+
+  // 우선순위: 변동가 → 고정가(매소 제외) → 매소
+  const variable = [], fixedNonMeso = [];
+  let mesoR = null;
+  (data.resources || []).forEach(r => {
+    if (!result[r].hasPrice || result[r].mesoVal <= 0) return;
+    if (r === '매소') mesoR = r;
+    else if (isPriceFixed(r)) fixedNonMeso.push(r);
+    else variable.push(r);
+  });
+  const order = [...variable, ...fixedNonMeso];
+  if (mesoR) order.push(mesoR);
+
+  let remainingPay = paidMeso;
+  order.forEach(r => {
+    if (remainingPay <= 0) return;
+    const v = result[r].mesoVal;
+    if (v <= 0) return;
+    const consumed = Math.min(v, remainingPay);
+    const ratio = consumed / v;
+    const qty = totals[r] || 0;
+    result[r].paidQty = qty * ratio;
+    result[r].remainingQty = qty - result[r].paidQty;
+    remainingPay -= consumed;
+  });
+  return result;
+}
+
+// [시안 3] 부주정산 표의 재화 셀 — scope별로 split / 단일 표시
+function renderSettleCell(res, qty, allocRes, scope) {
+  const price = getResourcePrice(res);
+  const isExp = res === '경험치';
+  const fmt = v => isExp ? (v ? v.toFixed(3) + '%' : '') : formatNum(Math.round(v));
+  const mesoOf = v => (!isExp && price) ? `<div class="meso-sub">=${formatMeso(Math.round(v * price))}</div>` : '';
+
+  // 가격 없는 재화(경험치 등)는 scope 상관없이 전체 표시
+  if (isExp || !price || !allocRes || !allocRes.hasPrice) {
+    return `<td class="cell"><div class="split-cell no-price"><span class="open ${qty ? '' : 'zero'}">${fmt(qty)}</span></div></td>`;
+  }
+  const paidQty = allocRes.paidQty;
+  const remQty = allocRes.remainingQty;
+
+  if (scope === 'all') {
+    return `<td class="cell"><div class="split-cell"><span class="open">${fmt(qty)}</span>${mesoOf(qty)}</div></td>`;
+  }
+  if (scope === 'paid') {
+    return `<td class="cell"><div class="split-cell"><span class="open ${paidQty ? '' : 'zero'}">${fmt(paidQty)}</span>${mesoOf(paidQty)}</div></td>`;
+  }
+  // 'remaining' (default) — 받은 분 위(회색 취소선), 남은 분 아래(파랑)
+  let html = '<td class="cell"><div class="split-cell">';
+  if (paidQty > 0) html += `<span class="paid">${fmt(paidQty)}</span>`;
+  html += `<span class="open ${remQty <= 0 ? 'zero' : ''}">${fmt(remQty)}</span>`;
+  if (remQty > 0) html += mesoOf(remQty);
+  html += '</div></td>';
+  return html;
+}
+
+// [시안 1] entry의 priceSnapshot을 한 줄 짜리 표시로 (스냅샷 없으면 "옛 정산")
+function renderEntrySnapshot(entry) {
+  const snap = entry?.priceSnapshot;
+  if (!snap || !snap.prices) {
+    return `<div class="entry-snap empty">(스냅샷 없음 · 시세 박제 이전 정산)</div>`;
+  }
+  const items = [];
+  Object.keys(snap.prices).forEach(r => {
+    items.push(`<span class="snap-item"><span class="k">${r}</span>=${formatMeso(snap.prices[r])}</span>`);
+  });
+  if (snap.cashRate) items.push(`<span class="snap-item"><span class="k">1억</span>=${Number(snap.cashRate).toLocaleString()}원</span>`);
+  return `<div class="entry-snap"><span class="lock">🔒 박제</span>${items.join('')}</div>`;
 }
 // 정산 현금 계산 (메소 → 원)
 function calcSettlementCash(meso) {
@@ -1996,6 +2214,7 @@ function renderSettleModal() {
   // 시세 확인 박스 (변동가 재화 있으면 강조)
   const priceBox = document.getElementById('settleModalPrices');
   const pricedRes = (data.resources || []).filter(r => r !== '매소' && r !== '경험치' && getResourcePrice(r) > 0);
+  const drift = detectPriceDrift(data, ch);
   if (pricedRes.length) {
     const variableRes = pricedRes.filter(r => !isPriceFixed(r));
     let p = `<div style="background:#1a1410;border:1px solid #3a2a10;border-radius:6px;padding:10px 12px;margin-bottom:12px;">`;
@@ -2004,6 +2223,16 @@ function renderSettleModal() {
     p += `<span style="color:#8F96A3;font-size:11px;">— 경매장 변동가 재화는 정산 전에 한번 확인</span>`;
     if (variableRes.length) p += `<span style="background:#3a1010;color:#ff8a65;font-size:10px;padding:2px 7px;border-radius:3px;margin-left:auto;font-weight:600;">변동 ${variableRes.length}건 확인 필요</span>`;
     p += `</div>`;
+    if (drift.length) {
+      p += `<div style="background:#2a1610;border:1px solid #5a2a10;border-radius:4px;padding:6px 10px;margin-bottom:8px;font-size:11px;color:#ff8a65;">`;
+      p += `<span style="font-weight:700;margin-right:6px;">⚠ 직전 정산 이후 시세 변동:</span>`;
+      drift.forEach((d, i) => {
+        const arrow = d.diff > 0 ? '↑' : '↓';
+        p += `<span style="margin-right:10px;font-family:Consolas,monospace;font-weight:600;"><span style="color:#cdd6f4">${d.res}</span> <span style="color:#5c5f66;text-decoration:line-through;">${formatMeso(d.from)}</span> ${arrow} <span style="color:#ffd76b">${formatMeso(d.to)}</span></span>`;
+      });
+      p += `<span style="color:#8F96A3;font-weight:400;display:block;margin-top:3px;">기록된 정산은 박제되어 영향 없음. 미정산 잔여만 새 시세로 재계산됨.</span>`;
+      p += `</div>`;
+    }
     p += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;">`;
     pricedRes.forEach(r => {
       const fixed = isPriceFixed(r);
@@ -2038,10 +2267,13 @@ function renderSettleModal() {
       let amtTxt = '';
       if (e.type === 'cash' || (e.type === 'advance' && e.subType === 'cash')) amtTxt = `${Number(e.amount).toLocaleString()}원 (${formatMeso(e.mesoEquiv)})`;
       else amtTxt = `${formatMeso(e.mesoEquiv)} 메소`;
-      h += `<div style="padding:3px 0;font-size:11px;color:#cdd6f4;display:flex;align-items:center;gap:4px;">`;
+      h += `<div style="padding:3px 0;font-size:11px;color:#cdd6f4;">`;
+      h += `<div style="display:flex;align-items:center;gap:4px;">`;
       h += `<span style="color:#5c5f66;font-family:Consolas,monospace;min-width:80px;">${e.date}</span>${typeLabel}<span>${amtTxt}</span>`;
       if (e.memo) h += `<span style="color:#5c5f66;font-size:10px;">— ${e.memo}</span>`;
       h += `<button onclick="deleteSettlementEntry('${ch.replace(/'/g,"\\'")}',${e.id});setTimeout(renderSettleModal,50)" style="background:none;border:1px solid #3a1010;color:#c0392b;font-size:10px;cursor:pointer;margin-left:auto;font-family:inherit;border-radius:3px;padding:2px 8px;">↩ 되돌리기</button>`;
+      h += `</div>`;
+      h += renderEntrySnapshot(e);
       h += `</div>`;
     });
     if (st.entries.length > 5) h += `<div style="font-size:10px;color:#5c5f66;margin-top:4px;text-align:center;">+ ${st.entries.length - 5}건 더 (표에서 ▶ 펼치기)</div>`;
@@ -2233,7 +2465,8 @@ function recordSettlement() {
       amount: fullType === 'cash' ? st.remainingCash : remaining,
       mesoEquiv: remaining,
       memo,
-      cashRateAtTime: cashRate
+      cashRateAtTime: cashRate,
+      priceSnapshot: capturePriceSnapshot(data)
     });
     // 기존 history 호환 — snapshot 추가
     data.settlements[ch].lastDate = date;
@@ -2272,12 +2505,15 @@ function recordSettlement() {
     }
   }
 
-  data.settlements[ch].entries.push({ id, date, type, subType, amount, mesoEquiv, memo, cashRateAtTime: cashRate });
+  data.settlements[ch].entries.push({ id, date, type, subType, amount, mesoEquiv, memo, cashRateAtTime: cashRate, priceSnapshot: capturePriceSnapshot(data) });
+  const promoted = autoPromoteLastDate(data, ch);
   saveData(data);
   closeSettleModal();
   renderHistory();
   const label = type === 'cash' ? '현금' : type === 'meso' ? '메소' : '선금';
-  toast(`"${ch}" ${label} 정산 +${formatNum(mesoEquiv)} 메소 기록`);
+  let msg = `"${ch}" ${label} 정산 +${formatNum(mesoEquiv)} 메소 기록`;
+  if (promoted) msg += ` (${data.settlements[ch].lastDate}까지 자동 정리)`;
+  toast(msg);
 }
 
 // 개별 entry 되돌리기
@@ -2439,15 +2675,55 @@ function rollbackSettle(ch) {
   toast(`"${ch}" 정산 롤백 완료`);
 }
 
+// [시안 3] 부주정산 표 보기 모드 — 'remaining' (기본) / 'all' / 'paid'
+let _settleScope = 'remaining';
+function setSettleScope(scope) {
+  _settleScope = scope;
+  document.querySelectorAll('#settleScopeTabs button').forEach(b => {
+    b.classList.toggle('active', b.dataset.scope === scope);
+  });
+  renderHistory();
+}
+
+// [자동 정리] 페이지 세션 내 한 번만 실행 — 기존 데이터 retroactive 처리
+let _autoPromoteRanForUser = null;
+
 function renderHistory() {
   const data = loadData();
   const settleWrap = document.getElementById('settlementWrap');
   const wrap = document.getElementById('historyTableWrap');
+  const driftWrap = document.getElementById('settlePriceDriftBanner');
 
   if (!data.characters.length || !data.resources.length) {
     settleWrap.innerHTML = '<div class="no-data">캐릭터와 재화를 먼저 추가해주세요.</div>';
     wrap.innerHTML = '';
+    if (driftWrap) driftWrap.innerHTML = '';
     return;
+  }
+
+  // [자동 정리] 유저별 첫 렌더에서 한 번 검사. promote되면 saveData → 재렌더
+  const userKey = getCurrentUser();
+  if (_autoPromoteRanForUser !== userKey) {
+    _autoPromoteRanForUser = userKey;
+    let promotedNames = [];
+    (data.characters || []).forEach(ch => {
+      if (autoPromoteLastDate(data, ch)) promotedNames.push(ch);
+    });
+    if (promotedNames.length) {
+      saveData(data);
+      toast(`자동 정리: ${promotedNames.join(', ')} — 정산받은 시점까지 잠금`);
+      // saveData는 재렌더 안 함 — 이어서 새 상태로 렌더
+    }
+  }
+
+  // [시안 1] 캐릭터별 시세 변동 집계 — 영향받는 캐릭터 수 표시
+  if (driftWrap) {
+    const driftCharCount = (data.characters || []).filter(c => detectPriceDrift(data, c).length > 0).length;
+    if (driftCharCount > 0) {
+      driftWrap.innerHTML = `<div class="price-drift-banner">⚠ 직전 정산 이후 시세 변동 — <strong>${driftCharCount}명</strong> 잔여 메소에 영향 (박제된 정산은 영향 없음)</div>`;
+    } else {
+      driftWrap.innerHTML = '';
+    }
   }
 
   const cashRate = getCashRate();
@@ -2480,7 +2756,9 @@ function renderHistory() {
   });
 
   if (unsettled.length) {
-    sh += `<tr><td colspan="${totalCols}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#1971c2;background:#0d1a30;border:1px solid #373A40;">미정산 (${unsettled.length})</td></tr>`;
+    const scope = _settleScope;
+    const scopeLabel = scope === 'remaining' ? '잔여만 표시' : scope === 'paid' ? '정산된 분만 표시' : '전체 누적 표시';
+    sh += `<tr><td colspan="${totalCols}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#1971c2;background:#0d1a30;border:1px solid #373A40;">미정산 (${unsettled.length}) <span style="color:#8F96A3;font-weight:400;font-size:11px;margin-left:6px;">— ${scopeLabel}</span></td></tr>`;
     let sumMeso = 0, sumCash = 0;
     unsettled.forEach(({ ch, state, totals, lastDate }) => {
       const remMeso = state.remainingMeso;
@@ -2494,13 +2772,9 @@ function renderHistory() {
         sh += `<button data-settle-arrow="${ch}" onclick="toggleSettleHistory('${ch.replace(/'/g,"\\'")}')" style="background:#1a3a1a;border:1px solid #2a5a3a;color:#7ec97e;font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px;cursor:pointer;font-family:inherit;">▶ 이력 ${state.entries.length}건</button>`;
       }
       sh += `</div></td>`;
+      const alloc = allocatePaidToResources(data, totals, Math.max(0, state.paidMeso));
       data.resources.forEach(r => {
-        const qty = totals[r] || 0;
-        const price = getResourcePrice(r);
-        const mesoVal = (r !== '경험치' && price) ? qty * price : 0;
-        const sub = mesoVal ? `<div style="font-size:10px;color:#5c5f66;">=${formatMeso(mesoVal)}</div>` : '';
-        const main = r === '경험치' ? (qty ? qty.toFixed(3) + '%' : '') : formatNum(qty);
-        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:13px;color:#1971c2">${main}${sub}</td>`;
+        sh += renderSettleCell(r, totals[r] || 0, alloc[r], scope);
       });
       sumMeso += remMeso; sumCash += remCash;
       const mesoColor = isNeg ? '#ef4444' : '#ffd76b';
@@ -2530,10 +2804,13 @@ function renderHistory() {
             amtTxt = `전체 정산 ${formatMeso(e.mesoEquiv)} ${e.subType === 'cash' ? '(현금 ' + Number(e.amount).toLocaleString() + '원)' : '(메소)'}`;
           }
           const memo = e.memo ? `<span style="color:#5c5f66;margin-left:8px;">— ${e.memo}</span>` : '';
-          sh += `<div style="padding:4px 0;font-size:12px;color:#cdd6f4;display:flex;align-items:center;gap:4px;">`;
+          sh += `<div style="padding:4px 0;font-size:12px;color:#cdd6f4;">`;
+          sh += `<div style="display:flex;align-items:center;gap:4px;">`;
           sh += `<span style="color:#8F96A3;font-family:Consolas,monospace;min-width:90px;">${e.date}</span>`;
           sh += `${typeLabel}<span>${amtTxt}</span>${memo}`;
           sh += `<button onclick="deleteSettlementEntry('${ch.replace(/'/g,"\\'")}',${e.id})" style="background:none;border:none;color:#c0392b;font-size:11px;cursor:pointer;margin-left:auto;font-family:inherit;">↩ 되돌리기</button>`;
+          sh += `</div>`;
+          sh += renderEntrySnapshot(e);
           sh += `</div>`;
         });
         sh += `</td></tr>`;

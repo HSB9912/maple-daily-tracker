@@ -683,6 +683,7 @@ const CHANGELOG = [
       '<strong style="color:#ffd76b">📊 잔여 중심 뷰</strong>: 부주정산 표 셀이 "받은 분(회색 취소선) + 남은 분(파랑)" 두 줄로 분할. <code>잔여만 / 전체 누적 / 정산된 분</code> 토글로 전환',
       '<strong>우선순위 차감</strong>: 받은 메소는 <strong>변동가 → 고정가 → 매소</strong> 순으로 차감. 시세 흔들리는 재화부터 잠가서 잔여가 매소 위주로 안정화',
       '<strong style="color:#7ec97e">✨ 자동 정리</strong>: 정산받은 금액이 그 날짜까지의 누적을 cover하면 <code>lastDate</code>를 자동 갱신. 부분정산이라도 사실상 전체 정산이면 시각이 깔끔하게 정리됨 (오늘 분량만 잔여로 표시)',
+      '잠긴 정산 이력도 메모·금액 그대로 보존 — "▶ 이력 N건 (🔒M)" 펼치면 잠긴 entries도 같이 보임',
       '정산 이력 각 항목에 🔒 박제 표시 — 그때의 단가가 한 줄로 보임 (옛 정산은 "스냅샷 없음" 폴백)',
     ],
   },
@@ -1223,8 +1224,9 @@ function autoPromoteLastDate(data, ch) {
     if (paidUpTo >= partialGross * 0.99) {
       settle.lastDate = cutoff;
       settle.history = settle.history || [];
-      settle.history.push({ date: cutoff, amounts: partialTotals });
-      // cutoff 이전 entries 모두 제거 (잠긴 거)
+      // 이 cutoff에 잠긴 entries들도 함께 보존 (memo, amount, priceSnapshot 등)
+      const consumedEntries = allEntries.filter(e => e.date <= cutoff);
+      settle.history.push({ date: cutoff, amounts: partialTotals, entries: consumedEntries });
       settle.entries = allEntries.filter(e => e.date > cutoff);
       return true;
     }
@@ -1297,6 +1299,36 @@ function allocatePaidToResources(data, totals, paidMeso) {
     remainingPay -= consumed;
   });
   return result;
+}
+
+// 정산 이력 한 줄 렌더링 (current/locked 공용)
+function renderEntryLine(ch, e, locked) {
+  const typeLabel = e.type === 'cash' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#3a1010;color:#ff8a65;margin-right:6px;">현금</span>'
+    : e.type === 'meso' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#3a3010;color:#ffd76b;margin-right:6px;">메소</span>'
+    : e.type === 'advance' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a3a;color:#7ed4d4;margin-right:6px;">선금</span>'
+    : '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a1a;color:#7ec97e;margin-right:6px;">전체</span>';
+  let amtTxt = '';
+  if (e.type === 'cash' || (e.type === 'advance' && e.subType === 'cash')) {
+    amtTxt = `${Number(e.amount).toLocaleString()}원 받음 (${formatMeso(e.mesoEquiv)} 차감)`;
+  } else if (e.type === 'meso' || (e.type === 'advance' && e.subType === 'meso')) {
+    amtTxt = `${formatMeso(e.mesoEquiv)} 받음`;
+  } else {
+    amtTxt = `전체 정산 ${formatMeso(e.mesoEquiv)} ${e.subType === 'cash' ? '(현금 ' + Number(e.amount).toLocaleString() + '원)' : '(메소)'}`;
+  }
+  const memo = e.memo ? `<span style="color:#5c5f66;margin-left:8px;">— ${e.memo}</span>` : '';
+  let h = `<div style="padding:4px 0;font-size:12px;color:${locked ? '#8F96A3' : '#cdd6f4'};${locked ? 'opacity:0.75;' : ''}">`;
+  h += `<div style="display:flex;align-items:center;gap:4px;">`;
+  h += `<span style="color:#8F96A3;font-family:Consolas,monospace;min-width:90px;">${e.date}</span>`;
+  h += `${typeLabel}<span>${amtTxt}</span>${memo}`;
+  if (locked) {
+    h += `<span style="margin-left:auto;background:#1a2a3a;color:#7ed4d4;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;">🔒 잠금</span>`;
+  } else {
+    h += `<button onclick="deleteSettlementEntry('${ch.replace(/'/g,"\\'")}',${e.id})" style="background:none;border:none;color:#c0392b;font-size:11px;cursor:pointer;margin-left:auto;font-family:inherit;">↩ 되돌리기</button>`;
+  }
+  h += `</div>`;
+  h += renderEntrySnapshot(e);
+  h += `</div>`;
+  return h;
 }
 
 // [시안 3] 부주정산 표의 재화 셀 — scope별로 split / 단일 표시
@@ -2254,29 +2286,22 @@ function renderSettleModal() {
     priceBox.style.display = 'none';
   }
 
-  // 최근 정산 이력 (entries가 있으면 표시)
+  // 최근 정산 이력 (current entries + 가장 최근 잠긴 history 1건까지)
   const histBox = document.getElementById('settleModalHistory');
-  if (st.entries.length) {
+  const lockedRecent = (data.settlements?.[ch]?.history || []).slice(-1)
+    .flatMap(h => (h.entries || []).map(e => ({ ...e, _lockedAt: h.date })));
+  if (st.entries.length || lockedRecent.length) {
     let h = '<div style="background:#0a0e15;border:1px solid #1f2937;border-radius:5px;padding:10px 12px;margin-bottom:12px;">';
-    h += `<div style="color:#8F96A3;font-size:11px;font-weight:600;margin-bottom:6px;">📋 최근 정산 이력 (${st.entries.length}건) — 잘못 기록했으면 ↩되돌리기</div>`;
-    st.entries.slice().reverse().slice(0, 5).forEach(e => {
-      const typeLabel = e.type === 'cash' ? '<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#3a1010;color:#ff8a65;margin-right:6px;">현금</span>'
-        : e.type === 'meso' ? '<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#3a3010;color:#ffd76b;margin-right:6px;">메소</span>'
-        : e.type === 'advance' ? '<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a3a;color:#7ed4d4;margin-right:6px;">선금</span>'
-        : '<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a1a;color:#7ec97e;margin-right:6px;">전체</span>';
-      let amtTxt = '';
-      if (e.type === 'cash' || (e.type === 'advance' && e.subType === 'cash')) amtTxt = `${Number(e.amount).toLocaleString()}원 (${formatMeso(e.mesoEquiv)})`;
-      else amtTxt = `${formatMeso(e.mesoEquiv)} 메소`;
-      h += `<div style="padding:3px 0;font-size:11px;color:#cdd6f4;">`;
-      h += `<div style="display:flex;align-items:center;gap:4px;">`;
-      h += `<span style="color:#5c5f66;font-family:Consolas,monospace;min-width:80px;">${e.date}</span>${typeLabel}<span>${amtTxt}</span>`;
-      if (e.memo) h += `<span style="color:#5c5f66;font-size:10px;">— ${e.memo}</span>`;
-      h += `<button onclick="deleteSettlementEntry('${ch.replace(/'/g,"\\'")}',${e.id});setTimeout(renderSettleModal,50)" style="background:none;border:1px solid #3a1010;color:#c0392b;font-size:10px;cursor:pointer;margin-left:auto;font-family:inherit;border-radius:3px;padding:2px 8px;">↩ 되돌리기</button>`;
-      h += `</div>`;
-      h += renderEntrySnapshot(e);
-      h += `</div>`;
-    });
-    if (st.entries.length > 5) h += `<div style="font-size:10px;color:#5c5f66;margin-top:4px;text-align:center;">+ ${st.entries.length - 5}건 더 (표에서 ▶ 펼치기)</div>`;
+    if (st.entries.length) {
+      h += `<div style="color:#8F96A3;font-size:11px;font-weight:600;margin-bottom:6px;">📋 진행 중 (${st.entries.length}건) — 잘못 기록했으면 ↩되돌리기</div>`;
+      st.entries.slice().reverse().slice(0, 5).forEach(e => { h += renderEntryLine(ch, e, false); });
+      if (st.entries.length > 5) h += `<div style="font-size:10px;color:#5c5f66;margin-top:4px;text-align:center;">+ ${st.entries.length - 5}건 더 (표에서 ▶ 펼치기)</div>`;
+    }
+    if (lockedRecent.length) {
+      if (st.entries.length) h += `<div style="border-top:1px dashed #1f2937;margin:6px 0;"></div>`;
+      h += `<div style="color:#7ed4d4;font-size:11px;font-weight:600;margin-bottom:6px;">🔒 직전 잠긴 정산 (${lockedRecent.length}건)</div>`;
+      lockedRecent.slice().reverse().slice(0, 3).forEach(e => { h += renderEntryLine(ch, e, true); });
+    }
     h += '</div>';
     histBox.innerHTML = h;
     histBox.style.display = '';
@@ -2459,7 +2484,7 @@ function recordSettlement() {
     const fullType = document.getElementById('settleFullType')?.value || 'cash';
     const remaining = st.remainingMeso;
     // 전체 정산 = 잔여만큼 entry 추가 + lastDate 갱신
-    data.settlements[ch].entries.push({
+    const fullEntry = {
       id, date, type: 'full',
       subType: fullType,
       amount: fullType === 'cash' ? st.remainingCash : remaining,
@@ -2467,10 +2492,14 @@ function recordSettlement() {
       memo,
       cashRateAtTime: cashRate,
       priceSnapshot: capturePriceSnapshot(data)
-    });
-    // 기존 history 호환 — snapshot 추가
-    data.settlements[ch].lastDate = date;
-    data.settlements[ch].history = [...(data.settlements[ch].history || []), { date, amounts: st.totals }];
+    };
+    const settle = data.settlements[ch];
+    settle.entries.push(fullEntry);
+    // history에 amounts 스냅샷 + 이 시점까지 잠긴 entries 전체 보존
+    const allBefore = settle.entries.filter(e => e.date <= date);
+    settle.history = [...(settle.history || []), { date, amounts: st.totals, entries: allBefore }];
+    settle.lastDate = date;
+    settle.entries = settle.entries.filter(e => e.date > date);
     saveData(data);
     closeSettleModal();
     renderHistory();
@@ -2764,12 +2793,16 @@ function renderHistory() {
       const remMeso = state.remainingMeso;
       const remCash = state.remainingCash;
       const isNeg = remMeso < 0;
-      const hasHist = state.entries.length > 0;
+      const lockedEntries = (data.settlements?.[ch]?.history || [])
+        .flatMap(h => (h.entries || []).map(e => ({ ...e, _lockedAt: h.date })));
+      const totalHistCount = state.entries.length + lockedEntries.length;
+      const hasHist = totalHistCount > 0;
       sh += `<tr><td class="row-header">`;
       sh += `<div style="display:flex;align-items:center;gap:6px;">`;
       sh += `<span>${ch}</span>`;
       if (hasHist) {
-        sh += `<button data-settle-arrow="${ch}" onclick="toggleSettleHistory('${ch.replace(/'/g,"\\'")}')" style="background:#1a3a1a;border:1px solid #2a5a3a;color:#7ec97e;font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px;cursor:pointer;font-family:inherit;">▶ 이력 ${state.entries.length}건</button>`;
+        const lockedSuffix = lockedEntries.length ? ` <span style="color:#7ed4d4;">(🔒${lockedEntries.length})</span>` : '';
+        sh += `<button data-settle-arrow="${ch}" onclick="toggleSettleHistory('${ch.replace(/'/g,"\\'")}')" style="background:#1a3a1a;border:1px solid #2a5a3a;color:#7ec97e;font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px;cursor:pointer;font-family:inherit;">▶ 이력 ${state.entries.length}건${lockedSuffix}</button>`;
       }
       sh += `</div></td>`;
       const alloc = allocatePaidToResources(data, totals, Math.max(0, state.paidMeso));
@@ -2786,34 +2819,18 @@ function renderHistory() {
       sh += `<button onclick="settleChar('${ch.replace(/'/g,"\\'")}')" style="padding:5px 14px;border:none;border-radius:4px;cursor:pointer;font-size:13px;background:#1971c2;color:#fff;font-weight:600;font-family:inherit;">정산하기</button>`;
       if (lastDate) sh += `<div style="font-size:10px;color:#5c5f66;margin-top:3px">이전: ${lastDate}</div>`;
       sh += `</td></tr>`;
-      // 펼침 행 - 정산 이력
+      // 펼침 행 - 정산 이력 (current + locked)
       if (hasHist) {
         sh += `<tr data-settle-hist="${ch}" style="display:none"><td colspan="${totalCols}" style="background:#0a0e15;padding:10px 16px 10px 36px;">`;
-        sh += `<div style="font-size:11px;color:#8F96A3;margin-bottom:6px;font-weight:600;">📋 정산 이력 (${state.entries.length}건)</div>`;
-        state.entries.slice().reverse().forEach(e => {
-          const typeLabel = e.type === 'cash' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#3a1010;color:#ff8a65;margin-right:6px;">현금</span>'
-            : e.type === 'meso' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#3a3010;color:#ffd76b;margin-right:6px;">메소</span>'
-            : e.type === 'advance' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a3a;color:#7ed4d4;margin-right:6px;">선금</span>'
-            : '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a1a;color:#7ec97e;margin-right:6px;">전체</span>';
-          let amtTxt = '';
-          if (e.type === 'cash' || (e.type === 'advance' && e.subType === 'cash')) {
-            amtTxt = `${Number(e.amount).toLocaleString()}원 받음 (${formatMeso(e.mesoEquiv)} 차감)`;
-          } else if (e.type === 'meso' || (e.type === 'advance' && e.subType === 'meso')) {
-            amtTxt = `${formatMeso(e.mesoEquiv)} 받음`;
-          } else {
-            amtTxt = `전체 정산 ${formatMeso(e.mesoEquiv)} ${e.subType === 'cash' ? '(현금 ' + Number(e.amount).toLocaleString() + '원)' : '(메소)'}`;
-          }
-          const memo = e.memo ? `<span style="color:#5c5f66;margin-left:8px;">— ${e.memo}</span>` : '';
-          sh += `<div style="padding:4px 0;font-size:12px;color:#cdd6f4;">`;
-          sh += `<div style="display:flex;align-items:center;gap:4px;">`;
-          sh += `<span style="color:#8F96A3;font-family:Consolas,monospace;min-width:90px;">${e.date}</span>`;
-          sh += `${typeLabel}<span>${amtTxt}</span>${memo}`;
-          sh += `<button onclick="deleteSettlementEntry('${ch.replace(/'/g,"\\'")}',${e.id})" style="background:none;border:none;color:#c0392b;font-size:11px;cursor:pointer;margin-left:auto;font-family:inherit;">↩ 되돌리기</button>`;
-          sh += `</div>`;
-          sh += renderEntrySnapshot(e);
-          sh += `</div>`;
-        });
-        sh += `</td></tr>`;
+        if (state.entries.length) {
+          sh += `<div style="font-size:11px;color:#8F96A3;margin-bottom:6px;font-weight:600;">📋 진행 중 (${state.entries.length}건)</div>`;
+          state.entries.slice().reverse().forEach(e => { sh += renderEntryLine(ch, e, false); });
+        }
+        if (lockedEntries.length) {
+          if (state.entries.length) sh += `<div style="border-top:1px dashed #1f2937;margin:8px 0;"></div>`;
+          sh += `<div style="font-size:11px;color:#7ed4d4;margin-bottom:6px;font-weight:600;">🔒 잠긴 이력 (${lockedEntries.length}건) — ${data.settlements[ch].lastDate}까지 정산 완료</div>`;
+          lockedEntries.slice().reverse().forEach(e => { sh += renderEntryLine(ch, e, true); });
+        }
       }
     });
     if (unsettled.length > 1) {

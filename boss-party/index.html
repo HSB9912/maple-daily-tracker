@@ -70,16 +70,16 @@
   .boss-sec { display: flex; align-items: flex-start; gap: 10px; padding: 7px 4px; border-bottom: 1px solid var(--line); }
   .boss-sec:last-child { border-bottom: none; }
 
-  .bsec-info { width: 138px; flex-shrink: 0; }
-  .bsec-info .r1 { display: flex; align-items: center; gap: 6px; }
-  .bsec-info .bname { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .bsec-info { width: 150px; flex-shrink: 0; }
+  .bsec-info .r1 { display: flex; align-items: flex-start; gap: 6px; }
+  .bsec-info .bname { flex: 1; min-width: 0; font-size: 13px; font-weight: 800; cursor: pointer; word-break: break-all; line-height: 1.25; }
   .bsec-info .bname:hover { color: var(--accent); }
   .bsec-info .diff { cursor: pointer; }
   .diff { font-size: 9.5px; font-weight: 800; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--dc, var(--muted-2)); color: var(--dc, var(--muted-2)); line-height: 1.35; flex-shrink: 0; }
-  .bsec-info .del-boss { color: var(--muted-2); background: none; border: none; cursor: pointer; font-size: 12px; margin-left: auto; opacity: 0; }
+  .bsec-info .del-boss { color: var(--muted-2); background: none; border: none; cursor: pointer; font-size: 12px; opacity: 0; flex-shrink: 0; }
   .boss-sec:hover .del-boss { opacity: 1; }
   .bsec-info .del-boss:hover { color: var(--danger); }
-  .bsec-info .r2 { display: flex; align-items: center; gap: 5px; margin-top: 3px; }
+  .bsec-info .r2 { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
   .bsec-info .prog { font-size: 10.5px; color: var(--muted); }
   .bsec-info .prog.done { color: var(--good); font-weight: 700; }
   .addp { display: flex; gap: 3px; margin-top: 5px; }
@@ -272,10 +272,12 @@ function bossSection(boss){
   info.innerHTML = `
     <div class="r1">
       <span class="bname" title="클릭하여 이름·난이도 수정">${escapeHtml(boss.name)}</span>
-      <span class="diff" style="--dc:${dc}" title="클릭하여 이름·난이도 수정">${escapeHtml(boss.diff||"")}</span>
       <button class="del-boss" title="편성판 삭제">✕</button>
     </div>
-    <div class="r2"><span class="prog ${complete?"done":""}">${done}/${total} 배정</span></div>
+    <div class="r2">
+      <span class="diff" style="--dc:${dc}" title="클릭하여 이름·난이도 수정">${escapeHtml(boss.diff||"")}</span>
+      <span class="prog ${complete?"done":""}">${done}/${total} 배정</span>
+    </div>
     <div class="addp">
       <button data-add="1"><span class="sw" style="background:var(--solo)"></span>솔격</button>
       <button data-add="2"><span class="sw" style="background:var(--duo)"></span>2인</button>

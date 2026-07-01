@@ -136,6 +136,62 @@
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-thumb { background: #2c3242; border-radius: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
+
+  /* 멤버 선택 모달 목록 */
+  .pick-list { display: flex; flex-direction: column; gap: 5px; max-height: 52vh; overflow-y: auto; }
+  .pick-item { display: flex; align-items: center; gap: 8px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); cursor: pointer; }
+  .pick-item:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .pick-item .n { flex: 1; font-size: 13.5px; font-weight: 600; }
+  .pick-item .h { font-size: 11.5px; color: var(--muted-2); }
+  .pick-empty { color: var(--muted-2); font-size: 12.5px; text-align: center; padding: 18px; }
+
+  /* ===== 모바일 최적화 ===== */
+  @media (max-width: 760px) {
+    body { font-size: 14px; }
+    header { flex-wrap: wrap; gap: 7px; padding: 8px 10px; }
+    header h1 { font-size: 15px; }
+    .sync { order: 5; font-size: 11px; }
+    #btn-save, #btn-reload, #btn-add-boss { padding: 7px 12px; font-size: 13px; }
+
+    .app { flex-direction: column; }
+    .pool { width: 100%; flex-shrink: 0; border-right: none; border-bottom: 1px solid var(--line); max-height: 34vh; }
+    .board { padding: 6px 10px 60px; }
+
+    .boss-sec { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 2px; }
+    .bsec-info { width: auto; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; }
+    .bsec-info .r1 { flex: 1; min-width: 120px; }
+    .bsec-info .bname { font-size: 15px; }
+    .bsec-info .r2 { margin-top: 0; }
+    .bsec-info .addp { margin: 0 0 0 auto; }
+    .bsec-info .del-boss { opacity: 1; font-size: 15px; }
+    .boss-sec:hover .del-boss { opacity: 1; }
+
+    .bsec-right { width: 100%; }
+    .bsec-parties { gap: 8px; }
+    .party { gap: 6px; padding: 6px 9px 6px 7px; border-radius: 9px; }
+    .party .pdiff { font-size: 12px; padding: 3px 7px; }
+    .party .tag { font-size: 11px; }
+    .party .sum { font-size: 10.5px; }
+    .token { padding: 5px 6px 5px 9px; border-radius: 7px; }
+    .token .nick { font-size: 13.5px; }
+    .token .hx { font-size: 11px; }
+    .token .rm { font-size: 15px; padding: 2px 4px; }
+    .slot-mini { min-width: 40px; height: 34px; font-size: 20px; border-radius: 8px; }
+    .del-p { font-size: 15px !important; padding: 2px 4px; }
+
+    .addp button { padding: 7px 11px; font-size: 12.5px; }
+    .un-pill { padding: 7px 14px; font-size: 12.5px; }
+    .un-open { padding: 7px 10px; gap: 7px; }
+    .utok { padding: 5px 9px; border-radius: 7px; }
+    .utok .n { font-size: 13px; }
+    .un-fold { font-size: 12px; padding: 4px 6px; }
+
+    .member { padding: 8px 9px; }
+    .member .nick { font-size: 13.5px; }
+    .member .del-m { opacity: 1; font-size: 14px; }
+    input.fld { padding: 10px 11px; font-size: 14px; }
+    .modal { width: 92vw; max-width: 360px; }
+  }
 </style>
 </head>
 <body>
@@ -156,6 +212,16 @@
         <button class="btn ghost" id="nb-cancel">취소</button>
         <button class="btn primary" id="nb-ok">추가</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 멤버 선택(탭 배정) 모달 -->
+  <div class="modal-bg" id="pick-bg">
+    <div class="modal">
+      <h3>멤버 선택 <span class="en" id="pick-sub"></span></h3>
+      <input class="fld" id="pick-search" placeholder="🔍 닉네임 검색" style="width:100%" />
+      <div class="pick-list" id="pick-list"></div>
+      <div class="actions"><button class="btn ghost" id="pick-cancel">닫기</button></div>
     </div>
   </div>
 
@@ -356,9 +422,10 @@ function seatEl(boss,p,i,mId){
       return t;
     }
   }
-  const slot = document.createElement("div"); slot.className="slot-mini"; slot.textContent="+";
+  const slot = document.createElement("div"); slot.className="slot-mini"; slot.textContent="+"; slot.title="탭하여 멤버 배정";
   const dc = DIFF_COLOR[p.diff] || "var(--muted-2)";
   slot.style.setProperty("--tone",dc); slot.style.setProperty("--tone-soft",dc+"22");
+  slot.addEventListener("click", e=>{ e.stopPropagation(); openAssignPicker(boss,p,i); });
   slot.addEventListener("dragover", e=>{ e.preventDefault(); e.stopPropagation(); slot.classList.add("over"); });
   slot.addEventListener("dragleave", ()=>slot.classList.remove("over"));
   slot.addEventListener("drop", e=>{
@@ -416,6 +483,37 @@ function unassignedInline(boss){
   }
   return wrap;
 }
+
+/* ===== 멤버 선택(탭 배정) — 모바일/클릭용 ===== */
+let pickCtx = null;
+function openAssignPicker(boss, p, seat){
+  pickCtx = { boss, p, seat };
+  document.getElementById("pick-sub").textContent = `${boss.name} · ${p.diff} ${SIZE_META[p.size].label}`;
+  document.getElementById("pick-search").value = "";
+  renderPickList("");
+  document.getElementById("pick-bg").classList.add("on");
+  document.getElementById("pick-search").focus();
+}
+function renderPickList(q){
+  const list = document.getElementById("pick-list"); list.innerHTML = "";
+  if(!pickCtx) return;
+  const un = unassignedFor(pickCtx.boss).filter(m => !q || m.nick.toLowerCase().includes(q.toLowerCase()));
+  if(!un.length){ list.innerHTML = '<div class="pick-empty">배정할 미배정 멤버가 없어요.</div>'; return; }
+  un.forEach(m=>{
+    const it = document.createElement("div"); it.className="pick-item";
+    it.innerHTML = `<span class="n">${escapeHtml(m.nick)}</span><span class="h">${fmt(m.hexa)}</span>`;
+    it.addEventListener("click", ()=>{
+      const { boss, p, seat } = pickCtx;
+      pullFromBoss(boss, m.id); p.seats[seat] = m.id;
+      closePick(); renderAll();
+    });
+    list.appendChild(it);
+  });
+}
+function closePick(){ document.getElementById("pick-bg").classList.remove("on"); pickCtx=null; }
+document.getElementById("pick-cancel").addEventListener("click", closePick);
+document.getElementById("pick-bg").addEventListener("click", e=>{ if(e.target.id==="pick-bg") closePick(); });
+document.getElementById("pick-search").addEventListener("input", e=>renderPickList(e.target.value));
 
 /* ===== Add / Edit boss modal (이름만) ===== */
 let editingBossId = null;

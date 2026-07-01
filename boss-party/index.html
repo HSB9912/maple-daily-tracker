@@ -13,140 +13,129 @@
     --accent: #6c8cff; --accent-soft: #6c8cff22;
     --good: #4ecb8d; --warn: #f0b45e; --danger: #f06e6e;
     --solo: #f0b45e; --duo: #6c8cff; --trio: #b06cff;
-    --radius: 12px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
   body {
     font-family: "Pretendard", -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
-    background: radial-gradient(1200px 600px at 80% -10%, #1a2136 0%, var(--bg) 60%);
-    color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden; font-size: 13px;
   }
-  .en { font-size: 0.72em; color: var(--muted-2); font-weight: 400; letter-spacing: 0.02em; }
+  .en { font-size: 0.72em; color: var(--muted-2); font-weight: 400; }
 
-  header { display: flex; align-items: center; gap: 12px; padding: 13px 20px; border-bottom: 1px solid var(--line); background: rgba(23,26,35,0.6); backdrop-filter: blur(8px); }
-  header h1 { font-size: 16px; font-weight: 700; }
-  header h1 .en { display: block; margin-top: 1px; }
+  header { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 14px; font-weight: 700; }
   header .spacer { margin-left: auto; }
-  .sync { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
-  .sync .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted-2); transition: 0.2s; }
+  .sync { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+  .sync .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted-2); transition: 0.2s; }
   .sync.saved .dot { background: var(--good); } .sync.saved { color: var(--good); }
   .sync.saving .dot { background: var(--warn); } .sync.saving { color: var(--warn); }
   .sync.error .dot { background: var(--danger); } .sync.error { color: var(--danger); }
 
-  .btn { border: 1px solid var(--line-2); background: var(--panel-2); color: var(--text); border-radius: 9px; padding: 8px 13px; font-size: 13px; cursor: pointer; transition: 0.15s; font-family: inherit; }
+  .btn { border: 1px solid var(--line-2); background: var(--panel-2); color: var(--text); border-radius: 7px; padding: 6px 11px; font-size: 12.5px; cursor: pointer; transition: 0.12s; font-family: inherit; }
   .btn:hover { border-color: var(--accent); background: var(--accent-soft); }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
   .btn.primary:hover { filter: brightness(1.1); }
   .btn.ghost { background: transparent; }
-  .btn.sm { padding: 5px 10px; font-size: 12px; border-radius: 7px; }
-  .swatch { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+  .btn.sm { padding: 4px 8px; font-size: 11.5px; border-radius: 6px; }
 
   .app { display: flex; flex: 1; min-height: 0; }
 
-  .pool { width: 244px; flex-shrink: 0; border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; }
-  .pool-head { padding: 13px 14px 10px; border-bottom: 1px solid var(--line); }
-  .pool-head .title { display: flex; align-items: baseline; gap: 7px; }
-  .pool-head .title h2 { font-size: 14px; }
-  .pool-head .title .big { margin-left: auto; font-size: 14px; font-weight: 800; }
-  .pool-head .hint { font-size: 11px; color: var(--muted-2); margin-top: 5px; }
-  .pool-list { flex: 1; overflow-y: auto; padding: 8px 10px 14px; display: flex; flex-direction: column; gap: 5px; }
-  .member { display: flex; align-items: center; gap: 8px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; cursor: grab; transition: 0.12s; user-select: none; }
-  .member:hover { border-color: var(--line-2); transform: translateX(2px); }
+  /* ===== Left roster ===== */
+  .pool { width: 200px; flex-shrink: 0; border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; }
+  .pool-head { padding: 9px 11px 7px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 6px; }
+  .pool-head h2 { font-size: 12.5px; }
+  .pool-head .big { margin-left: auto; font-size: 12.5px; font-weight: 800; }
+  .pool-list { flex: 1; overflow-y: auto; padding: 5px 7px; display: flex; flex-direction: column; gap: 1px; }
+  .member { display: flex; align-items: center; gap: 7px; border: 1px solid transparent; border-radius: 6px; padding: 4px 7px; cursor: grab; transition: 0.1s; user-select: none; }
+  .member:hover { background: var(--panel-2); border-color: var(--line); }
   .member.dragging { opacity: 0.4; }
-  .member .av { width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: linear-gradient(135deg,#33405e,#262b3a); color: #cdd6ff; }
-  .member .info { flex: 1; min-width: 0; }
-  .member .nick { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .member .hexa { font-size: 10.5px; color: var(--muted); }
-  .member .bpill { font-size: 10px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 20px; padding: 2px 6px; flex-shrink: 0; }
-  .member .bpill.zero { color: var(--muted-2); background: #ffffff08; }
-  .member .del-m { color: var(--muted-2); cursor: pointer; font-size: 12px; flex-shrink: 0; }
+  .member .nick { flex: 1; min-width: 0; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .member .hexa { font-size: 10.5px; color: var(--muted-2); flex-shrink: 0; }
+  .member .bpill { font-size: 9.5px; font-weight: 700; color: var(--accent); flex-shrink: 0; min-width: 24px; text-align: right; }
+  .member .bpill.zero { color: var(--muted-2); }
+  .member .del-m { color: var(--muted-2); cursor: pointer; font-size: 11px; flex-shrink: 0; opacity: 0; }
+  .member:hover .del-m { opacity: 1; }
   .member .del-m:hover { color: var(--danger); }
-  .pool-foot { border-top: 1px solid var(--line); padding: 10px 13px 12px; }
-  .pool-foot .lbl { font-size: 11px; color: var(--muted-2); margin-bottom: 6px; display: block; }
-  .add-form { display: flex; flex-direction: column; gap: 6px; }
-  .add-form .row { display: flex; gap: 6px; }
-  input.fld { flex: 1; background: var(--bg); border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 10px; color: var(--text); font-size: 13px; font-family: inherit; min-width: 0; }
+  .pool-foot { border-top: 1px solid var(--line); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+  .add-form .row { display: flex; gap: 5px; margin-bottom: 5px; }
+  input.fld { flex: 1; background: var(--bg); border: 1px solid var(--line-2); border-radius: 6px; padding: 6px 8px; color: var(--text); font-size: 12px; font-family: inherit; min-width: 0; }
   input.fld:focus { outline: none; border-color: var(--accent); }
-  input.fld.hexa { max-width: 84px; }
+  input.fld.hexa { max-width: 72px; }
 
-  .board { flex: 1; overflow-y: auto; padding: 8px 20px 40px; }
-  .boss-sec { border-bottom: 1px solid var(--line); padding: 14px 0 16px; }
+  /* ===== Right board : compact horizontal boss rows ===== */
+  .board { flex: 1; overflow-y: auto; padding: 2px 12px 16px; }
+  .boss-sec { display: flex; align-items: flex-start; gap: 10px; padding: 7px 4px; border-bottom: 1px solid var(--line); }
   .boss-sec:last-child { border-bottom: none; }
-  .bsec-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .bsec-head .caret { color: var(--muted-2); cursor: pointer; font-size: 12px; width: 14px; transition: transform 0.15s; }
-  .bsec-head .bname { font-size: 15px; font-weight: 800; cursor: pointer; }
-  .diff { font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--dc, var(--muted-2)); color: var(--dc, var(--muted-2)); line-height: 1; }
-  .bsec-head .prog { font-size: 12px; color: var(--muted); }
-  .bsec-head .prog b { color: var(--text); }
-  .bsec-head .prog.done, .bsec-head .prog.done b { color: var(--good); }
-  .bsec-head .actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
-  .bsec-head .del-boss { color: var(--muted-2); background: none; border: none; cursor: pointer; font-size: 15px; }
-  .bsec-head .del-boss:hover { color: var(--danger); }
 
-  .bsec-body { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
-  .party { width: 200px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); border-top: 3px solid var(--tone); overflow: hidden; }
-  .party-head { padding: 9px 11px 8px; display: flex; align-items: center; gap: 7px; }
-  .party-head .tag { font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 20px; background: var(--tone-soft); color: var(--tone); }
-  .party-head .sum { font-size: 10.5px; color: var(--muted); }
-  .party-head .sum b { color: var(--text); }
-  .party-head .del-p { margin-left: auto; color: var(--muted-2); background: none; border: none; cursor: pointer; font-size: 13px; }
-  .party-head .del-p:hover { color: var(--danger); }
-  .p-slots { padding: 0 9px 10px; display: flex; flex-direction: column; gap: 6px; }
-  .slot { border: 1.5px dashed var(--line-2); border-radius: 8px; min-height: 40px; display: flex; align-items: center; justify-content: center; color: var(--muted-2); font-size: 11.5px; transition: 0.12s; }
-  .slot.over { border-color: var(--tone); background: var(--tone-soft); color: var(--tone); }
-  .slot.filled { border-style: solid; border-color: var(--line); background: var(--panel-2); justify-content: flex-start; padding: 6px 8px; gap: 7px; cursor: grab; }
-  .slot.filled .av { width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0; display: grid; place-items: center; font-size: 11px; font-weight: 700; background: linear-gradient(135deg,#33405e,#262b3a); color: #cdd6ff; }
-  .slot.filled .info { flex: 1; min-width: 0; text-align: left; }
-  .slot.filled .nick { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .slot.filled .hexa { font-size: 10px; color: var(--muted); }
-  .slot .remove { color: var(--muted-2); cursor: pointer; font-size: 13px; padding: 0 2px; flex-shrink: 0; }
-  .slot .remove:hover { color: var(--danger); }
+  .bsec-info { width: 138px; flex-shrink: 0; }
+  .bsec-info .r1 { display: flex; align-items: center; gap: 6px; }
+  .bsec-info .bname { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .diff { font-size: 9.5px; font-weight: 800; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--dc, var(--muted-2)); color: var(--dc, var(--muted-2)); line-height: 1.35; flex-shrink: 0; }
+  .bsec-info .del-boss { color: var(--muted-2); background: none; border: none; cursor: pointer; font-size: 12px; margin-left: auto; opacity: 0; }
+  .boss-sec:hover .del-boss { opacity: 1; }
+  .bsec-info .del-boss:hover { color: var(--danger); }
+  .bsec-info .r2 { display: flex; align-items: center; gap: 5px; margin-top: 3px; }
+  .bsec-info .prog { font-size: 10.5px; color: var(--muted); }
+  .bsec-info .prog.done { color: var(--good); font-weight: 700; }
+  .addp { display: flex; gap: 3px; margin-top: 5px; }
+  .addp button { font-size: 10.5px; padding: 2px 6px; border-radius: 5px; cursor: pointer; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--muted); font-family: inherit; display: flex; align-items: center; gap: 3px; }
+  .addp button:hover { color: var(--text); border-color: var(--accent); }
+  .addp .sw { width: 7px; height: 7px; border-radius: 2px; }
 
-  .add-party { display: flex; flex-direction: column; gap: 6px; justify-content: center; width: 108px; padding: 10px; border: 1.5px dashed var(--line-2); border-radius: var(--radius); }
-  .add-party .lbl { font-size: 10.5px; color: var(--muted-2); text-align: center; }
+  .bsec-parties { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start; padding-top: 1px; }
+  .party { display: flex; align-items: center; gap: 4px; padding: 3px 6px 3px 5px; border: 1px solid var(--line); border-left: 3px solid var(--tone); border-radius: 7px; background: var(--panel); }
+  .party .tag { font-size: 9px; font-weight: 800; color: var(--tone); flex-shrink: 0; letter-spacing: 0.02em; }
+  .party .sum { font-size: 9px; color: var(--muted-2); flex-shrink: 0; }
+  .party .del-p { color: var(--muted-2); background: none; border: none; cursor: pointer; font-size: 10px; flex-shrink: 0; padding: 0 1px; }
+  .party .del-p:hover { color: var(--danger); }
+  .party.over { border-color: var(--tone); box-shadow: 0 0 0 1px var(--tone); }
 
-  .un-tray { width: 100%; margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 9px 11px; background: #ffffff05; border: 1px dashed var(--line-2); border-radius: 10px; }
-  .un-tray.over { border-color: var(--accent); background: var(--accent-soft); }
-  .un-tray .ttl { font-size: 11.5px; color: var(--warn); font-weight: 700; flex-shrink: 0; }
-  .un-tray .ttl.done { color: var(--good); }
-  .chip { display: flex; align-items: center; gap: 6px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 20px; padding: 3px 9px 3px 4px; cursor: grab; user-select: none; }
-  .chip:hover { border-color: var(--line-2); }
-  .chip .av { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 700; background: linear-gradient(135deg,#33405e,#262b3a); color: #cdd6ff; }
-  .chip .nick { font-size: 11.5px; font-weight: 600; }
-  .chip .hexa { font-size: 10px; color: var(--muted); }
+  .token { display: flex; align-items: center; gap: 4px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 5px; padding: 2px 4px 2px 6px; cursor: grab; user-select: none; }
+  .token .nick { font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .token .hx { font-size: 9px; color: var(--muted-2); }
+  .token .rm { color: var(--muted-2); cursor: pointer; font-size: 10px; }
+  .token .rm:hover { color: var(--danger); }
+  .slot-mini { min-width: 24px; height: 21px; border: 1px dashed var(--line-2); border-radius: 5px; display: grid; place-items: center; color: var(--muted-2); font-size: 12px; }
+  .slot-mini.over { border-color: var(--tone); background: var(--tone-soft); color: var(--tone); }
 
-  .board-empty { color: var(--muted-2); font-size: 13px; text-align: center; margin: 60px auto; line-height: 1.7; }
+  .un-inline { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 2px 6px; border: 1px dashed var(--line-2); border-radius: 7px; background: #ffffff05; }
+  .un-inline.over { border-color: var(--accent); background: var(--accent-soft); }
+  .un-inline .ttl { font-size: 10px; font-weight: 700; color: var(--warn); flex-shrink: 0; }
+  .un-inline .ttl.done { color: var(--good); }
+  .un-inline .token { background: var(--bg); }
 
-  .modal-bg { position: fixed; inset: 0; background: #0008; backdrop-filter: blur(2px); display: none; align-items: center; justify-content: center; z-index: 50; }
+  .board-empty { color: var(--muted-2); font-size: 12.5px; text-align: center; margin: 50px auto; line-height: 1.7; }
+
+  .modal-bg { position: fixed; inset: 0; background: #0009; display: none; align-items: center; justify-content: center; z-index: 50; }
   .modal-bg.on { display: flex; }
-  .modal { width: 340px; background: var(--panel); border: 1px solid var(--line-2); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 13px; }
-  .modal h3 { font-size: 15px; }
-  .modal label { font-size: 11px; color: var(--muted-2); display: block; margin-bottom: 6px; }
-  .diff-seg { display: flex; gap: 6px; flex-wrap: wrap; }
-  .diff-seg button { flex: 1; min-width: 58px; padding: 8px 0; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--muted); font-family: inherit; }
+  .modal { width: 320px; background: var(--panel); border: 1px solid var(--line-2); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .modal h3 { font-size: 14px; }
+  .modal label { font-size: 11px; color: var(--muted-2); display: block; margin-bottom: 5px; }
+  .diff-seg { display: flex; gap: 5px; flex-wrap: wrap; }
+  .diff-seg button { flex: 1; min-width: 54px; padding: 7px 0; font-size: 12px; font-weight: 700; border-radius: 7px; cursor: pointer; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--muted); font-family: inherit; }
   .diff-seg button.on { background: var(--dc)22; border-color: var(--dc); color: var(--dc); }
-  .modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+  .modal .actions { display: flex; gap: 7px; justify-content: flex-end; }
 
-  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-thumb { background: #2c3242; border-radius: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
 </style>
 </head>
 <body>
   <header>
-    <h1>보스 파티 편성판 <span class="en">Boss Party Board</span></h1>
+    <h1>보스 파티 편성판</h1>
     <div class="spacer"></div>
     <div class="sync" id="sync"><span class="dot"></span><span id="sync-txt">연결 중…</span></div>
     <button class="btn ghost sm" id="btn-reload" title="클라우드에서 최신 불러오기">새로고침</button>
-    <button class="btn primary sm" id="btn-add-boss">+ 보스 추가</button>
+    <button class="btn primary sm" id="btn-add-boss">+ 보스</button>
   </header>
 
   <div class="modal-bg" id="modal-bg">
     <div class="modal">
-      <h3>보스 추가 <span class="en">New boss</span></h3>
+      <h3>보스 추가</h3>
       <div><label>보스 이름</label><input class="fld" id="nb-name" placeholder="예: 검은마법사" style="width:100%" /></div>
-      <div><label>난이도 <span class="en">difficulty</span></label><div class="diff-seg" id="nb-diff"></div></div>
+      <div><label>난이도</label><div class="diff-seg" id="nb-diff"></div></div>
       <div class="actions">
         <button class="btn ghost" id="nb-cancel">취소</button>
         <button class="btn primary" id="nb-ok">추가</button>
@@ -156,19 +145,15 @@
 
   <div class="app">
     <aside class="pool">
-      <div class="pool-head">
-        <div class="title"><h2>전체 멤버</h2><span class="en">Roster</span><span class="big" id="roster-count">0</span></div>
-        <div class="hint">멤버를 오른쪽 보스 파티 자리에 끌어다 놓으세요</div>
-      </div>
+      <div class="pool-head"><h2>전체 멤버</h2><span class="en">Roster</span><span class="big" id="roster-count">0</span></div>
       <div class="pool-list" id="pool-list"></div>
       <div class="pool-foot">
-        <span class="lbl">멤버 추가 <span class="en">add member</span></span>
         <div class="add-form">
           <div class="row">
             <input class="fld" id="in-nick" placeholder="닉네임" />
-            <input class="fld hexa" id="in-hexa" placeholder="헥사환산" inputmode="numeric" />
+            <input class="fld hexa" id="in-hexa" placeholder="헥사" inputmode="numeric" />
           </div>
-          <button class="btn primary" id="btn-add-member">+ 멤버 추가</button>
+          <button class="btn primary" id="btn-add-member" style="width:100%">+ 멤버 추가</button>
         </div>
       </div>
     </aside>
@@ -181,29 +166,21 @@ const SUPABASE_URL = 'https://lapxytabpabdkomjspta.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhcHh5dGFicGFiZGtvbWpzcHRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODM5OTcsImV4cCI6MjA5MTY1OTk5N30.tU4zbHkbM-fan_MIeV0bqjMu8Z_LKkj335YrdnKMVR8';
 const TABLE = 'boss_party_state';
 const ROW_ID = 'main';
-const LS_KEY = 'bossparty_state';           // 기존 maple_* 키와 격리
+const LS_KEY = 'bossparty_state';
 let _supabase = null;
 try { _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.warn('supabase init 실패', e); }
 
-/* ===== Meta ===== */
-const SIZE_META = {
-  1: { label: "솔격", tone: "var(--solo)", soft: "#f0b45e22" },
-  2: { label: "2인",  tone: "var(--duo)",  soft: "#6c8cff22" },
-  3: { label: "3인",  tone: "var(--trio)", soft: "#b06cff22" },
-};
-const DIFFS = ["이지", "노말", "하드", "카오스", "익스트림"];
+const SIZE_META = { 1:{label:"솔격",tone:"var(--solo)",soft:"#f0b45e22"}, 2:{label:"2인",tone:"var(--duo)",soft:"#6c8cff22"}, 3:{label:"3인",tone:"var(--trio)",soft:"#b06cff22"} };
+const DIFFS = ["이지","노말","하드","카오스","익스트림"];
 const DIFF_COLOR = { "이지":"#4ecb8d","노말":"#8b90a0","하드":"#f0b45e","카오스":"#b06cff","익스트림":"#f06e6e" };
 
-/* ===== State (빈 상태로 시작 — 실제 멤버 입력) ===== */
 let members = [];
 let bosses = [];
 let mid=1, bid=1, pid=1, loaded=false, saveTimer=null;
 
 const fmt = n => (n||0).toLocaleString("ko-KR");
 const byId = id => members.find(m => m.id === id);
-const initial = n => (n||"?").trim().charAt(0);
-const getBoss = id => bosses.find(b => b.id === id);
-function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
+const escapeHtml = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
 function assignedIds(boss){ const s=new Set(); boss.parties.forEach(p=>p.seats.forEach(x=>{if(x)s.add(x);})); return s; }
 function unassignedFor(boss){ const a=assignedIds(boss); return members.filter(m=>!a.has(m.id)).sort((x,y)=>y.hexa-x.hexa); }
@@ -215,7 +192,7 @@ function serialize(){ return { members, bosses, v:1 }; }
 function applyState(s){
   if(!s) return false;
   members = Array.isArray(s.members) ? s.members : [];
-  bosses  = Array.isArray(s.bosses)  ? s.bosses.map(b=>({ collapsed:false, ...b, parties:(b.parties||[]).map(p=>({ ...p, seats: Array.isArray(p.seats)?p.seats:[] })) })) : [];
+  bosses  = Array.isArray(s.bosses) ? s.bosses.map(b=>({ ...b, parties:(b.parties||[]).map(p=>({ ...p, seats:Array.isArray(p.seats)?p.seats:[] })) })) : [];
   return true;
 }
 function reseedCounters(){
@@ -233,24 +210,17 @@ function setStatus(state){
 function scheduleSave(){
   if(!loaded) return;
   try { localStorage.setItem(LS_KEY, JSON.stringify(serialize())); } catch(e){}
-  setStatus("saving");
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(cloudSave, 700);
+  setStatus("saving"); clearTimeout(saveTimer); saveTimer = setTimeout(cloudSave, 700);
 }
 async function cloudSave(){
   if(!_supabase){ setStatus("error"); return; }
-  try {
-    const { error } = await _supabase.from(TABLE).upsert({ id: ROW_ID, data: serialize() }, { onConflict: 'id' });
-    setStatus(error ? "error" : "saved");
-    if(error) console.warn("cloud save error", error);
-  } catch(e){ setStatus("error"); console.warn(e); }
+  try { const { error } = await _supabase.from(TABLE).upsert({ id: ROW_ID, data: serialize() }, { onConflict:'id' }); setStatus(error?"error":"saved"); if(error) console.warn(error); }
+  catch(e){ setStatus("error"); console.warn(e); }
 }
 async function cloudLoad(){
   if(!_supabase) return false;
-  try {
-    const { data, error } = await _supabase.from(TABLE).select('data').eq('id', ROW_ID).single();
-    if(!error && data && data.data){ return applyState(data.data); }
-  } catch(e){ console.warn("cloud load error", e); }
+  try { const { data, error } = await _supabase.from(TABLE).select('data').eq('id', ROW_ID).single(); if(!error && data && data.data) return applyState(data.data); }
+  catch(e){ console.warn(e); }
   return false;
 }
 
@@ -259,143 +229,134 @@ function renderPool(){
   const list = document.getElementById("pool-list");
   document.getElementById("roster-count").textContent = members.length;
   list.innerHTML = "";
-  if(!members.length){ list.innerHTML='<div style="color:var(--muted-2);font-size:12.5px;padding:10px 4px">아래에서 멤버를 추가하세요.</div>'; return; }
+  if(!members.length){ list.innerHTML='<div style="color:var(--muted-2);font-size:11.5px;padding:8px 4px">아래에서 멤버를 추가하세요.</div>'; return; }
   members.slice().sort((a,b)=>b.hexa-a.hexa).forEach(m=>{
     const cnt = bossesOf(m.id);
     const el = document.createElement("div");
     el.className="member"; el.draggable=true;
-    el.innerHTML = `
-      <div class="av">${initial(m.nick)}</div>
-      <div class="info"><div class="nick">${escapeHtml(m.nick)}</div><div class="hexa">헥사환산 ${fmt(m.hexa)}</div></div>
-      <span class="bpill ${cnt?"":"zero"}" title="배정된 보스 수">${cnt}/${bosses.length}</span>
-      <span class="del-m" title="삭제">✕</span>`;
+    el.innerHTML = `<span class="nick">${escapeHtml(m.nick)}</span><span class="hexa">${fmt(m.hexa)}</span><span class="bpill ${cnt?"":"zero"}" title="배정된 보스 수">${cnt}/${bosses.length}</span><span class="del-m" title="삭제">✕</span>`;
     el.addEventListener("dragstart", e=>{ e.dataTransfer.setData("mid", m.id); el.classList.add("dragging"); });
     el.addEventListener("dragend", ()=>el.classList.remove("dragging"));
     el.querySelector(".del-m").addEventListener("click", ()=>{
       if(!confirm(`'${m.nick}' 멤버를 삭제할까요? 모든 보스에서 빠집니다.`)) return;
-      members = members.filter(x=>x.id!==m.id);
-      bosses.forEach(b=>pullFromBoss(b,m.id));
-      renderAll();
+      members = members.filter(x=>x.id!==m.id); bosses.forEach(b=>pullFromBoss(b,m.id)); renderAll();
     });
     list.appendChild(el);
   });
 }
 
-/* ===== Right: all bosses ===== */
+/* ===== Right board ===== */
 function renderBoard(){
   const board = document.getElementById("board");
   board.innerHTML = "";
-  if(!bosses.length){ board.innerHTML='<div class="board-empty">아직 보스가 없어요.<br>오른쪽 위 <b>+ 보스 추가</b>로 시작하세요.</div>'; return; }
+  if(!bosses.length){ board.innerHTML='<div class="board-empty">아직 보스가 없어요.<br>오른쪽 위 <b>+ 보스</b>로 시작하세요.</div>'; return; }
   bosses.forEach(b=>board.appendChild(bossSection(b)));
 }
+
 function bossSection(boss){
-  const total = members.length;
-  const done = assignedIds(boss).size;
-  const complete = total>0 && done===total;
+  const total = members.length, done = assignedIds(boss).size, complete = total>0 && done===total;
   const dc = DIFF_COLOR[boss.diff] || "var(--muted-2)";
-  const sec = document.createElement("div");
-  sec.className = "boss-sec";
-  sec.innerHTML = `
-    <div class="bsec-head">
-      <span class="caret" style="transform:rotate(${boss.collapsed?-90:0}deg)">▾</span>
+  const sec = document.createElement("div"); sec.className="boss-sec";
+
+  const info = document.createElement("div"); info.className="bsec-info";
+  info.innerHTML = `
+    <div class="r1">
       <span class="bname">${escapeHtml(boss.name)}</span>
       <span class="diff" style="--dc:${dc}">${escapeHtml(boss.diff||"")}</span>
-      <span class="prog ${complete?"done":""}"><b>${done}</b>/${total} 배정</span>
-      <span class="actions">
-        <button class="btn sm" data-add="1"><span class="swatch" style="background:var(--solo)"></span>솔격</button>
-        <button class="btn sm" data-add="2"><span class="swatch" style="background:var(--duo)"></span>2인</button>
-        <button class="btn sm" data-add="3"><span class="swatch" style="background:var(--trio)"></span>3인</button>
-        <button class="del-boss" title="편성판 삭제">✕</button>
-      </span>
+      <button class="del-boss" title="편성판 삭제">✕</button>
+    </div>
+    <div class="r2"><span class="prog ${complete?"done":""}">${done}/${total} 배정</span></div>
+    <div class="addp">
+      <button data-add="1"><span class="sw" style="background:var(--solo)"></span>솔격</button>
+      <button data-add="2"><span class="sw" style="background:var(--duo)"></span>2인</button>
+      <button data-add="3"><span class="sw" style="background:var(--trio)"></span>3인</button>
     </div>`;
-  const head = sec.querySelector(".bsec-head");
-  head.querySelector(".caret").addEventListener("click", ()=>{ boss.collapsed=!boss.collapsed; renderBoard(); scheduleSave(); });
-  head.querySelector(".bname").addEventListener("click", ()=>{ boss.collapsed=!boss.collapsed; renderBoard(); scheduleSave(); });
-  head.querySelectorAll("[data-add]").forEach(btn=>btn.addEventListener("click", ()=>{
-    const size=+btn.dataset.add;
-    boss.parties.push({ id:"p"+(pid++), size, seats:Array(size).fill(null) });
-    renderAll();
-  }));
-  head.querySelector(".del-boss").addEventListener("click", ()=>{
+  info.querySelector(".del-boss").addEventListener("click", ()=>{
     if(!confirm(`'${boss.name} ${boss.diff}' 편성판을 삭제할까요?`)) return;
     bosses = bosses.filter(x=>x.id!==boss.id); renderAll();
   });
-  if(boss.collapsed) return sec;
-  const body = document.createElement("div");
-  body.className = "bsec-body";
-  boss.parties.forEach(p=>body.appendChild(partyCard(boss,p)));
-  body.appendChild(unassignedTray(boss));
-  sec.appendChild(body);
+  info.querySelectorAll("[data-add]").forEach(btn=>btn.addEventListener("click", ()=>{
+    const size=+btn.dataset.add; boss.parties.push({ id:"p"+(pid++), size, seats:Array(size).fill(null) }); renderAll();
+  }));
+  sec.appendChild(info);
+
+  const parts = document.createElement("div"); parts.className="bsec-parties";
+  boss.parties.forEach(p=>parts.appendChild(partyEl(boss,p)));
+  parts.appendChild(unassignedInline(boss));
+  sec.appendChild(parts);
   return sec;
 }
-function partyCard(boss,p){
+
+function partyEl(boss,p){
   const meta = SIZE_META[p.size];
   const filled = p.seats.filter(Boolean);
   const total = filled.reduce((s,id)=>s+(byId(id)?.hexa||0),0);
-  const card = document.createElement("div");
-  card.className="party"; card.style.setProperty("--tone",meta.tone); card.style.setProperty("--tone-soft",meta.soft);
-  card.innerHTML = `
-    <div class="party-head">
-      <span class="tag">${meta.label} ${filled.length}/${p.size}</span>
-      <span class="sum">합 <b>${fmt(total)}</b></span>
-      <button class="del-p" title="파티 삭제">✕</button>
-    </div>
-    <div class="p-slots"></div>`;
-  card.querySelector(".del-p").addEventListener("click", ()=>{ boss.parties = boss.parties.filter(x=>x.id!==p.id); renderAll(); });
-  const slots = card.querySelector(".p-slots");
-  p.seats.forEach((mId,i)=>slots.appendChild(slotEl(boss,p,i,mId)));
-  return card;
+  const el = document.createElement("div");
+  el.className="party"; el.style.setProperty("--tone",meta.tone); el.style.setProperty("--tone-soft",meta.soft);
+  const tag = document.createElement("span"); tag.className="tag"; tag.textContent=meta.label; el.appendChild(tag);
+  p.seats.forEach((mId,i)=>el.appendChild(seatEl(boss,p,i,mId)));
+  const sum = document.createElement("span"); sum.className="sum"; sum.textContent = total?fmt(total):""; el.appendChild(sum);
+  const del = document.createElement("button"); del.className="del-p"; del.title="파티 삭제"; del.textContent="✕";
+  del.addEventListener("click", ()=>{ boss.parties=boss.parties.filter(x=>x.id!==p.id); renderAll(); });
+  el.appendChild(del);
+  // 파티 전체에 드롭 => 첫 빈 자리 채우기
+  el.addEventListener("dragover", e=>{ e.preventDefault(); el.classList.add("over"); });
+  el.addEventListener("dragleave", ()=>el.classList.remove("over"));
+  el.addEventListener("drop", e=>{
+    e.preventDefault(); el.classList.remove("over");
+    const m2 = e.dataTransfer.getData("mid"); if(!m2) return;
+    const empty = p.seats.indexOf(null);
+    if(empty<0 && !p.seats.includes(m2)) return;   // 자리 없음
+    pullFromBoss(boss, m2);
+    const slot = p.seats.indexOf(null); p.seats[slot<0?0:slot] = m2; renderAll();
+  });
+  return el;
 }
-function slotEl(boss,p,i,mId){
-  const meta = SIZE_META[p.size];
-  const slot = document.createElement("div");
-  slot.className = "slot" + (mId?" filled":"");
-  slot.style.setProperty("--tone",meta.tone); slot.style.setProperty("--tone-soft",meta.soft);
+
+function seatEl(boss,p,i,mId){
   if(mId){
     const m = byId(mId);
-    if(m){
-      slot.draggable = true;
-      slot.innerHTML = `
-        <div class="av">${initial(m.nick)}</div>
-        <div class="info"><div class="nick">${escapeHtml(m.nick)}</div><div class="hexa">${fmt(m.hexa)}</div></div>
-        <span class="remove" title="빼기">✕</span>`;
-      slot.querySelector(".remove").addEventListener("click", e=>{ e.stopPropagation(); p.seats[i]=null; renderAll(); });
-      slot.addEventListener("dragstart", e=>{ e.dataTransfer.setData("mid", mId); });
-    } else { p.seats[i]=null; slot.className="slot"; slot.textContent="빈 자리"; }
-  } else { slot.textContent="빈 자리"; }
-  slot.addEventListener("dragover", e=>{ e.preventDefault(); slot.classList.add("over"); });
+    if(!m){ p.seats[i]=null; }
+    else {
+      const t = document.createElement("div"); t.className="token"; t.draggable=true;
+      t.innerHTML = `<span class="nick">${escapeHtml(m.nick)}</span><span class="hx">${fmt(m.hexa)}</span><span class="rm" title="빼기">✕</span>`;
+      t.addEventListener("dragstart", e=>{ e.stopPropagation(); e.dataTransfer.setData("mid", mId); });
+      t.querySelector(".rm").addEventListener("click", e=>{ e.stopPropagation(); p.seats[i]=null; renderAll(); });
+      return t;
+    }
+  }
+  const slot = document.createElement("div"); slot.className="slot-mini"; slot.textContent="+";
+  slot.style.setProperty("--tone",SIZE_META[p.size].tone); slot.style.setProperty("--tone-soft",SIZE_META[p.size].soft);
+  slot.addEventListener("dragover", e=>{ e.preventDefault(); e.stopPropagation(); slot.classList.add("over"); });
   slot.addEventListener("dragleave", ()=>slot.classList.remove("over"));
   slot.addEventListener("drop", e=>{
-    e.preventDefault(); slot.classList.remove("over");
+    e.preventDefault(); e.stopPropagation(); slot.classList.remove("over");
     const m2 = e.dataTransfer.getData("mid"); if(!m2) return;
-    pullFromBoss(boss, m2);
-    p.seats[i] = m2; renderAll();
+    pullFromBoss(boss, m2); p.seats[i]=m2; renderAll();
   });
   return slot;
 }
-function unassignedTray(boss){
+
+function unassignedInline(boss){
   const un = unassignedFor(boss);
-  const tray = document.createElement("div");
-  tray.className = "un-tray";
-  const ttl = document.createElement("span");
-  ttl.className = "ttl" + (un.length?"":" done");
-  ttl.textContent = un.length ? `미배정 ${un.length}` : (members.length? "✓ 전원 배정 완료" : "미배정 0");
-  tray.appendChild(ttl);
+  const box = document.createElement("div"); box.className="un-inline";
+  const ttl = document.createElement("span"); ttl.className="ttl"+(un.length?"":" done");
+  ttl.textContent = un.length ? `미배정 ${un.length}` : (members.length?"✓ 완료":"미배정 0");
+  box.appendChild(ttl);
   un.forEach(m=>{
-    const chip = document.createElement("div");
-    chip.className="chip"; chip.draggable=true;
-    chip.innerHTML = `<span class="av">${initial(m.nick)}</span><span class="nick">${escapeHtml(m.nick)}</span><span class="hexa">${fmt(m.hexa)}</span>`;
-    chip.addEventListener("dragstart", e=>{ e.dataTransfer.setData("mid", m.id); });
-    tray.appendChild(chip);
+    const t = document.createElement("div"); t.className="token"; t.draggable=true;
+    t.innerHTML = `<span class="nick">${escapeHtml(m.nick)}</span><span class="hx">${fmt(m.hexa)}</span>`;
+    t.addEventListener("dragstart", e=>{ e.dataTransfer.setData("mid", m.id); });
+    box.appendChild(t);
   });
-  tray.addEventListener("dragover", e=>{ e.preventDefault(); tray.classList.add("over"); });
-  tray.addEventListener("dragleave", ()=>tray.classList.remove("over"));
-  tray.addEventListener("drop", e=>{
-    e.preventDefault(); tray.classList.remove("over");
+  box.addEventListener("dragover", e=>{ e.preventDefault(); box.classList.add("over"); });
+  box.addEventListener("dragleave", ()=>box.classList.remove("over"));
+  box.addEventListener("drop", e=>{
+    e.preventDefault(); box.classList.remove("over");
     const m2 = e.dataTransfer.getData("mid"); if(!m2) return;
     pullFromBoss(boss, m2); renderAll();
   });
-  return tray;
+  return box;
 }
 
 /* ===== Add-boss modal ===== */
@@ -417,8 +378,7 @@ document.getElementById("modal-bg").addEventListener("click", e=>{ if(e.target.i
 document.getElementById("nb-name").addEventListener("keydown", e=>{ if(e.key==="Enter") document.getElementById("nb-ok").click(); });
 document.getElementById("nb-ok").addEventListener("click", ()=>{
   const name = document.getElementById("nb-name").value.trim(); if(!name){ document.getElementById("nb-name").focus(); return; }
-  bosses.push({ id:"b"+(bid++), name, diff:nbDiff, collapsed:false, parties:[] });
-  closeAddBoss(); renderAll();
+  bosses.push({ id:"b"+(bid++), name, diff:nbDiff, parties:[] }); closeAddBoss(); renderAll();
 });
 
 /* ===== Member add ===== */
@@ -434,28 +394,18 @@ function addMember(){
   document.getElementById("in-nick").focus(); renderAll();
 }
 
-/* ===== Reload from cloud (여러 명이 동시에 편집할 때 최신 반영) ===== */
 document.getElementById("btn-reload").addEventListener("click", async ()=>{
-  setStatus("loading");
-  const ok = await cloudLoad();
-  reseedCounters(); renderPool(); renderBoard();
-  setStatus(ok ? "saved" : "error");
+  setStatus("loading"); const ok = await cloudLoad(); reseedCounters(); renderPool(); renderBoard(); setStatus(ok?"saved":"error");
 });
 
-/* ===== Render + init ===== */
 function renderAll(){ renderPool(); renderBoard(); scheduleSave(); }
 
 async function init(){
   setStatus("loading");
   let ok = await cloudLoad();
-  if(!ok){
-    const cached = localStorage.getItem(LS_KEY);
-    if(cached){ try { ok = applyState(JSON.parse(cached)); } catch(e){} }
-  }
-  reseedCounters();
-  renderPool(); renderBoard();       // 첫 렌더 (저장 트리거 없이)
-  loaded = true;
-  setStatus(_supabase ? (ok ? "saved" : "saved") : "error");
+  if(!ok){ const cached = localStorage.getItem(LS_KEY); if(cached){ try { ok = applyState(JSON.parse(cached)); } catch(e){} } }
+  reseedCounters(); renderPool(); renderBoard(); loaded = true;
+  setStatus(_supabase ? "saved" : "error");
 }
 init();
 </script>

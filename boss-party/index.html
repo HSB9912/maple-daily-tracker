@@ -72,7 +72,9 @@
 
   .bsec-info { width: 138px; flex-shrink: 0; }
   .bsec-info .r1 { display: flex; align-items: center; gap: 6px; }
-  .bsec-info .bname { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bsec-info .bname { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .bsec-info .bname:hover { color: var(--accent); }
+  .bsec-info .diff { cursor: pointer; }
   .diff { font-size: 9.5px; font-weight: 800; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--dc, var(--muted-2)); color: var(--dc, var(--muted-2)); line-height: 1.35; flex-shrink: 0; }
   .bsec-info .del-boss { color: var(--muted-2); background: none; border: none; cursor: pointer; font-size: 12px; margin-left: auto; opacity: 0; }
   .boss-sec:hover .del-boss { opacity: 1; }
@@ -136,7 +138,7 @@
 
   <div class="modal-bg" id="modal-bg">
     <div class="modal">
-      <h3>보스 추가</h3>
+      <h3 id="modal-title">보스 추가</h3>
       <div><label>보스 이름</label><input class="fld" id="nb-name" placeholder="예: 검은마법사" style="width:100%" /></div>
       <div><label>난이도</label><div class="diff-seg" id="nb-diff"></div></div>
       <div class="actions">
@@ -269,8 +271,8 @@ function bossSection(boss){
   const info = document.createElement("div"); info.className="bsec-info";
   info.innerHTML = `
     <div class="r1">
-      <span class="bname">${escapeHtml(boss.name)}</span>
-      <span class="diff" style="--dc:${dc}">${escapeHtml(boss.diff||"")}</span>
+      <span class="bname" title="클릭하여 이름·난이도 수정">${escapeHtml(boss.name)}</span>
+      <span class="diff" style="--dc:${dc}" title="클릭하여 이름·난이도 수정">${escapeHtml(boss.diff||"")}</span>
       <button class="del-boss" title="편성판 삭제">✕</button>
     </div>
     <div class="r2"><span class="prog ${complete?"done":""}">${done}/${total} 배정</span></div>
@@ -283,6 +285,8 @@ function bossSection(boss){
     if(!confirm(`'${boss.name} ${boss.diff}' 편성판을 삭제할까요?`)) return;
     bosses = bosses.filter(x=>x.id!==boss.id); renderAll();
   });
+  info.querySelector(".bname").addEventListener("click", ()=>openEditBoss(boss));
+  info.querySelector(".diff").addEventListener("click", ()=>openEditBoss(boss));
   info.querySelectorAll("[data-add]").forEach(btn=>btn.addEventListener("click", ()=>{
     const size=+btn.dataset.add; boss.parties.push({ id:"p"+(pid++), size, seats:Array(size).fill(null) }); renderAll();
   }));
@@ -367,8 +371,9 @@ function unassignedInline(boss){
   return box;
 }
 
-/* ===== Add-boss modal ===== */
+/* ===== Add / Edit boss modal ===== */
 let nbDiff = "노말";
+let editingBossId = null;
 function buildDiffSeg(){
   const seg = document.getElementById("nb-diff"); seg.innerHTML="";
   DIFFS.forEach(d=>{
@@ -378,7 +383,21 @@ function buildDiffSeg(){
     seg.appendChild(b);
   });
 }
-function openAddBoss(){ nbDiff="노말"; document.getElementById("nb-name").value=""; buildDiffSeg(); document.getElementById("modal-bg").classList.add("on"); document.getElementById("nb-name").focus(); }
+function openModal(){ buildDiffSeg(); document.getElementById("modal-bg").classList.add("on"); const n=document.getElementById("nb-name"); n.focus(); n.select(); }
+function openAddBoss(){
+  editingBossId = null; nbDiff = "노말";
+  document.getElementById("modal-title").textContent = "보스 추가";
+  document.getElementById("nb-ok").textContent = "추가";
+  document.getElementById("nb-name").value = "";
+  openModal();
+}
+function openEditBoss(boss){
+  editingBossId = boss.id; nbDiff = boss.diff || "노말";
+  document.getElementById("modal-title").textContent = "보스 수정";
+  document.getElementById("nb-ok").textContent = "저장";
+  document.getElementById("nb-name").value = boss.name;
+  openModal();
+}
 function closeAddBoss(){ document.getElementById("modal-bg").classList.remove("on"); }
 document.getElementById("btn-add-boss").addEventListener("click", openAddBoss);
 document.getElementById("nb-cancel").addEventListener("click", closeAddBoss);
@@ -386,7 +405,13 @@ document.getElementById("modal-bg").addEventListener("click", e=>{ if(e.target.i
 document.getElementById("nb-name").addEventListener("keydown", e=>{ if(e.key==="Enter") document.getElementById("nb-ok").click(); });
 document.getElementById("nb-ok").addEventListener("click", ()=>{
   const name = document.getElementById("nb-name").value.trim(); if(!name){ document.getElementById("nb-name").focus(); return; }
-  bosses.push({ id:"b"+(bid++), name, diff:nbDiff, parties:[] }); closeAddBoss(); renderAll();
+  if(editingBossId){
+    const b = bosses.find(x=>x.id===editingBossId);
+    if(b){ b.name = name; b.diff = nbDiff; }
+  } else {
+    bosses.push({ id:"b"+(bid++), name, diff:nbDiff, parties:[] });
+  }
+  closeAddBoss(); renderAll();
 });
 
 /* ===== Member add ===== */

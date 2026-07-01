@@ -30,7 +30,9 @@
   .sync .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted-2); transition: 0.2s; }
   .sync.saved .dot { background: var(--good); } .sync.saved { color: var(--good); }
   .sync.saving .dot { background: var(--warn); } .sync.saving { color: var(--warn); }
+  .sync.local .dot { background: var(--muted); } .sync.local { color: var(--muted); }
   .sync.error .dot { background: var(--danger); } .sync.error { color: var(--danger); }
+  .btn.saved { background: var(--good); border-color: var(--good); color: #08130d; }
 
   .btn { border: 1px solid var(--line-2); background: var(--panel-2); color: var(--text); border-radius: 7px; padding: 6px 11px; font-size: 12.5px; cursor: pointer; transition: 0.12s; font-family: inherit; }
   .btn:hover { border-color: var(--accent); background: var(--accent-soft); }
@@ -127,8 +129,9 @@
     <h1>보스 파티 편성판</h1>
     <div class="spacer"></div>
     <div class="sync" id="sync"><span class="dot"></span><span id="sync-txt">연결 중…</span></div>
+    <button class="btn primary sm" id="btn-save">저장</button>
     <button class="btn ghost sm" id="btn-reload" title="클라우드에서 최신 불러오기">새로고침</button>
-    <button class="btn primary sm" id="btn-add-boss">+ 보스</button>
+    <button class="btn ghost sm" id="btn-add-boss">+ 보스</button>
   </header>
 
   <div class="modal-bg" id="modal-bg">
@@ -203,7 +206,7 @@ function reseedCounters(){
 }
 function setStatus(state){
   const el = document.getElementById("sync");
-  const txt = { saving:"저장 중…", saved:"클라우드 저장됨", error:"오프라인(로컬 저장)", loading:"불러오는 중…" }[state] || "";
+  const txt = { saving:"저장 중…", saved:"클라우드 저장됨", local:"로컬 저장됨", error:"저장 실패", loading:"불러오는 중…" }[state] || "";
   el.className = "sync " + (state==="loading" ? "" : state);
   document.getElementById("sync-txt").textContent = txt;
 }
@@ -212,10 +215,15 @@ function scheduleSave(){
   try { localStorage.setItem(LS_KEY, JSON.stringify(serialize())); } catch(e){}
   setStatus("saving"); clearTimeout(saveTimer); saveTimer = setTimeout(cloudSave, 700);
 }
+// 클라우드 저장 성공 여부를 반환 (실패해도 로컬은 이미 저장됨)
 async function cloudSave(){
-  if(!_supabase){ setStatus("error"); return; }
-  try { const { error } = await _supabase.from(TABLE).upsert({ id: ROW_ID, data: serialize() }, { onConflict:'id' }); setStatus(error?"error":"saved"); if(error) console.warn(error); }
-  catch(e){ setStatus("error"); console.warn(e); }
+  try { localStorage.setItem(LS_KEY, JSON.stringify(serialize())); } catch(e){}
+  if(!_supabase){ setStatus("local"); return false; }
+  try {
+    const { error } = await _supabase.from(TABLE).upsert({ id: ROW_ID, data: serialize() }, { onConflict:'id' });
+    if(error){ setStatus("local"); console.warn(error); return false; }
+    setStatus("saved"); return true;
+  } catch(e){ setStatus("local"); console.warn(e); return false; }
 }
 async function cloudLoad(){
   if(!_supabase) return false;
@@ -395,7 +403,18 @@ function addMember(){
 }
 
 document.getElementById("btn-reload").addEventListener("click", async ()=>{
-  setStatus("loading"); const ok = await cloudLoad(); reseedCounters(); renderPool(); renderBoard(); setStatus(ok?"saved":"error");
+  setStatus("loading"); const ok = await cloudLoad(); reseedCounters(); renderPool(); renderBoard(); setStatus(ok?"saved":"local");
+});
+
+// 수동 저장 버튼 — 지금 즉시 저장 + 확인 표시
+document.getElementById("btn-save").addEventListener("click", async ()=>{
+  const btn = document.getElementById("btn-save");
+  clearTimeout(saveTimer);
+  btn.textContent = "저장 중…";
+  const ok = await cloudSave();
+  btn.textContent = ok ? "저장됨 ✓" : "로컬 저장됨 ✓";
+  btn.classList.add("saved");
+  setTimeout(()=>{ btn.textContent="저장"; btn.classList.remove("saved"); }, 1400);
 });
 
 function renderAll(){ renderPool(); renderBoard(); scheduleSave(); }
@@ -405,7 +424,7 @@ async function init(){
   let ok = await cloudLoad();
   if(!ok){ const cached = localStorage.getItem(LS_KEY); if(cached){ try { ok = applyState(JSON.parse(cached)); } catch(e){} } }
   reseedCounters(); renderPool(); renderBoard(); loaded = true;
-  setStatus(_supabase ? "saved" : "error");
+  setStatus(ok ? "saved" : "local");
 }
 init();
 </script>

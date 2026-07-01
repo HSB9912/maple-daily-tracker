@@ -87,7 +87,8 @@
   .addp button:hover { color: var(--text); border-color: var(--accent); }
   .addp .sw { width: 7px; height: 7px; border-radius: 2px; }
 
-  .bsec-parties { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start; padding-top: 1px; }
+  .bsec-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 1px; }
+  .bsec-parties { display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start; }
   .party { display: flex; align-items: center; gap: 4px; padding: 3px 6px 3px 5px; border: 1px solid var(--line); border-left: 3px solid var(--tone); border-radius: 7px; background: var(--panel); }
   .party .tag { font-size: 9px; font-weight: 800; color: var(--muted); flex-shrink: 0; letter-spacing: 0.02em; }
   .party .pdiff { font-size: 9.5px; font-weight: 800; color: var(--dc, var(--muted-2)); background: transparent; border: 1px solid var(--dc, var(--muted-2)); border-radius: 5px; padding: 1px 3px; font-family: inherit; cursor: pointer; flex-shrink: 0; -webkit-appearance: none; appearance: none; }
@@ -106,11 +107,19 @@
   .slot-mini { min-width: 24px; height: 21px; border: 1px dashed var(--line-2); border-radius: 5px; display: grid; place-items: center; color: var(--muted-2); font-size: 12px; }
   .slot-mini.over { border-color: var(--tone); background: var(--tone-soft); color: var(--tone); }
 
-  .un-inline { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 2px 6px; border: 1px dashed var(--line-2); border-radius: 7px; background: #ffffff05; }
-  .un-inline.over { border-color: var(--accent); background: var(--accent-soft); }
-  .un-inline .ttl { font-size: 10px; font-weight: 700; color: var(--warn); flex-shrink: 0; }
-  .un-inline .ttl.done { color: var(--good); }
-  .un-inline .token { background: var(--bg); }
+  .un-c { display: flex; }
+  .un-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 700; color: var(--muted); background: var(--panel); border: 1px dashed var(--line-2); border-radius: 20px; padding: 3px 11px; cursor: pointer; }
+  .un-pill:hover { border-color: var(--accent); color: var(--text); }
+  .un-pill.done { color: var(--good); border-style: solid; border-color: #4ecb8d55; cursor: default; }
+  .un-pill .cnt { background: var(--warn); color: #0e1016; border-radius: 20px; padding: 0 6px; font-size: 9.5px; font-weight: 800; }
+  .un-pill.over, .un-open.over { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+  .un-open { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 5px 9px; border: 1px dashed var(--line-2); border-radius: 8px; background: #00000030; }
+  .un-open .un-lbl { font-size: 10px; font-weight: 800; color: var(--muted-2); }
+  .un-fold { font-size: 10px; color: var(--muted-2); background: none; border: none; cursor: pointer; margin-left: 2px; }
+  .un-fold:hover { color: var(--text); }
+  .utok { display: flex; align-items: center; gap: 4px; background: transparent; border: 1px dashed var(--line-2); border-radius: 5px; padding: 2px 6px; cursor: grab; user-select: none; }
+  .utok .n { font-size: 11px; font-weight: 600; color: var(--muted); }
+  .utok .h { font-size: 9px; color: var(--muted-2); }
 
   .board-empty { color: var(--muted-2); font-size: 12.5px; text-align: center; margin: 50px auto; line-height: 1.7; }
 
@@ -294,10 +303,12 @@ function bossSection(boss){
   }));
   sec.appendChild(info);
 
+  const right = document.createElement("div"); right.className="bsec-right";
   const parts = document.createElement("div"); parts.className="bsec-parties";
   boss.parties.forEach(p=>parts.appendChild(partyEl(boss,p)));
-  parts.appendChild(unassignedInline(boss));
-  sec.appendChild(parts);
+  right.appendChild(parts);
+  right.appendChild(unassignedInline(boss));   // 파티 아래 별도 줄
+  sec.appendChild(right);
   return sec;
 }
 
@@ -358,26 +369,52 @@ function seatEl(boss,p,i,mId){
   return slot;
 }
 
-function unassignedInline(boss){
-  const un = unassignedFor(boss);
-  const box = document.createElement("div"); box.className="un-inline";
-  const ttl = document.createElement("span"); ttl.className="ttl"+(un.length?"":" done");
-  ttl.textContent = un.length ? `미배정 ${un.length}` : (members.length?"✓ 완료":"미배정 0");
-  box.appendChild(ttl);
-  un.forEach(m=>{
-    const t = document.createElement("div"); t.className="token"; t.draggable=true;
-    t.innerHTML = `<span class="nick">${escapeHtml(m.nick)}</span><span class="hx">${fmt(m.hexa)}</span>`;
-    t.addEventListener("dragstart", e=>{ e.dataTransfer.setData("mid", m.id); });
-    box.appendChild(t);
-  });
-  box.addEventListener("dragover", e=>{ e.preventDefault(); box.classList.add("over"); });
-  box.addEventListener("dragleave", ()=>box.classList.remove("over"));
-  box.addEventListener("drop", e=>{
-    e.preventDefault(); box.classList.remove("over");
+const unOpen = new Set();   // 펼쳐진 보스 id (UI 상태, 저장 안 함)
+
+function uToken(m){
+  const t = document.createElement("div"); t.className="utok"; t.draggable=true;
+  t.innerHTML = `<span class="n">${escapeHtml(m.nick)}</span><span class="h">${fmt(m.hexa)}</span>`;
+  t.addEventListener("dragstart", e=>{ e.dataTransfer.setData("mid", m.id); });
+  return t;
+}
+function attachUnassignDrop(el, boss){
+  el.addEventListener("dragover", e=>{ e.preventDefault(); el.classList.add("over"); });
+  el.addEventListener("dragleave", ()=>el.classList.remove("over"));
+  el.addEventListener("drop", e=>{
+    e.preventDefault(); el.classList.remove("over");
     const m2 = e.dataTransfer.getData("mid"); if(!m2) return;
     pullFromBoss(boss, m2); renderAll();
   });
-  return box;
+}
+function unassignedInline(boss){
+  const un = unassignedFor(boss);
+  const wrap = document.createElement("div"); wrap.className="un-c";
+  // 전원 배정 완료
+  if(!un.length){
+    if(members.length){
+      const done = document.createElement("div"); done.className="un-pill done"; done.textContent="✓ 전원 배정 완료";
+      attachUnassignDrop(done, boss);
+      wrap.appendChild(done);
+    }
+    return wrap;
+  }
+  if(unOpen.has(boss.id)){
+    const box = document.createElement("div"); box.className="un-open";
+    const lbl = document.createElement("span"); lbl.className="un-lbl"; lbl.textContent=`미배정 ${un.length}`; box.appendChild(lbl);
+    un.forEach(m=>box.appendChild(uToken(m)));
+    const fold = document.createElement("button"); fold.className="un-fold"; fold.textContent="접기 ▴";
+    fold.addEventListener("click", ()=>{ unOpen.delete(boss.id); renderBoard(); });
+    box.appendChild(fold);
+    attachUnassignDrop(box, boss);
+    wrap.appendChild(box);
+  } else {
+    const pill = document.createElement("div"); pill.className="un-pill";
+    pill.innerHTML = `미배정 <span class="cnt">${un.length}</span> · 펼치기 ▾`;
+    pill.addEventListener("click", ()=>{ unOpen.add(boss.id); renderBoard(); });
+    attachUnassignDrop(pill, boss);
+    wrap.appendChild(pill);
+  }
+  return wrap;
 }
 
 /* ===== Add / Edit boss modal (이름만) ===== */

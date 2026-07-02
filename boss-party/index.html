@@ -145,6 +145,74 @@
   .pick-item .h { font-size: 11.5px; color: var(--muted-2); }
   .pick-empty { color: var(--muted-2); font-size: 12.5px; text-align: center; padding: 18px; }
 
+  /* ===== 뷰 토글 ===== */
+  .vseg { display: flex; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 9px; padding: 2px; }
+  .vseg button { font-size: 12.5px; padding: 6px 13px; border: none; background: none; color: var(--muted); border-radius: 7px; cursor: pointer; font-family: inherit; font-weight: 600; }
+  .vseg button.on { background: var(--accent); color: #fff; }
+
+  /* ===== 일정표 ===== */
+  #view-sched { flex: 1; display: none; flex-direction: column; min-height: 0; }
+  #view-sched.on { display: flex; }
+  .wkbar { display: flex; align-items: center; gap: 8px; padding: 9px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .wkbar .w { font-size: 12.5px; font-weight: 700; } .wkbar .t { font-size: 11px; color: var(--muted-2); }
+  .wkbar .me-sel { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-left: auto; }
+  .wkbar .me-sel select { background: var(--bg); border: 1px solid var(--line-2); border-radius: 7px; color: var(--text); padding: 5px 8px; font-family: inherit; font-size: 12.5px; }
+  .sched-main { flex: 1; overflow: auto; padding: 14px 16px 60px; }
+
+  .mem { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 5px; }
+  .mchip { font-size: 10px; background: #ffffff10; border: 1px solid var(--line-2); border-radius: 20px; padding: 1px 7px; color: var(--muted); }
+  .mchip.me { background: #6c8cff22; border-color: #6c8cff88; color: #c7d3ff; font-weight: 700; }
+
+  .cols { display: grid; grid-template-columns: repeat(7, minmax(150px,1fr)); gap: 10px; }
+  .col { background: var(--panel); border: 1px solid var(--line); border-radius: 11px; overflow: hidden; display: flex; flex-direction: column; }
+  .col-h { padding: 8px 11px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 6px; }
+  .col-h.today { background: #141a2b; }
+  .col-h .d { font-size: 13px; font-weight: 800; } .col-h.today .d { color: var(--accent); }
+  .col-h .dt { font-size: 10px; color: var(--muted-2); } .col-h .n { margin-left: auto; font-size: 10px; color: var(--muted-2); }
+  .col-b { padding: 9px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .rcard { border: 1px solid var(--line); border-left: 3px solid var(--dc); border-radius: 9px; padding: 8px 9px; background: var(--panel-2); position: relative; }
+  .rcard.done { opacity: .5; } .rcard.mine { box-shadow: inset 2px 0 0 var(--accent); }
+  .rcard .r1 { display: flex; align-items: center; gap: 6px; }
+  .rcard .time { font-size: 12px; font-weight: 800; }
+  .rcard .bn { font-size: 12.5px; font-weight: 700; }
+  .rcard .sz { margin-left: auto; font-size: 9.5px; color: var(--muted-2); font-weight: 700; }
+  .rcard .r2 { display: flex; align-items: center; gap: 5px; margin-top: 5px; }
+  .rcard .actions { position: absolute; top: 6px; right: 7px; display: flex; gap: 6px; opacity: 0; }
+  .rcard:hover .actions { opacity: 1; }
+  .rcard .ic { font-size: 12px; color: var(--muted-2); cursor: pointer; }
+  .rcard .ic.del:hover { color: var(--danger); }
+  .rcard .chk { width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid var(--line-2); display: grid; place-items: center; font-size: 11px; color: var(--good); cursor: pointer; }
+  .rcard .chk.on { background: var(--good); border-color: var(--good); color: #08130d; }
+  .rcard .dcnt { font-size: 9.5px; color: var(--muted-2); }
+  .addc { border: 1px dashed var(--line-2); border-radius: 9px; color: var(--muted-2); font-size: 11.5px; text-align: center; padding: 8px; cursor: pointer; }
+  .addc:hover { border-color: var(--accent); color: var(--accent); }
+
+  .agenda { max-width: 560px; }
+  .aday { margin-bottom: 14px; }
+  .aday-h { display: flex; align-items: baseline; gap: 7px; margin-bottom: 7px; }
+  .aday-h .d { font-size: 13px; font-weight: 800; } .aday-h.today .d { color: var(--accent); }
+  .aday-h .dt { font-size: 11px; color: var(--muted-2); } .aday-h .line { flex: 1; height: 1px; background: var(--line); }
+  .arow { display: flex; align-items: center; gap: 11px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--dc); border-radius: 10px; padding: 9px 12px; margin-bottom: 6px; }
+  .arow.done { opacity: .5; }
+  .arow .time { font-size: 13px; font-weight: 800; width: 52px; flex-shrink: 0; }
+  .arow .mid { flex: 1; min-width: 0; } .arow .bn { font-size: 13px; font-weight: 700; }
+  .arow .who { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .arow .chk { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--line-2); display: grid; place-items: center; font-size: 13px; color: var(--good); cursor: pointer; flex-shrink: 0; }
+  .arow.done .chk { background: var(--good); border-color: var(--good); color: #08130d; }
+  .sched-empty { color: var(--muted-2); font-size: 13px; text-align: center; margin-top: 40px; line-height: 1.7; }
+
+  /* 파티 선택 리스트 (일정 추가 모달) */
+  .plist { display: flex; flex-direction: column; gap: 6px; max-height: 230px; overflow: auto; }
+  .pitem { border: 1px solid var(--line); border-left: 3px solid var(--dc); border-radius: 9px; padding: 8px 10px; background: var(--panel-2); cursor: pointer; }
+  .pitem.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .pitem .p1 { display: flex; align-items: center; gap: 6px; }
+  .pitem .pb { font-size: 13px; font-weight: 700; } .pitem .ps { margin-left: auto; font-size: 10px; color: var(--muted-2); font-weight: 700; }
+  .pitem .pdiffb { font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--dc); color: var(--dc); }
+  .segwrap { display: flex; gap: 5px; flex-wrap: wrap; }
+  .segwrap button { flex: 1; min-width: 40px; padding: 8px 0; font-size: 12.5px; font-weight: 700; border-radius: 7px; cursor: pointer; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--muted); font-family: inherit; }
+  .segwrap button.on { background: var(--accent-soft); border-color: var(--accent); color: #a9bcff; }
+  .row2 { display: flex; gap: 8px; }
+
   /* ===== 모바일 최적화 ===== */
   @media (max-width: 760px) {
     body { font-size: 14px; }
@@ -191,17 +259,29 @@
     .member .del-m { opacity: 1; font-size: 14px; }
     input.fld { padding: 10px 11px; font-size: 14px; }
     .modal { width: 92vw; max-width: 360px; }
+
+    .wkbar { padding: 8px 11px; } .wkbar .me-sel { order: 5; }
+    .sched-main { padding: 11px 11px 70px; }
+    .cols { display: flex; flex-direction: column; gap: 12px; }
+    .col { width: 100%; }
+    .rcard { padding: 10px 11px; } .rcard .bn { font-size: 14px; } .rcard .time { font-size: 13px; }
+    .rcard .actions { opacity: 1; } .rcard .chk { width: 22px; height: 22px; font-size: 13px; }
+    .mchip { font-size: 11.5px; padding: 2px 9px; }
+    .arow { padding: 11px 13px; } .arow .bn { font-size: 14px; }
+    .agenda { max-width: 100%; }
   }
 </style>
 </head>
 <body>
   <header>
-    <h1>보스 파티 편성판</h1>
+    <h1 id="app-title">보스 파티 편성판</h1>
+    <div class="vseg" id="vseg"><button id="v-board" class="on">편성판</button><button id="v-sched">일정표</button></div>
     <div class="spacer"></div>
     <div class="sync" id="sync"><span class="dot"></span><span id="sync-txt">연결 중…</span></div>
     <button class="btn primary sm" id="btn-save">저장</button>
     <button class="btn ghost sm" id="btn-reload" title="클라우드에서 최신 불러오기">새로고침</button>
     <button class="btn ghost sm" id="btn-add-boss">+ 보스</button>
+    <button class="btn primary sm" id="btn-add-run" style="display:none">+ 일정</button>
   </header>
 
   <div class="modal-bg" id="modal-bg">
@@ -225,7 +305,7 @@
     </div>
   </div>
 
-  <div class="app">
+  <div class="app" id="view-board">
     <aside class="pool">
       <div class="pool-head"><h2>전체 멤버</h2><span class="en">Roster</span><span class="big" id="roster-count">0</span></div>
       <div class="pool-list" id="pool-list"></div>
@@ -240,6 +320,33 @@
       </div>
     </aside>
     <div class="board" id="board"></div>
+  </div>
+
+  <!-- 일정표 뷰 -->
+  <div id="view-sched">
+    <div class="wkbar">
+      <button class="btn sm" id="wk-prev">◀</button>
+      <span class="w" id="wk-label">이번 주</span>
+      <button class="btn sm" id="wk-next">▶</button>
+      <span class="t" id="wk-range"></span>
+      <div class="sseg vseg" id="sview"><button id="sv-week" class="on">요일 카드</button><button id="sv-me">내 일정만</button></div>
+      <div class="me-sel">나: <select id="me-sel"></select></div>
+    </div>
+    <div class="sched-main" id="sched-main"></div>
+  </div>
+
+  <!-- 일정 추가 모달 (파티 연동) -->
+  <div class="modal-bg" id="run-bg">
+    <div class="modal">
+      <h3>일정 추가 <span class="en">편성판 파티에 시간 얹기</span></h3>
+      <div><label>파티 선택 (편성판에서 만든 파티)</label><div class="plist" id="run-plist"></div></div>
+      <div><label>요일</label><div class="segwrap" id="run-day"></div></div>
+      <div class="row2">
+        <div style="width:130px"><label>시간</label><input class="fld" id="run-time" type="time" value="21:00" style="width:100%" /></div>
+        <div style="flex:1"><label>선택된 파티</label><div class="fld" id="run-sel" style="color:var(--muted-2)">아직 선택 안 함</div></div>
+      </div>
+      <div class="actions"><button class="btn ghost" id="run-cancel">취소</button><button class="btn primary" id="run-ok">추가</button></div>
+    </div>
   </div>
 
 <script>
@@ -258,8 +365,14 @@ const DIFF_COLOR = { "이지":"#4ecb8d","노말":"#8b90a0","하드":"#f0b45e","�
 
 let members = [];
 let bosses = [];
-let mid=1, bid=1, pid=1, loaded=false, saveTimer=null;
+let schedule = [];   // 일정: {id, boss:bossId, party:partyId, dow:0~6(월~일), time:"HH:MM", doneBy:[memberId]}
+let mid=1, bid=1, pid=1, rid=1, loaded=false, saveTimer=null;
 let lastPartyDiff = "하드";   // 새 파티 추가 시 기본 난이도 (마지막 선택값 기억)
+let view = "board";  // "board" | "sched"
+let meId = localStorage.getItem("bossparty_me") || null;
+let schedView = "week";  // "week" | "me"
+let weekOffset = 0;
+const DOW = ["월","화","수","목","금","토","일"];
 
 const fmt = n => (n||0).toLocaleString("ko-KR");
 const byId = id => members.find(m => m.id === id);
@@ -271,11 +384,12 @@ function pullFromBoss(boss, mId){ boss.parties.forEach(p=>p.seats=p.seats.map(x=
 function bossesOf(mId){ return bosses.filter(b=>assignedIds(b).has(mId)).length; }
 
 /* ===== Persistence ===== */
-function serialize(){ return { members, bosses, v:1 }; }
+function serialize(){ return { members, bosses, schedule, v:2 }; }
 function applyState(s){
   if(!s) return false;
   members = Array.isArray(s.members) ? s.members : [];
   bosses  = Array.isArray(s.bosses) ? s.bosses.map(b=>({ ...b, parties:(b.parties||[]).map(p=>({ ...p, seats:Array.isArray(p.seats)?p.seats:[], diff: p.diff || b.diff || "노말" })) })) : [];
+  schedule = Array.isArray(s.schedule) ? s.schedule.map(r=>({ ...r, doneBy: Array.isArray(r.doneBy)?r.doneBy:[] })) : [];
   return true;
 }
 function reseedCounters(){
@@ -283,6 +397,7 @@ function reseedCounters(){
   mid = Math.max(1, ...members.map(m=>num(m.id)+1));
   bid = Math.max(1, ...bosses.map(b=>num(b.id)+1));
   let pmax = 1; bosses.forEach(b=>b.parties.forEach(p=>{ pmax=Math.max(pmax, num(p.id)+1); })); pid = pmax;
+  rid = Math.max(1, ...schedule.map(r=>num(r.id)+1));
 }
 function setStatus(state){
   const el = document.getElementById("sync");
@@ -576,7 +691,169 @@ document.getElementById("btn-save").addEventListener("click", async ()=>{
   setTimeout(()=>{ btn.textContent="저장"; btn.classList.remove("saved"); }, 1400);
 });
 
-function renderAll(){ renderPool(); renderBoard(); scheduleSave(); }
+/* ============================================================
+   일정표 (편성판 파티 연동)
+   ============================================================ */
+const findRunParty = run => { const b=bosses.find(x=>x.id===run.boss); const p=b&&b.parties.find(x=>x.id===run.party); return p?{b,p}:null; };
+const partyMemberIds = p => p.seats.filter(Boolean);
+const nickOf = id => byId(id)?.nick || "?";
+function weekDates(){
+  const now=new Date(); now.setDate(now.getDate()+weekOffset*7);
+  const dow=(now.getDay()+6)%7; const mon=new Date(now); mon.setDate(now.getDate()-dow); mon.setHours(0,0,0,0);
+  return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
+}
+const todayIdx = () => weekOffset===0 ? (new Date().getDay()+6)%7 : -1;
+const memChipsHtml = ids => `<div class="mem">${ids.map(id=>`<span class="mchip ${id===meId?"me":""}">${escapeHtml(nickOf(id))}</span>`).join("")}</div>`;
+
+function setView(v){
+  view = v;
+  document.getElementById("v-board").classList.toggle("on", v==="board");
+  document.getElementById("v-sched").classList.toggle("on", v==="sched");
+  document.getElementById("view-board").style.display = v==="board" ? "flex" : "none";
+  document.getElementById("view-sched").classList.toggle("on", v==="sched");
+  document.getElementById("btn-add-boss").style.display = v==="board" ? "" : "none";
+  document.getElementById("btn-add-run").style.display = v==="sched" ? "" : "none";
+  document.getElementById("app-title").textContent = v==="board" ? "보스 파티 편성판" : "보스 일정표";
+  if(v==="sched") renderSchedule();
+}
+function renderMeSel(){
+  const sel = document.getElementById("me-sel"); if(!sel) return;
+  const prev = meId;
+  sel.innerHTML = `<option value="">(선택)</option>` + members.slice().sort((a,b)=>b.hexa-a.hexa)
+    .map(m=>`<option value="${m.id}">${escapeHtml(m.nick)}</option>`).join("");
+  if(prev && members.some(m=>m.id===prev)) sel.value = prev; else { meId=null; sel.value=""; }
+}
+function renderSchedule(){
+  renderMeSel();
+  const wd = weekDates();
+  document.getElementById("wk-label").textContent = weekOffset===0?"이번 주":weekOffset<0?`${-weekOffset}주 전`:`${weekOffset}주 후`;
+  document.getElementById("wk-range").textContent = `${wd[0].getMonth()+1}/${wd[0].getDate()} ~ ${wd[6].getMonth()+1}/${wd[6].getDate()}`;
+  document.getElementById("sv-week").classList.toggle("on", schedView==="week");
+  document.getElementById("sv-me").classList.toggle("on", schedView==="me");
+  const main = document.getElementById("sched-main"); main.innerHTML="";
+  schedView==="week" ? schedWeek(main,wd) : schedMe(main,wd);
+}
+function schedWeek(main,wd){
+  const cols=document.createElement("div"); cols.className="cols";
+  for(let i=0;i<7;i++){
+    const day=schedule.filter(r=>r.dow===i && findRunParty(r)).sort((a,b)=>a.time.localeCompare(b.time));
+    const col=document.createElement("div"); col.className="col";
+    const today=i===todayIdx();
+    col.innerHTML=`<div class="col-h ${today?"today":""}"><span class="d">${DOW[i]}</span><span class="dt">${wd[i].getMonth()+1}/${wd[i].getDate()}</span><span class="n">${day.length||""}</span></div>`;
+    const b=document.createElement("div"); b.className="col-b";
+    day.forEach(r=>b.appendChild(schedCard(r)));
+    const add=document.createElement("div"); add.className="addc"; add.textContent="+ 추가"; add.onclick=()=>openAddRun(i);
+    b.appendChild(add); col.appendChild(b); cols.appendChild(col);
+  }
+  main.appendChild(cols);
+}
+function schedCard(r){
+  const fp=findRunParty(r); const {b:boss,p}=fp;
+  const ids=partyMemberIds(p);
+  const dc=DIFF_COLOR[p.diff]||"#8b90a0";
+  const doneCnt=ids.filter(id=>r.doneBy.includes(id)).length;
+  const allDone=ids.length>0 && doneCnt===ids.length;
+  const iMine=meId && ids.includes(meId);
+  const iDone=meId && r.doneBy.includes(meId);
+  const el=document.createElement("div"); el.className="rcard"+(allDone?" done":"")+(iMine?" mine":""); el.style.setProperty("--dc",dc);
+  el.innerHTML=`
+    <div class="actions"><span class="ic del" title="일정 삭제">✕</span></div>
+    <div class="r1"><span class="time">${r.time}</span><span class="bn">${escapeHtml(boss.name)}</span><span class="sz">${SIZE_META[p.size].label}</span></div>
+    <div class="r2"><span class="diff" style="--dc:${dc}">${escapeHtml(p.diff)}</span>
+      <span class="dcnt">완료 ${doneCnt}/${ids.length}</span>
+      ${iMine?`<span class="chk ${iDone?"on":""}" title="내 완료 체크">${iDone?"✓":""}</span>`:""}</div>
+    ${memChipsHtml(ids)}`;
+  el.querySelector(".del").onclick=()=>{ schedule=schedule.filter(x=>x.id!==r.id); afterSchedChange(); };
+  const chk=el.querySelector(".chk"); if(chk) chk.onclick=()=>toggleMyDone(r);
+  return el;
+}
+function schedMe(main,wd){
+  if(!meId){ main.innerHTML=`<div class="sched-empty">위 오른쪽에서 <b>‘나’</b>를 먼저 선택하세요.<br>내가 속한 파티 일정만 모아 보여줍니다.</div>`; return; }
+  const ag=document.createElement("div"); ag.className="agenda"; let any=false;
+  for(let i=0;i<7;i++){
+    const day=schedule.filter(r=>{ const fp=findRunParty(r); return r.dow===i && fp && partyMemberIds(fp.p).includes(meId); }).sort((a,b)=>a.time.localeCompare(b.time));
+    if(!day.length) continue; any=true;
+    const today=i===todayIdx();
+    const box=document.createElement("div"); box.className="aday";
+    box.innerHTML=`<div class="aday-h ${today?"today":""}"><span class="d">${DOW[i]}요일</span><span class="dt">${wd[i].getMonth()+1}/${wd[i].getDate()}</span><span class="line"></span></div>`;
+    day.forEach(r=>{
+      const {b:boss,p}=findRunParty(r); const dc=DIFF_COLOR[p.diff]||"#8b90a0";
+      const others=partyMemberIds(p).filter(id=>id!==meId).map(nickOf);
+      const iDone=r.doneBy.includes(meId);
+      const row=document.createElement("div"); row.className="arow"+(iDone?" done":""); row.style.setProperty("--dc",dc);
+      row.innerHTML=`<span class="time">${r.time}</span>
+        <div class="mid"><div class="bn">${escapeHtml(boss.name)} <span class="diff" style="--dc:${dc}">${escapeHtml(p.diff)}</span></div>
+        <div class="who">${SIZE_META[p.size].label}${others.length?" · 같이: "+others.map(escapeHtml).join(", "):" · 솔로"}</div></div>
+        <span class="chk">${iDone?"✓":""}</span>`;
+      row.querySelector(".chk").onclick=()=>toggleMyDone(r);
+      box.appendChild(row);
+    });
+    ag.appendChild(box);
+  }
+  if(!any) ag.innerHTML=`<div class="sched-empty"><b>${escapeHtml(nickOf(meId))}</b> 님이 속한 파티 일정이 이번 주에 없어요.<br>편성판에서 그 파티에 들어가 있으면 자동으로 떠요.</div>`;
+  main.appendChild(ag);
+}
+function toggleMyDone(r){
+  if(!meId){ alert("먼저 오른쪽에서 '나'를 선택하세요."); return; }
+  r.doneBy = r.doneBy.includes(meId) ? r.doneBy.filter(x=>x!==meId) : [...r.doneBy, meId];
+  afterSchedChange();
+}
+function afterSchedChange(){ renderSchedule(); scheduleSave(); }
+
+/* ===== 일정 추가 모달 ===== */
+let runDay=3, runPickBoss=null, runPickParty=null;
+function buildRunDay(){
+  const el=document.getElementById("run-day"); el.innerHTML="";
+  DOW.forEach((d,i)=>{ const b=document.createElement("button"); b.textContent=d; if(i===runDay)b.classList.add("on"); b.onclick=()=>{runDay=i;buildRunDay();}; el.appendChild(b); });
+}
+function buildRunPlist(){
+  const el=document.getElementById("run-plist"); el.innerHTML="";
+  const list=bosses.flatMap(b=>b.parties.map(p=>({b,p})));
+  if(!list.length){ el.innerHTML=`<div class="sched-empty" style="margin:10px 0">편성판에 파티가 없어요. 먼저 편성판에서 파티를 만드세요.</div>`; return; }
+  list.forEach(({b,p})=>{
+    const dc=DIFF_COLOR[p.diff]||"#8b90a0"; const ids=partyMemberIds(p);
+    const on = runPickBoss===b.id && runPickParty===p.id;
+    const it=document.createElement("div"); it.className="pitem"+(on?" on":""); it.style.setProperty("--dc",dc);
+    it.innerHTML=`<div class="p1"><span class="pb">${escapeHtml(b.name)}</span><span class="pdiffb" style="--dc:${dc}">${escapeHtml(p.diff)}</span><span class="ps">${SIZE_META[p.size].label}</span></div>${memChipsHtml(ids)}`;
+    it.onclick=()=>{ runPickBoss=b.id; runPickParty=p.id; buildRunPlist();
+      document.getElementById("run-sel").textContent=`${b.name} ${p.diff} · ${SIZE_META[p.size].label}`;
+      document.getElementById("run-sel").style.color="var(--text)"; };
+    el.appendChild(it);
+  });
+}
+function openAddRun(dow){
+  runDay = (dow!=null?dow:todayIdx()); if(runDay<0) runDay=3;
+  runPickBoss=null; runPickParty=null;
+  document.getElementById("run-time").value="21:00";
+  document.getElementById("run-sel").textContent="아직 선택 안 함"; document.getElementById("run-sel").style.color="var(--muted-2)";
+  buildRunDay(); buildRunPlist();
+  document.getElementById("run-bg").classList.add("on");
+}
+document.getElementById("btn-add-run").addEventListener("click", ()=>openAddRun());
+document.getElementById("run-cancel").addEventListener("click", ()=>document.getElementById("run-bg").classList.remove("on"));
+document.getElementById("run-bg").addEventListener("click", e=>{ if(e.target.id==="run-bg") e.currentTarget.classList.remove("on"); });
+document.getElementById("run-ok").addEventListener("click", ()=>{
+  if(!runPickBoss||!runPickParty){ alert("파티를 선택하세요."); return; }
+  const time=document.getElementById("run-time").value||"21:00";
+  schedule.push({ id:"r"+(rid++), boss:runPickBoss, party:runPickParty, dow:runDay, time, doneBy:[] });
+  document.getElementById("run-bg").classList.remove("on");
+  afterSchedChange();
+});
+
+/* 뷰 토글 / 주 이동 / 나 선택 */
+document.getElementById("v-board").addEventListener("click", ()=>setView("board"));
+document.getElementById("v-sched").addEventListener("click", ()=>setView("sched"));
+document.getElementById("sv-week").addEventListener("click", ()=>{ schedView="week"; renderSchedule(); });
+document.getElementById("sv-me").addEventListener("click", ()=>{ schedView="me"; renderSchedule(); });
+document.getElementById("wk-prev").addEventListener("click", ()=>{ weekOffset--; renderSchedule(); });
+document.getElementById("wk-next").addEventListener("click", ()=>{ weekOffset++; renderSchedule(); });
+document.getElementById("me-sel").addEventListener("change", e=>{
+  meId = e.target.value || null;
+  if(meId) localStorage.setItem("bossparty_me", meId); else localStorage.removeItem("bossparty_me");
+  renderSchedule();
+});
+
+function renderAll(){ renderPool(); renderBoard(); if(view==="sched") renderSchedule(); scheduleSave(); }
 
 async function init(){
   setStatus("loading");

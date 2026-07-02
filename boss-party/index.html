@@ -354,6 +354,7 @@
       <span class="w" id="wk-label">이번 주</span>
       <button class="btn sm" id="wk-next">▶</button>
       <span class="t" id="wk-range"></span>
+      <button class="btn sm" id="wk-copy" title="지난 주 일정을 이 주로 복사">지난 주 복사</button>
       <div class="sseg vseg" id="sview"><button id="sv-week" class="on">요일 카드</button><button id="sv-me">내 일정만</button></div>
       <div class="me-sel">나: <select id="me-sel"></select></div>
     </div>
@@ -819,11 +820,18 @@ const myCharIn = p => partyMemberIds(p).find(id=>personIds(meId).includes(id)); 
 function kstNow(){ return new Date(Date.now() + 9*3600000); }
 const dowMon = d => (d.getUTCDay()+6)%7;   // 월=0 … 일=6
 // 이번 리셋 주(목요일 시작) 7일 날짜 — 목,금,토,일,월,화,수
-function weekDates(){
+// off 주의 목요일(리셋 시작일) UTC-midnight
+function thursdayOf(off){
   const k=kstNow();
-  const sinceThu=(k.getUTCDay()-4+7)%7;   // 목요일(4)로부터 경과 일수
+  const sinceThu=(k.getUTCDay()-4+7)%7;
   const base=new Date(Date.UTC(k.getUTCFullYear(),k.getUTCMonth(),k.getUTCDate()));
-  base.setUTCDate(base.getUTCDate()-sinceThu+weekOffset*7);
+  base.setUTCDate(base.getUTCDate()-sinceThu+off*7);
+  return base;
+}
+const keyOf = d => `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+const curWeekKey = () => keyOf(thursdayOf(weekOffset));   // 지금 보고 있는 주의 소속 key
+function weekDates(){
+  const base=thursdayOf(weekOffset);
   return Array.from({length:7},(_,i)=>{const d=new Date(base);d.setUTCDate(base.getUTCDate()+i);return d;});
 }
 function isToday(d){ const k=kstNow(); return d.getUTCFullYear()===k.getUTCFullYear()&&d.getUTCMonth()===k.getUTCMonth()&&d.getUTCDate()===k.getUTCDate(); }
@@ -859,10 +867,11 @@ function renderSchedule(){
   schedView==="week" ? schedWeek(main,wd) : schedMe(main,wd);
 }
 function schedWeek(main,wd){
+  const wk=curWeekKey();
   const cols=document.createElement("div"); cols.className="cols";
   wd.forEach(date=>{
     const dm=dowMon(date);
-    const day=schedule.filter(r=>r.dow===dm && findRunParty(r)).sort((a,b)=>a.time.localeCompare(b.time));
+    const day=schedule.filter(r=>r.week===wk && r.dow===dm && findRunParty(r)).sort((a,b)=>a.time.localeCompare(b.time));
     const col=document.createElement("div"); col.className="col";
     const today=isToday(date);
     col.innerHTML=`<div class="col-h ${today?"today":""}"><span class="d">${DOW[dm]}</span><span class="dt">${date.getUTCMonth()+1}/${date.getUTCDate()}</span><span class="n">${day.length||""}</span></div>`;
@@ -896,10 +905,11 @@ function schedCard(r){
 }
 function schedMe(main,wd){
   if(!meId){ main.innerHTML=`<div class="sched-empty">위 오른쪽에서 <b>‘나’</b>를 먼저 선택하세요.<br>내가 속한 파티 일정만 모아 보여줍니다.</div>`; return; }
+  const wk=curWeekKey();
   const ag=document.createElement("div"); ag.className="agenda"; let any=false;
   wd.forEach(date=>{
     const dm=dowMon(date);
-    const day=schedule.filter(r=>{ const fp=findRunParty(r); return r.dow===dm && fp && myCharIn(fp.p); }).sort((a,b)=>a.time.localeCompare(b.time));
+    const day=schedule.filter(r=>{ const fp=findRunParty(r); return r.week===wk && r.dow===dm && fp && myCharIn(fp.p); }).sort((a,b)=>a.time.localeCompare(b.time));
     if(!day.length) return; any=true;
     const today=isToday(date);
     const box=document.createElement("div"); box.className="aday";
@@ -966,7 +976,7 @@ document.getElementById("run-bg").addEventListener("click", e=>{ if(e.target.id=
 document.getElementById("run-ok").addEventListener("click", ()=>{
   if(!runPickBoss||!runPickParty){ alert("파티를 선택하세요."); return; }
   const time=document.getElementById("run-time").value||"21:00";
-  schedule.push({ id:"r"+(rid++), boss:runPickBoss, party:runPickParty, dow:runDay, time, doneBy:[] });
+  schedule.push({ id:"r"+(rid++), boss:runPickBoss, party:runPickParty, dow:runDay, time, week:curWeekKey(), doneBy:[] });
   document.getElementById("run-bg").classList.remove("on");
   afterSchedChange();
 });
@@ -978,6 +988,18 @@ document.getElementById("sv-week").addEventListener("click", ()=>{ schedView="we
 document.getElementById("sv-me").addEventListener("click", ()=>{ schedView="me"; renderSchedule(); });
 document.getElementById("wk-prev").addEventListener("click", ()=>{ weekOffset--; renderSchedule(); });
 document.getElementById("wk-next").addEventListener("click", ()=>{ weekOffset++; renderSchedule(); });
+document.getElementById("wk-copy").addEventListener("click", ()=>{
+  const wk=curWeekKey(), prevKey=keyOf(thursdayOf(weekOffset-1));
+  const prev=schedule.filter(r=>r.week===prevKey);
+  if(!prev.length){ alert("지난 주에 복사할 일정이 없어요."); return; }
+  let added=0;
+  prev.forEach(r=>{
+    const dup=schedule.some(x=>x.week===wk && x.boss===r.boss && x.party===r.party && x.dow===r.dow && x.time===r.time);
+    if(!dup){ schedule.push({ id:"r"+(rid++), boss:r.boss, party:r.party, dow:r.dow, time:r.time, week:wk, doneBy:[] }); added++; }
+  });
+  afterSchedChange();
+  alert(added?`지난 주 일정 ${added}개를 이 주로 복사했어요.`:"이미 다 복사돼 있어요.");
+});
 document.getElementById("me-sel").addEventListener("change", e=>{
   meId = e.target.value || null;
   if(meId) localStorage.setItem("bossparty_me", meId); else localStorage.removeItem("bossparty_me");

@@ -697,12 +697,19 @@ document.getElementById("btn-save").addEventListener("click", async ()=>{
 const findRunParty = run => { const b=bosses.find(x=>x.id===run.boss); const p=b&&b.parties.find(x=>x.id===run.party); return p?{b,p}:null; };
 const partyMemberIds = p => p.seats.filter(Boolean);
 const nickOf = id => byId(id)?.nick || "?";
+// KST(한국/메이플 서버) 기준. getUTC* 로 읽으면 KST 벽시계.
+function kstNow(){ return new Date(Date.now() + 9*3600000); }
+const dowMon = d => (d.getUTCDay()+6)%7;   // 월=0 … 일=6
+// 이번 리셋 주(목요일 시작) 7일 날짜 — 목,금,토,일,월,화,수
 function weekDates(){
-  const now=new Date(); now.setDate(now.getDate()+weekOffset*7);
-  const dow=(now.getDay()+6)%7; const mon=new Date(now); mon.setDate(now.getDate()-dow); mon.setHours(0,0,0,0);
-  return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
+  const k=kstNow();
+  const sinceThu=(k.getUTCDay()-4+7)%7;   // 목요일(4)로부터 경과 일수
+  const base=new Date(Date.UTC(k.getUTCFullYear(),k.getUTCMonth(),k.getUTCDate()));
+  base.setUTCDate(base.getUTCDate()-sinceThu+weekOffset*7);
+  return Array.from({length:7},(_,i)=>{const d=new Date(base);d.setUTCDate(base.getUTCDate()+i);return d;});
 }
-const todayIdx = () => weekOffset===0 ? (new Date().getDay()+6)%7 : -1;
+function isToday(d){ const k=kstNow(); return d.getUTCFullYear()===k.getUTCFullYear()&&d.getUTCMonth()===k.getUTCMonth()&&d.getUTCDate()===k.getUTCDate(); }
+const RESET_DOW = [3,4,5,6,0,1,2];   // 목 금 토 일 월 화 수
 const memChipsHtml = ids => `<div class="mem">${ids.map(id=>`<span class="mchip ${id===meId?"me":""}">${escapeHtml(nickOf(id))}</span>`).join("")}</div>`;
 
 function setView(v){
@@ -726,8 +733,8 @@ function renderMeSel(){
 function renderSchedule(){
   renderMeSel();
   const wd = weekDates();
-  document.getElementById("wk-label").textContent = weekOffset===0?"이번 주":weekOffset<0?`${-weekOffset}주 전`:`${weekOffset}주 후`;
-  document.getElementById("wk-range").textContent = `${wd[0].getMonth()+1}/${wd[0].getDate()} ~ ${wd[6].getMonth()+1}/${wd[6].getDate()}`;
+  document.getElementById("wk-label").textContent = (weekOffset===0?"이번 주":weekOffset<0?`${-weekOffset}주 전`:`${weekOffset}주 후`)+" · 목요일 리셋";
+  document.getElementById("wk-range").textContent = `${wd[0].getUTCMonth()+1}/${wd[0].getUTCDate()}(목) ~ ${wd[6].getUTCMonth()+1}/${wd[6].getUTCDate()}(수)`;
   document.getElementById("sv-week").classList.toggle("on", schedView==="week");
   document.getElementById("sv-me").classList.toggle("on", schedView==="me");
   const main = document.getElementById("sched-main"); main.innerHTML="";
@@ -735,16 +742,17 @@ function renderSchedule(){
 }
 function schedWeek(main,wd){
   const cols=document.createElement("div"); cols.className="cols";
-  for(let i=0;i<7;i++){
-    const day=schedule.filter(r=>r.dow===i && findRunParty(r)).sort((a,b)=>a.time.localeCompare(b.time));
+  wd.forEach(date=>{
+    const dm=dowMon(date);
+    const day=schedule.filter(r=>r.dow===dm && findRunParty(r)).sort((a,b)=>a.time.localeCompare(b.time));
     const col=document.createElement("div"); col.className="col";
-    const today=i===todayIdx();
-    col.innerHTML=`<div class="col-h ${today?"today":""}"><span class="d">${DOW[i]}</span><span class="dt">${wd[i].getMonth()+1}/${wd[i].getDate()}</span><span class="n">${day.length||""}</span></div>`;
+    const today=isToday(date);
+    col.innerHTML=`<div class="col-h ${today?"today":""}"><span class="d">${DOW[dm]}</span><span class="dt">${date.getUTCMonth()+1}/${date.getUTCDate()}</span><span class="n">${day.length||""}</span></div>`;
     const b=document.createElement("div"); b.className="col-b";
     day.forEach(r=>b.appendChild(schedCard(r)));
-    const add=document.createElement("div"); add.className="addc"; add.textContent="+ 추가"; add.onclick=()=>openAddRun(i);
+    const add=document.createElement("div"); add.className="addc"; add.textContent="+ 추가"; add.onclick=()=>openAddRun(dm);
     b.appendChild(add); col.appendChild(b); cols.appendChild(col);
-  }
+  });
   main.appendChild(cols);
 }
 function schedCard(r){
@@ -770,12 +778,13 @@ function schedCard(r){
 function schedMe(main,wd){
   if(!meId){ main.innerHTML=`<div class="sched-empty">위 오른쪽에서 <b>‘나’</b>를 먼저 선택하세요.<br>내가 속한 파티 일정만 모아 보여줍니다.</div>`; return; }
   const ag=document.createElement("div"); ag.className="agenda"; let any=false;
-  for(let i=0;i<7;i++){
-    const day=schedule.filter(r=>{ const fp=findRunParty(r); return r.dow===i && fp && partyMemberIds(fp.p).includes(meId); }).sort((a,b)=>a.time.localeCompare(b.time));
-    if(!day.length) continue; any=true;
-    const today=i===todayIdx();
+  wd.forEach(date=>{
+    const dm=dowMon(date);
+    const day=schedule.filter(r=>{ const fp=findRunParty(r); return r.dow===dm && fp && partyMemberIds(fp.p).includes(meId); }).sort((a,b)=>a.time.localeCompare(b.time));
+    if(!day.length) return; any=true;
+    const today=isToday(date);
     const box=document.createElement("div"); box.className="aday";
-    box.innerHTML=`<div class="aday-h ${today?"today":""}"><span class="d">${DOW[i]}요일</span><span class="dt">${wd[i].getMonth()+1}/${wd[i].getDate()}</span><span class="line"></span></div>`;
+    box.innerHTML=`<div class="aday-h ${today?"today":""}"><span class="d">${DOW[dm]}요일</span><span class="dt">${date.getUTCMonth()+1}/${date.getUTCDate()}</span><span class="line"></span></div>`;
     day.forEach(r=>{
       const {b:boss,p}=findRunParty(r); const dc=DIFF_COLOR[p.diff]||"#8b90a0";
       const others=partyMemberIds(p).filter(id=>id!==meId).map(nickOf);
@@ -789,7 +798,7 @@ function schedMe(main,wd){
       box.appendChild(row);
     });
     ag.appendChild(box);
-  }
+  });
   if(!any) ag.innerHTML=`<div class="sched-empty"><b>${escapeHtml(nickOf(meId))}</b> 님이 속한 파티 일정이 이번 주에 없어요.<br>편성판에서 그 파티에 들어가 있으면 자동으로 떠요.</div>`;
   main.appendChild(ag);
 }
@@ -804,7 +813,7 @@ function afterSchedChange(){ renderSchedule(); scheduleSave(); }
 let runDay=3, runPickBoss=null, runPickParty=null;
 function buildRunDay(){
   const el=document.getElementById("run-day"); el.innerHTML="";
-  DOW.forEach((d,i)=>{ const b=document.createElement("button"); b.textContent=d; if(i===runDay)b.classList.add("on"); b.onclick=()=>{runDay=i;buildRunDay();}; el.appendChild(b); });
+  RESET_DOW.forEach(i=>{ const b=document.createElement("button"); b.textContent=DOW[i]; if(i===runDay)b.classList.add("on"); b.onclick=()=>{runDay=i;buildRunDay();}; el.appendChild(b); });
 }
 function buildRunPlist(){
   const el=document.getElementById("run-plist"); el.innerHTML="";
@@ -822,7 +831,7 @@ function buildRunPlist(){
   });
 }
 function openAddRun(dow){
-  runDay = (dow!=null?dow:todayIdx()); if(runDay<0) runDay=3;
+  runDay = (dow!=null?dow:dowMon(kstNow())); if(runDay<0) runDay=3;
   runPickBoss=null; runPickParty=null;
   document.getElementById("run-time").value="21:00";
   document.getElementById("run-sel").textContent="아직 선택 안 함"; document.getElementById("run-sel").style.color="var(--muted-2)";

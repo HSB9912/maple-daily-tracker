@@ -59,6 +59,10 @@
   .member .del-m { color: var(--muted-2); cursor: pointer; font-size: 11px; flex-shrink: 0; opacity: 0; }
   .member:hover .del-m { opacity: 1; }
   .member .del-m:hover { color: var(--danger); }
+  .member.drop-hi { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); }
+  .pgroup { border: 1px solid var(--line-2); border-radius: 9px; padding: 3px; margin: 2px 0; background: #6c8cff0d; }
+  .pgroup.drop-hi { border-color: var(--accent); background: var(--accent-soft); }
+  .pgroup-h { font-size: 9.5px; color: var(--accent); font-weight: 800; padding: 3px 7px 4px; letter-spacing: 0.02em; }
   .pool-foot { border-top: 1px solid var(--line); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
   .add-form .row { display: flex; gap: 5px; margin-bottom: 5px; }
   input.fld { flex: 1; background: var(--bg); border: 1px solid var(--line-2); border-radius: 6px; padding: 6px 8px; color: var(--text); font-size: 12px; font-family: inherit; min-width: 0; }
@@ -449,27 +453,72 @@ async function cloudLoad(){
 }
 
 /* ===== Left roster ===== */
+function memberRow(m){
+  const cnt = bossesOf(m.id);
+  const el = document.createElement("div");
+  el.className="member"; el.draggable=true; el.dataset.mid=m.id;
+  el.innerHTML = `<span class="nick" title="클릭하여 수정 · 다른 멤버로 끌어 합치기">${escapeHtml(m.nick)}</span><span class="hexa">${fmt(m.hexa)}</span><span class="bpill ${cnt?"":"zero"}" title="배정된 보스 수">${cnt}/${bosses.length}</span><span class="del-m" title="삭제">✕</span>`;
+  el.addEventListener("dragstart", e=>{ e.stopPropagation(); e.dataTransfer.setData("mid", m.id); e.dataTransfer.setData("merge","1"); el.classList.add("dragging"); });
+  el.addEventListener("dragend", ()=>el.classList.remove("dragging"));
+  el.querySelector(".nick").addEventListener("click", ()=>openMemberEdit(m));
+  el.querySelector(".del-m").addEventListener("click", ()=>{
+    if(!confirm(`'${m.nick}' 멤버를 삭제할까요? 모든 보스에서 빠집니다.`)) return;
+    members = members.filter(x=>x.id!==m.id); bosses.forEach(b=>pullFromBoss(b,m.id)); members.forEach(x=>{ if(x.owner===m.id) delete x.owner; }); renderAll();
+  });
+  // 다른 멤버 위에 떨구면 → 같은 사람으로 합치기
+  el.addEventListener("dragover", e=>{ if(e.dataTransfer.types.includes("merge")){ e.preventDefault(); e.stopPropagation(); el.classList.add("drop-hi"); } });
+  el.addEventListener("dragleave", ()=>el.classList.remove("drop-hi"));
+  el.addEventListener("drop", e=>{
+    if(!e.dataTransfer.types.includes("merge")) return;
+    e.preventDefault(); e.stopPropagation(); el.classList.remove("drop-hi");
+    const src=e.dataTransfer.getData("mid"); if(src && src!==m.id) mergePerson(src, pkeyOf(m));
+  });
+  return el;
+}
 function renderPool(){
   const list = document.getElementById("pool-list");
   document.getElementById("roster-count").textContent = members.length;
   list.innerHTML = "";
   if(!members.length){ list.innerHTML='<div style="color:var(--muted-2);font-size:11.5px;padding:8px 4px">아래에서 멤버를 추가하세요.</div>'; return; }
-  members.slice().sort((a,b)=>b.hexa-a.hexa).forEach(m=>{
-    const cnt = bossesOf(m.id);
-    const grouped = members.some(x=>x.id!==m.id && pkeyOf(x)===pkeyOf(m));
-    const el = document.createElement("div");
-    el.className="member"; el.draggable=true;
-    el.innerHTML = `<span class="nick" title="클릭하여 수정·부캐 합치기">${escapeHtml(m.nick)}${grouped?' <span style="color:var(--accent);font-size:10px">🔗</span>':''}</span><span class="hexa">${fmt(m.hexa)}</span><span class="bpill ${cnt?"":"zero"}" title="배정된 보스 수">${cnt}/${bosses.length}</span><span class="del-m" title="삭제">✕</span>`;
-    el.addEventListener("dragstart", e=>{ e.dataTransfer.setData("mid", m.id); el.classList.add("dragging"); });
-    el.addEventListener("dragend", ()=>el.classList.remove("dragging"));
-    el.querySelector(".nick").addEventListener("click", ()=>openMemberEdit(m));
-    el.querySelector(".del-m").addEventListener("click", ()=>{
-      if(!confirm(`'${m.nick}' 멤버를 삭제할까요? 모든 보스에서 빠집니다.`)) return;
-      members = members.filter(x=>x.id!==m.id); bosses.forEach(b=>pullFromBoss(b,m.id)); members.forEach(x=>{ if(x.owner===m.id) delete x.owner; }); renderAll();
-    });
-    list.appendChild(el);
+  const groups=new Map();
+  members.forEach(m=>{ const pk=pkeyOf(m); if(!groups.has(pk)) groups.set(pk,[]); groups.get(pk).push(m); });
+  const persons=[...groups.entries()].map(([pk,ms])=>({pk,ms,hexa:Math.max(0,...ms.map(x=>x.hexa||0))})).sort((a,b)=>b.hexa-a.hexa);
+  persons.forEach(({pk,ms})=>{
+    ms.sort((a,b)=>b.hexa-a.hexa);
+    if(ms.length>1){
+      const box=document.createElement("div"); box.className="pgroup";
+      box.innerHTML=`<div class="pgroup-h">🔗 한 사람 · ${ms.length}캐릭</div>`;
+      ms.forEach(m=>box.appendChild(memberRow(m)));
+      box.addEventListener("dragover", e=>{ if(e.dataTransfer.types.includes("merge")){ e.preventDefault(); box.classList.add("drop-hi"); } });
+      box.addEventListener("dragleave", ()=>box.classList.remove("drop-hi"));
+      box.addEventListener("drop", e=>{ if(!e.dataTransfer.types.includes("merge"))return; e.preventDefault(); box.classList.remove("drop-hi"); const src=e.dataTransfer.getData("mid"); if(src) mergePerson(src, pk); });
+      list.appendChild(box);
+    } else {
+      list.appendChild(memberRow(ms[0]));
+    }
   });
 }
+/* 같은 사람으로 합치기 / 그룹 해제 */
+function mergePerson(srcId, targetPk){
+  const src=byId(srcId); if(!src||!targetPk) return;
+  const srcPk=pkeyOf(src); if(srcPk===targetPk) return;   // 이미 같은 사람
+  members.forEach(m=>{ if(pkeyOf(m)===srcPk){ if(m.id===targetPk) delete m.owner; else m.owner=targetPk; } });
+  renderAll();
+}
+function detachMember(mid){
+  const m=byId(mid); if(!m) return;
+  const pk=pkeyOf(m); const grp=members.filter(x=>pkeyOf(x)===pk);
+  if(grp.length<=1) return;                 // 그룹 아님
+  if(m.owner){ delete m.owner; }            // 자식이면 그냥 빠짐
+  else { const rest=grp.filter(x=>x.id!==m.id); const nr=rest[0]; delete nr.owner; rest.slice(1).forEach(x=>x.owner=nr.id); }  // 대표면 다른 캐릭을 대표로
+  renderAll();
+}
+// 빈 로스터 영역에 떨구면 → 그룹 해제
+(function(){
+  const pl=document.getElementById("pool-list");
+  pl.addEventListener("dragover", e=>{ if(e.dataTransfer.types.includes("merge")) e.preventDefault(); });
+  pl.addEventListener("drop", e=>{ if(!e.dataTransfer.types.includes("merge")) return; e.preventDefault(); const src=e.dataTransfer.getData("mid"); if(src) detachMember(src); });
+})();
 
 /* ===== Right board ===== */
 function renderBoard(){

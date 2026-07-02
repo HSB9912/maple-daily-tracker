@@ -383,6 +383,8 @@ const ROW_ID = 'main';
 const LS_KEY = 'bossparty_state';
 let _supabase = null;
 try { _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.warn('supabase init 실패', e); }
+// 안전장치: 로컬(localhost/파일)에서는 클라우드 저장·불러오기 금지 → 테스트가 실서비스 데이터 못 건드림
+const CLOUD_ENABLED = /(^|\.)github\.io$/.test(location.hostname);
 
 const SIZE_META = { 1:{label:"솔격",tone:"var(--solo)",soft:"#f0b45e22"}, 2:{label:"2인",tone:"var(--duo)",soft:"#6c8cff22"}, 3:{label:"3인",tone:"var(--trio)",soft:"#b06cff22"} };
 const DIFFS = ["이지","노말","하드","카오스","익스트림"];
@@ -438,7 +440,7 @@ function scheduleSave(){
 // 클라우드 저장 성공 여부를 반환 (실패해도 로컬은 이미 저장됨)
 async function cloudSave(){
   try { localStorage.setItem(LS_KEY, JSON.stringify(serialize())); } catch(e){}
-  if(!_supabase){ setStatus("local"); return false; }
+  if(!_supabase || !CLOUD_ENABLED){ setStatus("local"); return false; }
   try {
     const { error } = await _supabase.from(TABLE).upsert({ id: ROW_ID, data: serialize() }, { onConflict:'id' });
     if(error){ setStatus("local"); console.warn(error); return false; }
@@ -446,7 +448,7 @@ async function cloudSave(){
   } catch(e){ setStatus("local"); console.warn(e); return false; }
 }
 async function cloudLoad(){
-  if(!_supabase) return false;
+  if(!_supabase || !CLOUD_ENABLED) return false;
   try { const { data, error } = await _supabase.from(TABLE).select('data').eq('id', ROW_ID).single(); if(!error && data && data.data) return applyState(data.data); }
   catch(e){ console.warn(e); }
   return false;

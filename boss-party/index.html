@@ -205,6 +205,27 @@
   .arow.done .chk { background: var(--good); border-color: var(--good); color: #08130d; }
   .sched-empty { color: var(--muted-2); font-size: 13px; text-align: center; margin-top: 40px; line-height: 1.7; }
 
+  /* 공유 타임라인 (시간 축) */
+  .tl { display: grid; grid-template-columns: 46px repeat(7, minmax(100px,1fr)); min-width: 760px; }
+  .tl-corner { border-bottom: 1px solid var(--line-2); }
+  .tl-dh { position: relative; text-align: center; font-weight: 800; font-size: 12px; padding: 6px 0 7px; border-bottom: 1px solid var(--line-2); display: flex; flex-direction: column; gap: 1px; }
+  .tl-dh.today { color: var(--accent); }
+  .tl-dh small { font-size: 9px; color: var(--muted-2); font-weight: 400; }
+  .tl-dh .addb { position: absolute; top: 5px; right: 7px; font-size: 13px; color: var(--muted-2); cursor: pointer; }
+  .tl-dh .addb:hover { color: var(--accent); }
+  .tl-ruler { position: relative; }
+  .tl-ruler .hl { position: absolute; right: 6px; font-size: 9.5px; color: var(--muted-2); transform: translateY(-6px); font-variant-numeric: tabular-nums; }
+  .tl-lane { position: relative; border-left: 1px solid var(--line); }
+  .tl-lane .gl { position: absolute; left: 0; right: 0; height: 1px; background: var(--line); opacity: .4; }
+  .tl-ev { position: absolute; border: 1px solid var(--line); border-left: 3px solid var(--dc); background: var(--panel-2); border-radius: 6px; padding: 2px 5px; overflow: hidden; cursor: pointer; }
+  .tl-ev.done { opacity: .42; }
+  .tl-ev.mine { box-shadow: inset 2px 0 0 var(--accent); }
+  .tl-ev .et { font-size: 9.5px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .tl-ev .eb { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+  .tl-ev .done-dot { color: var(--good); }
+  .tl-ev .ex { position: absolute; top: 1px; right: 3px; font-size: 10px; color: var(--muted-2); opacity: 0; }
+  .tl-ev:hover .ex { opacity: 1; } .tl-ev .ex:hover { color: var(--danger); }
+
   /* 파티 선택 리스트 (일정 추가 모달) */
   .plist { display: flex; flex-direction: column; gap: 6px; max-height: 230px; overflow: auto; }
   .pitem { border: 1px solid var(--line); border-left: 3px solid var(--dc); border-radius: 9px; padding: 8px 10px; background: var(--panel-2); cursor: pointer; }
@@ -273,6 +294,7 @@
     .mchip { font-size: 11.5px; padding: 2px 9px; }
     .arow { padding: 11px 13px; } .arow .bn { font-size: 14px; }
     .agenda { max-width: 100%; }
+    .tl { min-width: 680px; grid-template-columns: 40px repeat(7, minmax(88px,1fr)); }
   }
 </style>
 </head>
@@ -866,21 +888,68 @@ function renderSchedule(){
   const main = document.getElementById("sched-main"); main.innerHTML="";
   schedView==="week" ? schedWeek(main,wd) : schedMe(main,wd);
 }
+const effHour = t => { const [h,m]=t.split(":").map(Number); return (h<6?h+24:h)+m/60; };  // 새벽은 밤 뒤로
+const hourLabel = h => (h>24?`${h-24}시`:h===24?"24시":`${h}시`);
 function schedWeek(main,wd){
   const wk=curWeekKey();
-  const cols=document.createElement("div"); cols.className="cols";
+  const weekRuns=schedule.filter(r=>r.week===wk && findRunParty(r));
+  const effs=weekRuns.map(r=>effHour(r.time));
+  let startH=effs.length?Math.floor(Math.min(...effs)):19;
+  let endH  =effs.length?Math.ceil(Math.max(...effs))+1:24;
+  if(endH-startH<4) endH=startH+4;
+  const PXH=54, CARDH=44, H=(endH-startH)*PXH;
+
+  const tl=document.createElement("div"); tl.className="tl";
+  tl.appendChild(Object.assign(document.createElement("div"),{className:"tl-corner"}));
+  wd.forEach(date=>{
+    const dm=dowMon(date), today=isToday(date);
+    const dh=document.createElement("div"); dh.className="tl-dh"+(today?" today":"");
+    dh.innerHTML=`<span>${DOW[dm]}</span><small>${date.getUTCMonth()+1}/${date.getUTCDate()}</small><span class="addb" title="이 날 일정 추가">＋</span>`;
+    dh.querySelector(".addb").onclick=()=>openAddRun(dm);
+    tl.appendChild(dh);
+  });
+  const ruler=document.createElement("div"); ruler.className="tl-ruler"; ruler.style.height=H+"px";
+  for(let h=startH;h<=endH;h++){ const l=document.createElement("div"); l.className="hl"; l.style.top=((h-startH)*PXH)+"px"; l.textContent=hourLabel(h); ruler.appendChild(l); }
+  tl.appendChild(ruler);
+
   wd.forEach(date=>{
     const dm=dowMon(date);
-    const day=schedule.filter(r=>r.week===wk && r.dow===dm && findRunParty(r)).sort((a,b)=>a.time.localeCompare(b.time));
-    const col=document.createElement("div"); col.className="col";
-    const today=isToday(date);
-    col.innerHTML=`<div class="col-h ${today?"today":""}"><span class="d">${DOW[dm]}</span><span class="dt">${date.getUTCMonth()+1}/${date.getUTCDate()}</span><span class="n">${day.length||""}</span></div>`;
-    const b=document.createElement("div"); b.className="col-b";
-    day.forEach(r=>b.appendChild(schedCard(r)));
-    const add=document.createElement("div"); add.className="addc"; add.textContent="+ 추가"; add.onclick=()=>openAddRun(dm);
-    b.appendChild(add); col.appendChild(b); cols.appendChild(col);
+    const lane=document.createElement("div"); lane.className="tl-lane"; lane.style.height=H+"px";
+    for(let h=startH;h<=endH;h++){ const g=document.createElement("div"); g.className="gl"; g.style.top=((h-startH)*PXH)+"px"; lane.appendChild(g); }
+    lane.addEventListener("click", e=>{
+      if(e.target!==lane) return;
+      let mins=Math.round((startH + e.offsetY/PXH)*2)*30;  // 30분 단위
+      const t=String(Math.floor(mins/60)%24).padStart(2,'0')+":"+String(mins%60).padStart(2,'0');
+      openAddRun(dm,t);
+    });
+    // 겹침 배치(칼럼)
+    const items=schedule.filter(r=>r.week===wk && r.dow===dm && findRunParty(r))
+      .map(r=>({r,top:(effHour(r.time)-startH)*PXH})).sort((a,b)=>a.top-b.top);
+    let cluster=[], maxBottom=-1, colEnds=[];
+    const flush=()=>{ if(cluster.length){ const cols=Math.max(...cluster.map(x=>x.col+1)); cluster.forEach(x=>x.cols=cols); } cluster=[]; };
+    items.forEach(it=>{
+      it.bottom=it.top+CARDH;
+      if(it.top>=maxBottom){ flush(); colEnds=[]; maxBottom=it.bottom; } else maxBottom=Math.max(maxBottom,it.bottom);
+      let c=colEnds.findIndex(end=>end<=it.top); if(c<0) c=colEnds.length; colEnds[c]=it.bottom; it.col=c; cluster.push(it);
+    });
+    flush();
+    items.forEach(it=>{
+      const {r,top,col,cols}=it, {b:boss,p}=findRunParty(r), dc=DIFF_COLOR[p.diff]||"#8b90a0";
+      const myChar=meId?myCharIn(p):null, iDone=myChar&&r.doneBy.includes(myChar);
+      const w=100/cols;
+      const ev=document.createElement("div"); ev.className="tl-ev"+(iDone?" done":"")+(myChar?" mine":"");
+      ev.style.cssText=`top:${top}px;height:${CARDH-3}px;left:calc(${col*w}% + 2px);width:calc(${w}% - 4px)`;
+      ev.style.setProperty("--dc",dc);
+      ev.title=`${r.time} ${boss.name} ${p.diff} ${SIZE_META[p.size].label}\n${partyMemberIds(p).map(nickOf).join(", ")||"(빈 파티)"}`;
+      ev.innerHTML=`<div class="et">${r.time}${iDone?' <span class="done-dot">✓</span>':''}</div><div class="eb">${escapeHtml(boss.name)}</div><span class="ex" title="삭제">✕</span>`;
+      ev.querySelector(".ex").onclick=e=>{ e.stopPropagation(); schedule=schedule.filter(x=>x.id!==r.id); afterSchedChange(); };
+      ev.onclick=()=>{ if(myChar) toggleMyDone(r); };
+      lane.appendChild(ev);
+    });
+    tl.appendChild(lane);
   });
-  main.appendChild(cols);
+  main.appendChild(tl);
+  if(!weekRuns.length){ const hint=document.createElement("div"); hint.className="sched-empty"; hint.style.marginTop="14px"; hint.innerHTML="이번 주 일정이 없어요. 요일 칸을 <b>클릭</b>하거나 요일 위 <b>＋</b>로 추가하세요."; main.appendChild(hint); }
 }
 function schedCard(r){
   const fp=findRunParty(r); const {b:boss,p}=fp;
@@ -962,10 +1031,10 @@ function buildRunPlist(){
     el.appendChild(it);
   });
 }
-function openAddRun(dow){
+function openAddRun(dow, time){
   runDay = (dow!=null?dow:dowMon(kstNow())); if(runDay<0) runDay=3;
   runPickBoss=null; runPickParty=null;
-  document.getElementById("run-time").value="21:00";
+  document.getElementById("run-time").value=time||"21:00";
   document.getElementById("run-sel").textContent="아직 선택 안 함"; document.getElementById("run-sel").style.color="var(--muted-2)";
   buildRunDay(); buildRunPlist();
   document.getElementById("run-bg").classList.add("on");

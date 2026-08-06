@@ -369,6 +369,87 @@ body.top-bossdist #distribute { display: block !important; }
 .entry-snap .snap-item { color: #7ed4d4; margin-right: 8px; white-space: nowrap; }
 .entry-snap .snap-item .k { color: #5c5f66; margin-right: 1px; }
 .entry-snap.empty { color: #5c5f66; font-style: italic; }
+
+/* 정산 이력 한 줄 */
+.entry-line { padding: 4px 0; font-size: 12px; color: #cdd6f4; }
+.entry-line.locked { color: #8F96A3; opacity: 0.75; }
+.entry-head { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.entry-date { color: #8F96A3; font-family: Consolas, monospace; min-width: 90px; white-space: nowrap; }
+.entry-tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.entry-amt { white-space: nowrap; }
+.entry-memo { color: #5c5f66; margin-left: 8px; }
+.entry-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.entry-undo-btn { background: none; border: none; color: #c0392b; font-size: 11px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+
+/* ===== 표는 우겨넣지 말고 가로 스크롤 (모든 화면 폭 공통) ===== */
+/* 부주정산 표 — 13컬럼 균등분할이라 긴 메소값("83억 7251만 6895")이 잘리던 것 해소 */
+#history #settlementWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#history #settlementWrap .sheet { table-layout: auto; }
+#history #settlementWrap .sheet td.cell,
+#history #settlementWrap .sheet td.row-header { overflow: visible; }
+
+#allEntriesWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#allEntriesWrap table { min-width: 680px; }
+#allEntriesWrap th, #allEntriesWrap td { white-space: nowrap; }
+#allEntriesWrap td:nth-child(7) { white-space: normal; min-width: 130px; max-width: 260px; }
+
+/* ===== 반응형 — 폰/좁은 창 ===== */
+@media (max-width: 820px) {
+  body { font-size: 13px; }
+  .app { padding: 6px; }
+
+  /* 잘려서 안 보이던 표 → 가로 스크롤로 전부 읽히게 */
+  .sheet-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .sheet { table-layout: auto; }
+
+  /* 글자가 한 글자씩 세로로 깨지던 버튼/탭 전부 한 줄 고정 */
+  .cloud-btn, .tab, .view-tab, .user-tab, .user-tab-add, .top-nav-tab,
+  .dist-subtab, .settle-mode-tab, .edit-mode-btn, .settle-quick-btn,
+  .scope-tab-group button, .btn-add, .entry-edit-btn, .alloc-mini { white-space: nowrap; }
+
+  .header-bar { flex-wrap: wrap; gap: 6px; }
+  h1 { font-size: 1.05em; }
+  .cloud-bar { gap: 4px; margin-left: auto; }
+  .cloud-btn { padding: 6px 10px; font-size: 12px; }
+  .tab { padding: 11px 6px; font-size: 13px; }
+  .panel { padding: 6px; }
+
+  /* 대시보드 2열 고정 — 카드가 눌려서 숫자 깨지던 것 방지 */
+  .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .dash-card { min-width: 0; padding: 10px 8px; }
+  .dash-card .dash-value { font-size: 15px; }
+  .dash-card .dash-label, .dash-card .dash-sub { font-size: 11px; }
+
+  /* 모달 — 화면 밖으로 나가던 것 정리 */
+  #settleModal, #settleEditModal { padding: 6px; }
+  #settleModal > div, #settleEditModal > div { padding: 14px 12px; max-height: 94vh; }
+  .settle-row { flex-wrap: wrap; gap: 6px; }
+  .settle-row label { flex: 0 0 100%; min-width: 0; margin-bottom: 0; }
+  .settle-row input[type=text], .settle-row input[type=date] { min-width: 0; }
+  .settle-quick { margin-left: 0; }
+  .settle-mode-tab { padding: 7px 9px; font-size: 12px; }
+  .alloc-total, .edit-match { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .alloc-radio { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .alloc-table { min-width: 560px; }
+  .alloc-qty { width: 100px; }
+
+  /* 정산 이력 한 줄 — 날짜/금액/버튼이 세로로 깨지지 않게 줄바꿈 허용 */
+  .entry-snap .snap-item { margin-right: 6px; }
+  .entry-date { min-width: 0; }
+  .entry-memo { margin-left: 0; flex: 0 0 100%; }
+  .entry-actions { margin-left: auto; }
+  .entry-line { padding: 6px 0; border-bottom: 1px dashed #131c2a; }
+
+  /* 시세 확인 박스 — 2열이 눌려 깨지던 것 1열로 */
+  .settle-price-grid { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 480px) {
+  .dashboard { grid-template-columns: 1fr 1fr; }
+  .dash-card .dash-value { font-size: 14px; }
+  .cloud-btn { padding: 5px 8px; font-size: 11px; }
+  .tab { padding: 10px 4px; font-size: 12px; }
+}
 </style>
 </head>
 <body class="top-tracker">
@@ -740,8 +821,20 @@ const APP_VERSION = 2;
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-08-06b';
+const CHANGELOG_VERSION = '2026-08-06c';
 const CHANGELOG = [
+  {
+    version: '2026-08-06c',
+    title: '📱 폰·좁은 창에서 글자 깨지던 문제 수정',
+    items: [
+      '이 사이트에 <strong>반응형 CSS가 아예 없었습니다</strong> (@media 0건). 그래서 폰에서 열면 글자가 한 글자씩 세로로 쪼개졌습니다',
+      '<strong style="color:#ff8a65">세로로 깨졌던 것들</strong>: <code>업데이트 / 저장됨 / 불러오기</code> 버튼(45×87px로 눌림), 정산 이력 표의 <code>농도구</code>→<code>농/도/구</code>, <code>메소</code>→<code>메/소</code>, 메모가 한 글자씩 세로로 늘어지던 것 — 전부 한 줄 고정',
+      '<strong style="color:#7ec97e">잘려서 안 보이던 표</strong>: 부주정산 표(13컬럼)가 폰에서 70px 잘리고 <strong>스크롤도 안 됐습니다</strong>. 이제 좌우로 밀어서 전부 볼 수 있습니다 (정산 이력·일별 기록 표도 동일)',
+      '<strong>매소 값이 잘리던 것 수정</strong>: 컬럼 균등분할 때문에 <code>83억 7251만 6895</code>가 앞자리부터 잘렸습니다 — 이제 내용에 맞춰 늘어납니다 (PC에서도 개선)',
+      '대시보드 카드 <strong>2열 정렬</strong> — 큰 숫자가 줄바꿈으로 깨지지 않게',
+      '정산·수정 모달이 화면 밖으로 나가던 것 정리, 시세 확인 박스는 폰에서 1열로',
+    ],
+  },
   {
     version: '2026-08-06b',
     title: '✎ 과거 정산 기록 수정 기능',
@@ -1833,11 +1926,11 @@ function revalidateLock(data, ch, histIdx) {
 
 // 정산 이력 한 줄 렌더링 (current/locked 공용)
 function renderEntryLine(ch, e, locked) {
-  const typeLabel = e.type === 'cash' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#3a1010;color:#ff8a65;margin-right:6px;">현금</span>'
-    : e.type === 'meso' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#3a3010;color:#ffd76b;margin-right:6px;">메소</span>'
-    : e.type === 'items' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#0d2a1a;color:#7ec97e;margin-right:6px;">🎯 재화지정</span>'
-    : e.type === 'advance' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a3a;color:#7ed4d4;margin-right:6px;">선금</span>'
-    : '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#1a3a1a;color:#7ec97e;margin-right:6px;">전체</span>';
+  const typeLabel = e.type === 'cash' ? '<span class="entry-tag" style="background:#3a1010;color:#ff8a65;">현금</span>'
+    : e.type === 'meso' ? '<span class="entry-tag" style="background:#3a3010;color:#ffd76b;">메소</span>'
+    : e.type === 'items' ? '<span class="entry-tag" style="background:#0d2a1a;color:#7ec97e;">🎯 재화지정</span>'
+    : e.type === 'advance' ? '<span class="entry-tag" style="background:#1a3a3a;color:#7ed4d4;">선금</span>'
+    : '<span class="entry-tag" style="background:#1a3a1a;color:#7ec97e;">전체</span>';
   let amtTxt = '';
   if (e.type === 'items') {
     amtTxt = e.subType === 'cash'
@@ -1850,17 +1943,17 @@ function renderEntryLine(ch, e, locked) {
   } else {
     amtTxt = `전체 정산 ${formatMeso(e.mesoEquiv)} ${e.subType === 'cash' ? '(현금 ' + Number(e.amount).toLocaleString() + '원)' : '(메소)'}`;
   }
-  const memo = e.memo ? `<span style="color:#5c5f66;margin-left:8px;">— ${e.memo}</span>` : '';
-  let h = `<div style="padding:4px 0;font-size:12px;color:${locked ? '#8F96A3' : '#cdd6f4'};${locked ? 'opacity:0.75;' : ''}">`;
-  h += `<div style="display:flex;align-items:center;gap:4px;">`;
-  h += `<span style="color:#8F96A3;font-family:Consolas,monospace;min-width:90px;">${e.date}</span>`;
-  h += `${typeLabel}<span>${amtTxt}</span>${memo}`;
-  h += `<span style="margin-left:auto;display:flex;gap:6px;align-items:center;">`;
+  const memo = e.memo ? `<span class="entry-memo">— ${e.memo}</span>` : '';
+  let h = `<div class="entry-line${locked ? ' locked' : ''}">`;
+  h += `<div class="entry-head">`;
+  h += `<span class="entry-date">${e.date}</span>`;
+  h += `${typeLabel}<span class="entry-amt">${amtTxt}</span>${memo}`;
+  h += `<span class="entry-actions">`;
   h += `<button class="entry-edit-btn" onclick="openSettleEdit('${ch.replace(/'/g,"\\'")}',${e.id})">✎ 수정</button>`;
   if (locked) {
-    h += `<span style="background:#1a2a3a;color:#7ed4d4;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;">🔒 잠금</span>`;
+    h += `<span class="entry-tag" style="background:#1a2a3a;color:#7ed4d4;">🔒 잠금</span>`;
   } else {
-    h += `<button onclick="deleteSettlementEntry('${ch.replace(/'/g,"\\'")}',${e.id})" style="background:none;border:none;color:#c0392b;font-size:11px;cursor:pointer;font-family:inherit;">↩ 되돌리기</button>`;
+    h += `<button class="entry-undo-btn" onclick="deleteSettlementEntry('${ch.replace(/'/g,"\\'")}',${e.id})">↩ 되돌리기</button>`;
   }
   h += `</span></div>`;
   if (!e.allocations && e.type !== 'full') {
@@ -2818,7 +2911,7 @@ function renderSettleModal() {
       p += `<span style="color:#8F96A3;font-weight:400;display:block;margin-top:3px;">기록된 정산은 박제되어 영향 없음. 미정산 잔여만 새 시세로 재계산됨.</span>`;
       p += `</div>`;
     }
-    p += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;">`;
+    p += `<div class="settle-price-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;">`;
     pricedRes.forEach(r => {
       const fixed = isPriceFixed(r);
       const price = getResourcePrice(r);

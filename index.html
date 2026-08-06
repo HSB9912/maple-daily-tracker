@@ -715,6 +715,8 @@ const CHANGELOG = [
       '빠른 버튼: <code>전체 선택</code> / <code>매소만</code> / <code>아이템만</code> / <code>비우기</code>',
       '정산 이력에 <code>🎯 다조 50 · 매소 3억</code> 지정 내역이 시세와 함께 박제됩니다',
       '<strong>기존 정산 기록은 그대로</strong> — 재화 지정 없이 기록된 옛 정산은 종전 우선순위 차감으로 동일하게 계산됩니다',
+      '<strong style="color:#ef4444">🐞 선금 초과분 증발 수정</strong>: 누적 4억인데 선금 5억을 주면 자동 정리가 선금까지 "정산 완료"로 잠가서 <strong>초과분 1억이 사라졌습니다</strong>. 이제 잔여가 <code>-1억</code>으로 정상 표시되고 이후 누적을 까먹습니다',
+      '<strong style="color:#ef4444">🐞 표 덮어쓰기 수정</strong>: 보스 분배 "정산 현황"과 부주정산 표가 같은 id를 써서 서로 덮어썼습니다. 보스 분배 정산 현황 패널이 항상 비어 보이던 문제도 같이 해결',
       '정산 이력 펼침 행의 HTML 닫힘 태그 누락 수정',
     ],
   },
@@ -1274,8 +1276,10 @@ function autoPromoteLastDate(data, ch) {
       .filter(e => e.date <= cutoff)
       .reduce((s, e) => s + (Number(e.mesoEquiv) || 0), 0);
 
-    // paidUpTo ≥ partialGross * 0.99 (1% 오차 허용 — 시세 미세 차이, 반올림)
-    if (paidUpTo >= partialGross * 0.99) {
+    // paidUpTo가 partialGross와 사실상 일치할 때만 정리 (±1% — 시세 미세 차이, 반올림)
+    // 상한이 없으면 선금(초과 지급)까지 "정산 완료"로 잠가버려서 초과분이 증발함.
+    // 초과분은 활성 상태로 남겨야 잔여가 마이너스로 표시되고 이후 누적을 까먹음.
+    if (paidUpTo >= partialGross * 0.99 && paidUpTo <= partialGross * 1.01) {
       settle.lastDate = cutoff;
       settle.history = settle.history || [];
       // 이 cutoff에 잠긴 entries들도 함께 보존 (memo, amount, priceSnapshot 등)

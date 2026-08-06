@@ -646,6 +646,25 @@ body.top-bossdist #distribute { display: block !important; }
   </div>
 </div>
 
+<!-- 정산 기록 수정 모달 -->
+<div id="settleEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1001;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target.id==='settleEditModal')closeSettleEdit()">
+  <div style="background:#0d1320;border:1px solid #1f2937;border-radius:8px;padding:22px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;">
+    <h3 id="editModalTitle" style="color:#4a9eff;font-size:17px;font-weight:700;margin:0 0 4px;">✎ 정산 기록 수정</h3>
+    <div style="color:#8F96A3;font-size:12px;margin-bottom:14px;">기록한 정산의 날짜 · 방식 · 금액 · 메모를 고칩니다.</div>
+    <div id="editOrigBox" class="edit-orig"></div>
+    <div id="editFixBanner"></div>
+    <div class="settle-row"><label>날짜</label><input type="date" id="editDate" onchange="updateEditPreview()"></div>
+    <div class="settle-row"><label>방식</label><div class="edit-modes" id="editModes"></div></div>
+    <div id="editBody"></div>
+    <div class="settle-row"><label>메모</label><input type="text" id="editMemo" placeholder="(선택)"></div>
+    <div id="editPreview" class="settle-preview"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+      <button onclick="closeSettleEdit()" style="padding:8px 18px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:#1f2937;color:#8F96A3;">취소</button>
+      <button onclick="saveSettlementEdit()" style="padding:8px 18px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:#1971c2;color:#fff;">저장</button>
+    </div>
+  </div>
+</div>
+
 <style>
 .settle-mode-tab { padding:8px 14px; background:transparent; border:none; color:#5c5f66; font-family:inherit; font-size:13px; cursor:pointer; border-bottom:2px solid transparent; }
 .settle-mode-tab.active { color:#ffd76b; border-bottom-color:#ffd76b; }
@@ -695,6 +714,24 @@ body.top-bossdist #distribute { display: block !important; }
 .alloc-radio { display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
 .alloc-radio label { min-width:0; color:#8F96A3; font-size:12.5px; cursor:pointer; display:flex; align-items:center; gap:5px; }
 .alloc-radio input[type=radio] { accent-color:#1971c2; cursor:pointer; }
+
+/* ✎ 정산 기록 수정 */
+.edit-orig { background:#0a0e15; border-left:3px solid #373A40; border-radius:0 5px 5px 0; padding:9px 12px; margin-bottom:14px; font-size:11.5px; color:#8F96A3; font-family:Consolas,monospace; line-height:1.7; }
+.edit-orig b { color:#cdd6f4; }
+.edit-modes { display:flex; gap:6px; flex-wrap:wrap; flex:1; }
+.edit-mode-btn { padding:6px 12px; background:#131822; border:1px solid #373A40; color:#8F96A3; border-radius:4px; cursor:pointer; font-size:12px; font-family:inherit; }
+.edit-mode-btn:hover { color:#cdd6f4; }
+.edit-mode-btn.on { background:#0d2a1a; border-color:#2a5a3a; color:#7ec97e; font-weight:600; }
+.edit-fix { background:#2a1010; border:1px solid #5a2a2a; border-radius:5px; padding:10px 13px; margin-bottom:14px; font-size:12px; color:#ff8a65; line-height:1.6; }
+.edit-fix b { color:#fff; }
+.edit-fix-btn { margin-top:8px; padding:6px 14px; background:#0d2a1a; border:1px solid #2a5a3a; color:#7ec97e; border-radius:4px; cursor:pointer; font-size:12px; font-family:inherit; font-weight:600; }
+.edit-fix-btn:hover { background:#12351f; }
+.edit-match { border-radius:5px; padding:10px 13px; margin:10px 0; font-size:12.5px; font-family:Consolas,monospace; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+.edit-match.ok { background:#0b1610; border:1px solid #2a5a3a; color:#7ec97e; }
+.edit-match.diff { background:#2a1010; border:1px solid #5a2a2a; color:#ff8a65; }
+.entry-edit-btn { background:none; border:1px solid #1a3a5a; border-radius:3px; color:#4a9eff; font-size:11px; cursor:pointer; font-family:inherit; padding:2px 8px; }
+.entry-edit-btn:hover { background:#0d1a30; }
+.entry-noalloc { margin-top:5px; font-size:10.5px; color:#8F96A3; background:#131c2a; border-radius:3px; padding:3px 8px; display:inline-block; }
 </style>
 
 <script>
@@ -703,8 +740,21 @@ const APP_VERSION = 2;
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-08-06';
+const CHANGELOG_VERSION = '2026-08-06b';
 const CHANGELOG = [
+  {
+    version: '2026-08-06b',
+    title: '✎ 과거 정산 기록 수정 기능',
+    items: [
+      '<strong style="color:#4a9eff">✎ 수정 버튼</strong>: 정산 이력 각 줄(🔒잠긴 것 포함)에서 <strong>날짜 · 방식 · 금액 · 메모</strong>를 고칠 수 있습니다. 현금 ↔ 메소 ↔ 재화 지정 ↔ 선금 자유 전환',
+      '<strong style="color:#7ec97e">🎯 재화 지정으로 전환 (원클릭)</strong>: 옛 정산이 자동 차감돼서 재화에 소수점이 생긴 경우, 버튼 한 번으로 원래 금액을 매소에 그대로 배정해 정리됩니다. <strong>잔여 금액은 1원도 안 바뀝니다</strong>',
+      '수정 화면에 <strong>소수점 경고</strong>가 뜹니다 — 예: "다조 448.6679개가 정산 처리됨"',
+      '지정 합계가 원래 금액과 다르면 <strong>차액을 빨갛게 표시</strong>해서 실수로 잔여가 바뀌는 걸 막습니다',
+      '<strong>박제된 시세는 수정해도 유지</strong> — 그때 단가로 계산되고 지금 시세로 바뀌지 않습니다',
+      '🔒 잠긴 정산을 수정해서 금액이 크게 달라지면 <strong>잠금이 자동으로 풀립니다</strong> (메모·날짜만 고치면 잠금 유지)',
+      '정산 이력 모아보기 표에도 ✎ 버튼 추가',
+    ],
+  },
   {
     version: '2026-08-06',
     title: '🎯 부분정산 — 재화 지정 방식 추가',
@@ -1394,6 +1444,393 @@ function getAllocResList(data, ch) {
   return list;
 }
 
+// ===== ✎ 정산 기록 수정 =====
+// 활성 entries[] 와 잠긴 history[].entries[] 둘 다 편집 가능.
+// 잠긴 정산은 그 시점의 amounts 스냅샷을 기준으로, 시세는 entry의 priceSnapshot(박제)을 사용.
+let _editCtx = null;
+
+// 편집 대상 entry와 그 계산 기준(누적/형제 entries)을 찾아온다
+function getEditContext(data, ch, entryId) {
+  const settle = data.settlements?.[ch];
+  if (!settle) return null;
+  const active = settle.entries || [];
+  const ai = active.findIndex(e => e.id === entryId);
+  if (ai >= 0) {
+    const st = getSettlementState(data, ch);
+    return { ch, entryId, entry: active[ai], locked: false, histIdx: -1,
+             totals: st.totals, siblings: st.entries.filter(e => e.id !== entryId) };
+  }
+  const hist = settle.history || [];
+  for (let i = 0; i < hist.length; i++) {
+    const es = hist[i].entries || [];
+    const j = es.findIndex(e => e.id === entryId);
+    if (j >= 0) {
+      return { ch, entryId, entry: es[j], locked: true, histIdx: i, lockedAt: hist[i].date,
+               totals: hist[i].amounts || {}, siblings: es.filter(e => e.id !== entryId) };
+    }
+  }
+  return null;
+}
+
+// 박제 시세 우선 — 수정해도 그때 단가가 유지됨
+function editPriceOf(ctx, res) {
+  if (res === '매소') return 1;
+  if (res === '경험치') return 0;
+  const snap = ctx.entry?.priceSnapshot?.prices;
+  if (snap && Number(snap[res]) > 0) return Number(snap[res]);
+  return getResourcePrice(res);
+}
+
+// 이 entry가 쓸 수 있는 수량 = 전체 누적 − 다른 정산이 이미 가져간 분
+function buildEditAllocList(data, ctx) {
+  const sibPaid = ctx.siblings.reduce((s, e) => s + (Number(e.mesoEquiv) || 0), 0);
+  const alloc = allocatePaidToResources(data, ctx.totals, Math.max(0, sibPaid), ctx.siblings);
+  const list = [];
+  (data.resources || []).forEach(r => {
+    if (r === '경험치') return;
+    const price = editPriceOf(ctx, r);
+    if (!price) return;
+    list.push({ name: r, price, fixed: isPriceFixed(r),
+                avail: Math.max(0, alloc[r] ? alloc[r].remainingQty : (ctx.totals[r] || 0)) });
+  });
+  return list;
+}
+
+// 재화 미지정 정산이 자동 차감으로 소수점을 만드는지 찾아냄
+function findFractionalRes(data, ctx) {
+  const sibPaid = ctx.siblings.reduce((s, e) => s + (Number(e.mesoEquiv) || 0), 0);
+  const before = allocatePaidToResources(data, ctx.totals, Math.max(0, sibPaid), ctx.siblings);
+  const all = [...ctx.siblings, ctx.entry];
+  const total = all.reduce((s, e) => s + (Number(e.mesoEquiv) || 0), 0);
+  const after = allocatePaidToResources(data, ctx.totals, Math.max(0, total), all);
+  for (const r of Object.keys(after)) {
+    if (r === '매소' || !after[r].hasPrice) continue;
+    const delta = after[r].paidQty - (before[r] ? before[r].paidQty : 0);
+    if (delta > 0 && Math.abs(delta - Math.round(delta)) > 1e-6) {
+      return { res: r, qty: delta };
+    }
+  }
+  return null;
+}
+
+function openSettleEdit(ch, entryId) {
+  const data = loadData();
+  const ctx = getEditContext(data, ch, entryId);
+  if (!ctx) { toast('정산 기록을 찾을 수 없습니다.', 'error'); return; }
+  const e = ctx.entry;
+  _editCtx = {
+    ch, entryId, locked: ctx.locked, histIdx: ctx.histIdx, lockedAt: ctx.lockedAt,
+    origType: e.type, origMesoEquiv: Number(e.mesoEquiv) || 0, origAmount: Number(e.amount) || 0,
+    origSubType: e.subType || '', origDate: e.date, origMemo: e.memo || '',
+    cashRate: Number(e.cashRateAtTime) || getCashRate(),
+    mode: e.type === 'full' ? 'meso' : e.type,
+    wasFull: e.type === 'full',
+    alloc: e.allocations ? { ...e.allocations } : {},
+    resList: buildEditAllocList(data, ctx),
+    fractional: e.allocations ? null : findFractionalRes(data, ctx),
+  };
+  closeSettleModal();
+  document.getElementById('settleEditModal').style.display = 'flex';
+  renderSettleEditModal();
+}
+
+function closeSettleEdit() {
+  document.getElementById('settleEditModal').style.display = 'none';
+  _editCtx = null;
+}
+
+function setEditMode(mode) {
+  _editCtx.mode = mode;
+  renderSettleEditModal();
+}
+
+// 원래 금액을 매소에 그대로 배정 → 잔여가 흔들리지 않게 재화 지정으로 전환
+function editConvertToItems() {
+  const c = _editCtx;
+  const meso = c.resList.find(r => r.name === '매소');
+  c.alloc = {};
+  if (meso) c.alloc['매소'] = Math.min(c.origMesoEquiv, meso.avail);
+  c.mode = 'items';
+  renderSettleEditModal();
+}
+
+function renderSettleEditModal() {
+  const c = _editCtx;
+  if (!c) return;
+  const e = { type: c.origType, subType: c.origSubType };
+  document.getElementById('editModalTitle').textContent = `✎ 정산 기록 수정 — ${c.ch}`;
+
+  const typeName = c.origType === 'cash' ? '현금' : c.origType === 'meso' ? '메소'
+    : c.origType === 'items' ? '재화 지정' : c.origType === 'advance' ? '선금' : '전체 정산';
+  const origAmtTxt = (c.origType === 'cash' || (c.origType !== 'meso' && c.origSubType === 'cash'))
+    ? `${c.origAmount.toLocaleString()} 원 (${formatMeso(c.origMesoEquiv)})`
+    : `${formatMeso(c.origMesoEquiv)} 메소`;
+  let orig = `원래 기록 &nbsp; <b>${c.origDate}</b> · <b>${typeName}</b> · <b>${origAmtTxt}</b>`;
+  if (c.origMemo) orig += ` · "${c.origMemo}"`;
+  const snapPrices = Object.keys(c.resList.length ? {} : {});
+  const snap = [];
+  c.resList.forEach(r => { if (r.name !== '매소') snap.push(`${r.name}=${formatMeso(r.price)}`); });
+  if (snap.length) orig += `<br>시세 박제 &nbsp; ${snap.join(' · ')}${c.cashRate ? ` · 1억=${c.cashRate.toLocaleString()}원` : ''} <span style="color:#5c5f66">(수정해도 유지)</span>`;
+  if (c.locked) orig += `<br><span style="color:#7ed4d4">🔒 ${c.lockedAt}까지 정산 완료로 잠긴 기록입니다. 금액이 크게 달라지면 잠금이 풀립니다.</span>`;
+  if (c.wasFull) orig += `<br><span style="color:#ff8a65">⚠ '전체 정산' 기록입니다. 방식을 바꾸면 잠금이 다시 계산됩니다.</span>`;
+  document.getElementById('editOrigBox').innerHTML = orig;
+
+  // 소수점 경고 + 원클릭 전환
+  const fixBox = document.getElementById('editFixBanner');
+  if (c.fractional && c.mode !== 'items') {
+    fixBox.innerHTML = `<div class="edit-fix">
+      ⚠ 이 정산은 <b>재화 미지정</b>이라 자동 차감됩니다 → <b>${c.fractional.res} ${fmtAllocQty(c.fractional.res, c.fractional.qty)}개</b> 정산 (소수점)<br>
+      <span style="color:#8F96A3">실제로 메소로 받으셨다면 ${c.fractional.res}는 손대지 않은 게 맞습니다.</span>
+      <button class="edit-fix-btn" onclick="editConvertToItems()">🎯 재화 지정으로 전환 (금액 그대로 매소에 배정)</button>
+    </div>`;
+  } else {
+    fixBox.innerHTML = '';
+  }
+
+  document.getElementById('editDate').value = c.origDate;
+  document.getElementById('editMemo').value = c.origMemo;
+
+  const modes = [
+    { id: 'cash', label: '💵 현금' },
+    { id: 'meso', label: '💰 메소' },
+    { id: 'items', label: '🎯 재화 지정' },
+    { id: 'advance', label: '🔵 선금' },
+  ];
+  document.getElementById('editModes').innerHTML = modes.map(m =>
+    `<button class="edit-mode-btn${c.mode === m.id ? ' on' : ''}" onclick="setEditMode('${m.id}')">${m.label}</button>`
+  ).join('');
+
+  const body = document.getElementById('editBody');
+  if (c.mode === 'items') {
+    body.innerHTML = renderEditItemsBody();
+  } else {
+    const isCash = c.mode === 'cash' || (c.mode === 'advance' && c.origSubType === 'cash');
+    const preset = c.mode === 'cash' ? c.origAmount
+      : c.mode === 'advance' ? (c.origType === 'advance' ? c.origAmount : c.origMesoEquiv)
+      : c.origMesoEquiv;
+    let h = `<div class="settle-row"><label>${c.mode === 'advance' ? '선지급 금액' : '받은 금액'}</label>
+      <input type="text" id="editAmount" value="${preset}" oninput="updateEditPreview()">
+      <span class="settle-unit" id="editAmtUnit">${c.mode === 'cash' ? '원' : '메소'}</span></div>`;
+    if (c.mode === 'advance') {
+      h += `<div class="settle-row"><label>지급 방식</label><div class="alloc-radio">
+        <label><input type="radio" name="editAdvType" value="meso" ${c.origSubType !== 'cash' ? 'checked' : ''} onchange="renderSettleEditModal()"> 💰 메소</label>
+        <label><input type="radio" name="editAdvType" value="cash" ${c.origSubType === 'cash' ? 'checked' : ''} onchange="renderSettleEditModal()"> 💵 현금</label>
+      </div></div>`;
+    }
+    body.innerHTML = h;
+    if (c.mode === 'advance') {
+      const sub = document.querySelector('input[name="editAdvType"]:checked')?.value || 'meso';
+      document.getElementById('editAmtUnit').textContent = sub === 'cash' ? '원' : '메소';
+    }
+  }
+  updateEditPreview();
+}
+
+function renderEditItemsBody() {
+  const c = _editCtx;
+  if (!c.resList.length) {
+    return `<div style="background:#1a0e0e;border:1px solid #5a2a2a;border-radius:5px;padding:12px 14px;font-size:12px;color:#ef4444;">시세가 설정된 재화가 없습니다.</div>`;
+  }
+  let h = `<div class="alloc-hint">🎯 이 정산으로 실제 넘긴 재화와 수량을 지정하세요. <span style="color:#5c5f66">(시세는 이 정산에 박제된 값 사용)</span></div>`;
+  h += `<div style="overflow-x:auto"><table class="alloc-table"><thead><tr>
+    <th style="width:32px"></th><th class="l">재화</th><th>시세</th><th>지정 가능</th>
+    <th style="text-align:right">이번 정산</th><th>= 메소</th><th>남는 분</th></tr></thead><tbody>`;
+  c.resList.forEach((r, i) => {
+    const q = Number(c.alloc[r.name]) || 0;
+    const on = q > 0;
+    h += `<tr id="edRow${i}" class="${on ? '' : 'off'}">
+      <td><input type="checkbox" id="edCk${i}" ${on ? 'checked' : ''} onchange="editAllocToggle(${i})"></td>
+      <td class="l"><span class="alloc-name">${r.name}</span><span class="alloc-badge ${r.fixed ? 'fx' : 'vr'}">${r.fixed ? '🔒고정' : '📈변동'}</span></td>
+      <td class="alloc-price">${r.name === '매소' ? '1' : formatMeso(r.price)}</td>
+      <td class="alloc-accum">${fmtAllocQty(r.name, r.avail)}</td>
+      <td style="white-space:nowrap"><input class="alloc-qty${on ? '' : ' zero'}" id="edQ${i}" value="${allocInputVal(q)}" oninput="onEditAllocInput(${i})"><button class="alloc-mini" onclick="editAllocFull(${i})">전체</button></td>
+      <td class="alloc-eq${on ? '' : ' zero'}" id="edEq${i}">${on ? formatMeso(Math.round(q * r.price)) : '-'}</td>
+      <td class="alloc-rem" id="edRem${i}">${fmtAllocQty(r.name, r.avail - q)}</td></tr>`;
+  });
+  h += `</tbody></table></div>`;
+  h += `<div class="settle-quick" style="margin-left:0">
+    <button class="settle-quick-btn" onclick="editAllocQuick('orig')">원래 금액을 매소에</button>
+    <button class="settle-quick-btn" onclick="editAllocQuick('all')">전체 선택</button>
+    <button class="settle-quick-btn" onclick="editAllocQuick('clear')">비우기</button></div>`;
+  h += `<div class="edit-match" id="editMatchBox"></div>`;
+  h += `<div class="settle-row"><label>받은 방식</label><div class="alloc-radio">
+      <label><input type="radio" name="editItemsPay" value="meso" ${c.origSubType !== 'cash' ? 'checked' : ''} onchange="updateEditPreview()"> 💰 메소·재화 직접 수령</label>
+      <label><input type="radio" name="editItemsPay" value="cash" ${c.origSubType === 'cash' ? 'checked' : ''} onchange="updateEditPreview()"> 💵 현금으로 환산 수령</label>
+    </div></div>`;
+  return h;
+}
+
+function editAllocSet(i, v) {
+  const c = _editCtx, r = c.resList[i];
+  if (!r) return;
+  c.alloc[r.name] = v;
+  const q = document.getElementById('edQ' + i);
+  const ck = document.getElementById('edCk' + i);
+  if (q) q.value = allocInputVal(v);
+  if (ck) ck.checked = v > 0;
+}
+function editAllocToggle(i) {
+  const ck = document.getElementById('edCk' + i);
+  editAllocSet(i, ck && ck.checked ? _editCtx.resList[i].avail : 0);
+  updateEditPreview();
+}
+function onEditAllocInput(i) {
+  const r = _editCtx.resList[i];
+  const el = document.getElementById('edQ' + i);
+  let v = Number(String(el.value).replace(/[^0-9.]/g, '')) || 0;
+  if (v > r.avail) { v = allocInputVal(r.avail); el.value = v; }
+  _editCtx.alloc[r.name] = v;
+  const ck = document.getElementById('edCk' + i);
+  if (ck) ck.checked = v > 0;
+  updateEditPreview();
+}
+function editAllocFull(i) { editAllocSet(i, _editCtx.resList[i].avail); updateEditPreview(); }
+function editAllocQuick(kind) {
+  const c = _editCtx;
+  if (kind === 'orig') {
+    c.resList.forEach((r, i) => editAllocSet(i, 0));
+    const mi = c.resList.findIndex(r => r.name === '매소');
+    if (mi >= 0) editAllocSet(mi, Math.min(c.origMesoEquiv, c.resList[mi].avail));
+  } else {
+    c.resList.forEach((r, i) => editAllocSet(i, kind === 'all' ? r.avail : 0));
+  }
+  updateEditPreview();
+}
+
+function calcEditAllocTotal() {
+  const c = _editCtx;
+  let t = 0;
+  c.resList.forEach(r => { t += (Number(c.alloc[r.name]) || 0) * r.price; });
+  return Math.round(t);
+}
+
+// 현재 입력값 → { mesoEquiv, amount, type, subType }
+function readEditForm() {
+  const c = _editCtx;
+  const rate = c.cashRate;
+  if (c.mode === 'items') {
+    const meso = calcEditAllocTotal();
+    const sub = document.querySelector('input[name="editItemsPay"]:checked')?.value || 'meso';
+    return { type: 'items', subType: sub, mesoEquiv: meso,
+             amount: sub === 'cash' ? (rate ? Math.round(meso / 100000000 * rate) : 0) : meso };
+  }
+  const raw = Number(String(document.getElementById('editAmount')?.value || '').replace(/[^0-9.\-]/g, '')) || 0;
+  if (c.mode === 'cash') {
+    return { type: 'cash', subType: '', amount: raw, mesoEquiv: rate ? Math.round(raw / rate * 100000000) : 0 };
+  }
+  if (c.mode === 'meso') {
+    return { type: 'meso', subType: '', amount: raw, mesoEquiv: raw };
+  }
+  const sub = document.querySelector('input[name="editAdvType"]:checked')?.value || 'meso';
+  return { type: 'advance', subType: sub, amount: raw,
+           mesoEquiv: sub === 'cash' ? (rate ? Math.round(raw / rate * 100000000) : 0) : raw };
+}
+
+function updateEditPreview() {
+  const c = _editCtx;
+  if (!c) return;
+  if (c.mode === 'items') {
+    c.resList.forEach((r, i) => {
+      const q = Number(c.alloc[r.name]) || 0;
+      const row = document.getElementById('edRow' + i);
+      if (!row) return;
+      row.className = q > 0 ? '' : 'off';
+      const qin = document.getElementById('edQ' + i);
+      if (qin) qin.className = 'alloc-qty' + (q > 0 ? '' : ' zero');
+      const eq = document.getElementById('edEq' + i);
+      if (eq) { eq.textContent = q > 0 ? formatMeso(Math.round(q * r.price)) : '-'; eq.className = 'alloc-eq' + (q > 0 ? '' : ' zero'); }
+      const rem = document.getElementById('edRem' + i);
+      if (rem) rem.textContent = fmtAllocQty(r.name, r.avail - q);
+    });
+    const box = document.getElementById('editMatchBox');
+    if (box) {
+      const t = calcEditAllocTotal();
+      const diff = t - c.origMesoEquiv;
+      box.className = 'edit-match ' + (diff === 0 ? 'ok' : 'diff');
+      box.innerHTML = diff === 0
+        ? `<span>✓ 지정 합계 ${formatMeso(t)} — 원래 금액과 일치</span><span>잔여 변동 없음</span>`
+        : `<span>⚠ 지정 합계 ${formatMeso(t)} · 원래 ${formatMeso(c.origMesoEquiv)}</span><span>차액 ${diff > 0 ? '+' : ''}${formatMeso(diff)} → 잔여가 ${diff > 0 ? '줄어듭니다' : '늘어납니다'}</span>`;
+    }
+  }
+  const f = readEditForm();
+  const pv = document.getElementById('editPreview');
+  if (!pv) return;
+  const delta = f.mesoEquiv - c.origMesoEquiv;
+  pv.innerHTML = `
+    <div class="settle-prev-line"><span>수정 후 방식</span><span class="val">${f.type === 'cash' ? '💵 현금' : f.type === 'meso' ? '💰 메소' : f.type === 'items' ? '🎯 재화 지정' : '🔵 선금'}</span></div>
+    <div class="settle-prev-line"><span>수정 후 금액</span><span class="val">${f.type === 'cash' || f.subType === 'cash' ? Number(f.amount).toLocaleString() + ' 원 (' + formatMeso(f.mesoEquiv) + ')' : formatMeso(f.mesoEquiv) + ' 메소'}</span></div>
+    <div class="settle-prev-div"></div>
+    <div class="settle-prev-line"><span>원래 차감액</span><span class="val">${formatMeso(c.origMesoEquiv)} 메소</span></div>
+    <div class="settle-prev-line ${delta === 0 ? '' : 'minus'}"><span>차이</span><span class="val">${delta === 0 ? '없음 (잔여 그대로)' : (delta > 0 ? '+' : '') + formatMeso(delta) + ' 메소'}</span></div>
+  `;
+}
+
+function saveSettlementEdit() {
+  const c = _editCtx;
+  if (!c) return;
+  const f = readEditForm();
+  if (f.mesoEquiv <= 0 && c.mode !== 'items') { toast('금액을 입력하세요.', 'error'); return; }
+  if (c.mode === 'items' && f.mesoEquiv <= 0) { toast('정산할 재화와 수량을 지정하세요.', 'error'); return; }
+  if ((f.type === 'cash' || f.subType === 'cash') && !c.cashRate) { toast('이 정산에 현금 시세가 없습니다. 메소로 기록해주세요.', 'error'); return; }
+
+  const data = loadData();
+  const live = getEditContext(data, c.ch, c.entryId);
+  if (!live) { toast('정산 기록을 찾을 수 없습니다.', 'error'); return; }
+  const e = live.entry;
+
+  e.date = document.getElementById('editDate').value || c.origDate;
+  e.memo = document.getElementById('editMemo').value || '';
+  e.type = f.type;
+  e.subType = f.subType;
+  e.amount = f.amount;
+  e.mesoEquiv = f.mesoEquiv;
+  if (c.mode === 'items') {
+    const allocations = {};
+    c.resList.forEach(r => {
+      const q = Math.min(Number(c.alloc[r.name]) || 0, r.avail);
+      if (q > 0) allocations[r.name] = q;
+    });
+    e.allocations = allocations;
+  } else {
+    delete e.allocations;
+  }
+
+  let note = '';
+  if (live.locked) {
+    // 금액이 달라져 잠금 근거가 깨지면 자동 해제
+    if (revalidateLock(data, c.ch, live.histIdx)) note = ' · 잠금 해제됨';
+  } else {
+    const settle = data.settlements[c.ch];
+    if (settle) {
+      (settle.entries || []).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      if (autoPromoteLastDate(data, c.ch)) note = ` · ${settle.lastDate}까지 자동 정리`;
+    }
+  }
+
+  saveData(data);
+  closeSettleEdit();
+  renderHistory();
+  toast(`정산 기록 수정 완료${note}`);
+}
+
+// 잠긴 이력의 지급액이 그 시점 누적과 더 이상 맞지 않으면 잠금을 푼다
+function revalidateLock(data, ch, histIdx) {
+  const settle = data.settlements?.[ch];
+  const hist = settle?.history || [];
+  const item = hist[histIdx];
+  if (!item) return false;
+  const gross = calcSettlementMeso(item.amounts || {});
+  const paid = (item.entries || []).reduce((s, e) => s + (Number(e.mesoEquiv) || 0), 0);
+  if (gross > 0 && paid >= gross * 0.99 && paid <= gross * 1.01) return false;  // 여전히 유효
+  settle.entries = settle.entries || [];
+  (item.entries || []).forEach(e => settle.entries.push(e));
+  hist.splice(histIdx, 1);
+  settle.lastDate = hist.length ? hist[hist.length - 1].date : '';
+  settle._unlockedDate = item.date;
+  settle.entries.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  return true;
+}
+
 // 정산 이력 한 줄 렌더링 (current/locked 공용)
 function renderEntryLine(ch, e, locked) {
   const typeLabel = e.type === 'cash' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#3a1010;color:#ff8a65;margin-right:6px;">현금</span>'
@@ -1418,12 +1855,17 @@ function renderEntryLine(ch, e, locked) {
   h += `<div style="display:flex;align-items:center;gap:4px;">`;
   h += `<span style="color:#8F96A3;font-family:Consolas,monospace;min-width:90px;">${e.date}</span>`;
   h += `${typeLabel}<span>${amtTxt}</span>${memo}`;
+  h += `<span style="margin-left:auto;display:flex;gap:6px;align-items:center;">`;
+  h += `<button class="entry-edit-btn" onclick="openSettleEdit('${ch.replace(/'/g,"\\'")}',${e.id})">✎ 수정</button>`;
   if (locked) {
-    h += `<span style="margin-left:auto;background:#1a2a3a;color:#7ed4d4;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;">🔒 잠금</span>`;
+    h += `<span style="background:#1a2a3a;color:#7ed4d4;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;">🔒 잠금</span>`;
   } else {
-    h += `<button onclick="deleteSettlementEntry('${ch.replace(/'/g,"\\'")}',${e.id})" style="background:none;border:none;color:#c0392b;font-size:11px;cursor:pointer;margin-left:auto;font-family:inherit;">↩ 되돌리기</button>`;
+    h += `<button onclick="deleteSettlementEntry('${ch.replace(/'/g,"\\'")}',${e.id})" style="background:none;border:none;color:#c0392b;font-size:11px;cursor:pointer;font-family:inherit;">↩ 되돌리기</button>`;
   }
-  h += `</div>`;
+  h += `</span></div>`;
+  if (!e.allocations && e.type !== 'full') {
+    h += `<div class="entry-noalloc">재화 미지정 — 자동 차감 (✎수정에서 🎯재화 지정으로 바꾸면 소수점이 사라집니다)</div>`;
+  }
   h += renderEntryAlloc(e);
   h += renderEntrySnapshot(e);
   h += `</div>`;
@@ -2899,6 +3341,7 @@ function renderAllEntries() {
   h += '<th style="padding:6px 8px;text-align:right;">금액</th>';
   h += '<th style="padding:6px 8px;text-align:right;">메소 환산</th>';
   h += '<th style="padding:6px 8px;text-align:left;">메모</th>';
+  h += '<th style="padding:6px 8px;text-align:center;width:56px;">수정</th>';
   h += '</tr></thead><tbody>';
   all.forEach(e => {
     const typeLabel = e.type === 'cash' ? '<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;background:#3a1010;color:#ff8a65;">💵 현금</span>'
@@ -2928,6 +3371,7 @@ function renderAllEntries() {
     h += `<td style="padding:7px 8px;text-align:right;color:${e._locked ? '#8F96A3' : '#cdd6f4'};font-family:Consolas,monospace;">${amtTxt}</td>`;
     h += `<td style="padding:7px 8px;text-align:right;color:${e._locked ? '#8F96A3' : '#ffd76b'};font-family:Consolas,monospace;font-size:12px;">${formatNum(e.mesoEquiv)}</td>`;
     h += `<td style="padding:7px 8px;color:#8F96A3;font-size:12px;">${allocTxt ? `<span style="color:#7ec97e;font-family:Consolas,monospace;font-size:11px;">🎯 ${allocTxt}</span>${e.memo ? `<br>${e.memo}` : ''}` : (e.memo || '-')}</td>`;
+    h += `<td style="padding:7px 8px;text-align:center;"><button class="entry-edit-btn" onclick="openSettleEdit('${e.ch.replace(/'/g,"\\'")}',${e.id})">✎</button></td>`;
     h += `</tr>`;
   });
   h += '</tbody></table>';

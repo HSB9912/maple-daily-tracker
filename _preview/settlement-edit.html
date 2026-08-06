@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>과거 정산 기록 수정 (미리보기)</title>
+<style>
+  * { box-sizing: border-box; }
+  body { background:#070b12; color:#C1C2C5; font-family:'Malgun Gothic','맑은 고딕',sans-serif; margin:0; padding:24px; font-size:14px; }
+  .wrap { max-width:1120px; margin:0 auto; }
+  h1 { color:#ffd76b; font-size:22px; margin:0 0 6px; }
+  .sub { color:#8F96A3; font-size:13px; margin-bottom:22px; line-height:1.6; }
+  h2 { font-size:15px; margin:28px 0 10px; color:#cdd6f4; display:flex; align-items:center; gap:8px; }
+  h2 .num { background:#1971c2; color:#fff; width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px; flex:none; }
+  .card { background:#0d1320; border:1px solid #1f2937; border-radius:8px; padding:18px; }
+  .mono { font-family:Consolas,monospace; }
+
+  /* 실데이터 배너 */
+  .real { background:#1a1410; border:1px solid #3a2a10; border-radius:6px; padding:11px 14px; font-size:12px; color:#ffd76b; margin-bottom:18px; line-height:1.6; }
+  .real b { color:#fff; }
+
+  /* 정산 이력 라인 */
+  .entry { padding:9px 12px; background:#0a0e15; border:1px solid #1f2937; border-radius:5px; margin-top:7px; font-size:12.5px; }
+  .entry-top { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .e-date { color:#8F96A3; font-family:Consolas,monospace; min-width:90px; }
+  .e-tag { padding:2px 8px; border-radius:3px; font-size:10px; font-weight:600; }
+  .e-tag.meso { background:#3a3010; color:#ffd76b; }
+  .e-tag.items { background:#0d2a1a; color:#7ec97e; }
+  .e-txt { color:#cdd6f4; }
+  .e-memo { color:#5c5f66; }
+  .e-btns { margin-left:auto; display:flex; gap:4px; }
+  .e-btn { background:none; border:1px solid #1f2937; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit; padding:3px 9px; }
+  .e-btn.edit { color:#4a9eff; border-color:#1a3a5a; }
+  .e-btn.edit:hover { background:#0d1a30; }
+  .e-btn.undo { color:#c0392b; border-color:#3a1010; }
+  .e-snap { margin-top:6px; padding-top:6px; border-top:1px dashed #1f2937; font-size:10.5px; color:#8F96A3; font-family:Consolas,monospace; display:flex; flex-wrap:wrap; gap:4px 10px; align-items:center; }
+  .e-snap .lock { background:#131c2a; color:#8F96A3; padding:1px 6px; border-radius:3px; }
+  .e-snap .k { color:#7ec97e; font-weight:600; }
+  .warnline { margin-top:6px; font-size:11px; color:#ff8a65; background:#2a1010; border-radius:4px; padding:5px 9px; }
+
+  /* 편집 모달 */
+  .modal-mock { background:#0d1320; border:1px solid #1f2937; border-radius:8px; padding:22px; max-width:720px; }
+  .modal-title { color:#4a9eff; font-size:17px; font-weight:700; margin:0 0 4px; }
+  .modal-sub { color:#8F96A3; font-size:12px; margin-bottom:14px; }
+  .orig-box { background:#0a0e15; border-left:3px solid #373A40; border-radius:0 5px 5px 0; padding:9px 12px; margin-bottom:14px; font-size:11.5px; color:#8F96A3; font-family:Consolas,monospace; line-height:1.6; }
+  .orig-box b { color:#cdd6f4; }
+
+  .row { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .row > label { color:#C1C2C5; font-size:13px; min-width:80px; }
+  .row input[type=text], .row input[type=date] { background:#1B2030; border:1px solid #373A40; color:#C1C2C5; border-radius:4px; padding:7px 10px; font-size:13px; font-family:inherit; flex:1; min-width:120px; }
+  .unit { color:#5c5f66; font-size:12px; min-width:36px; }
+  .modes { display:flex; gap:6px; flex-wrap:wrap; flex:1; }
+  .mode-btn { padding:6px 12px; background:#131822; border:1px solid #373A40; color:#8F96A3; border-radius:4px; cursor:pointer; font-size:12px; font-family:inherit; }
+  .mode-btn.on { background:#0d2a1a; border-color:#2a5a3a; color:#7ec97e; font-weight:600; }
+  .mode-btn.on.meso { background:#3a3010; border-color:#5a4a10; color:#ffd76b; }
+
+  .fix-banner { background:#2a1010; border:1px solid #5a2a2a; border-radius:5px; padding:10px 13px; margin-bottom:14px; font-size:12px; color:#ff8a65; line-height:1.6; }
+  .fix-banner b { color:#fff; }
+  .fix-btn { margin-top:8px; padding:6px 14px; background:#0d2a1a; border:1px solid #2a5a3a; color:#7ec97e; border-radius:4px; cursor:pointer; font-size:12px; font-family:inherit; font-weight:600; }
+  .fix-btn:hover { background:#12351f; }
+
+  table.alloc { width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:10px; }
+  table.alloc th { color:#5c5f66; font-size:10.5px; font-weight:600; text-align:right; padding:0 8px 6px; border-bottom:1px solid #1f2937; white-space:nowrap; }
+  table.alloc th.l { text-align:left; }
+  table.alloc td { padding:6px 8px; border-bottom:1px solid #131c2a; text-align:right; font-family:Consolas,monospace; white-space:nowrap; }
+  table.alloc td.l { text-align:left; font-family:inherit; }
+  table.alloc tr.off td { opacity:0.45; }
+  .aname { color:#cdd6f4; font-weight:600; }
+  .abadge { font-size:9.5px; padding:1px 5px; border-radius:3px; margin-left:5px; }
+  .abadge.fx { background:#1a3a1a; color:#7ec97e; }
+  .abadge.vr { background:#3a1010; color:#ff8a65; }
+  .aqty { width:130px; background:#1B2030; border:1px solid #373A40; color:#ffd76b; border-radius:4px; padding:5px 8px; font-size:12.5px; font-family:Consolas,monospace; text-align:right; }
+  .aqty.zero { color:#5c5f66; }
+  .amini { padding:3px 7px; background:#1f2937; border:1px solid #373A40; color:#8F96A3; border-radius:3px; cursor:pointer; font-size:10px; font-family:inherit; margin-left:4px; }
+  .aeq { color:#ffd76b; font-weight:600; }
+  .aeq.zero { color:#3a3f4a; font-weight:400; }
+  .arem { color:#4a9eff; }
+
+  .match { border-radius:5px; padding:10px 13px; margin-bottom:12px; font-size:12.5px; font-family:Consolas,monospace; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+  .match.ok { background:#0b1610; border:1px solid #2a5a3a; color:#7ec97e; }
+  .match.diff { background:#2a1010; border:1px solid #5a2a2a; color:#ff8a65; }
+
+  .modal-btns { display:flex; gap:8px; margin-top:16px; justify-content:flex-end; }
+  .btn { padding:8px 18px; border:none; border-radius:5px; cursor:pointer; font-size:13px; font-weight:600; font-family:inherit; }
+  .btn.cancel { background:#1f2937; color:#8F96A3; }
+  .btn.ok { background:#1971c2; color:#fff; }
+
+  /* 결과 표 */
+  table.result { width:100%; border-collapse:collapse; font-size:12px; }
+  table.result th { background:#0a0e15; color:#8F96A3; font-size:11px; font-weight:600; padding:7px 9px; border:1px solid #1f2937; white-space:nowrap; }
+  table.result td { padding:6px 9px; border:1px solid #131c2a; text-align:right; font-family:Consolas,monospace; }
+  table.result td.chname { text-align:left; color:#cdd6f4; font-family:inherit; font-weight:600; }
+  .split { display:flex; flex-direction:column; align-items:flex-end; line-height:1.35; }
+  .split .paid { color:#5c5f66; text-decoration:line-through; font-size:11px; }
+  .split .paid.frac { color:#ff8a65; text-decoration:none; background:#2a1010; padding:0 4px; border-radius:2px; }
+  .split .open { color:#4a9eff; font-weight:600; }
+  .meso-sub { color:#5c5f66; font-size:10px; }
+
+  .note { background:#0a0e15; border-left:3px solid #1971c2; border-radius:0 5px 5px 0; padding:12px 14px; margin-top:12px; font-size:12px; color:#8F96A3; line-height:1.7; }
+  .note b { color:#cdd6f4; }
+  .note code { background:#131c2a; color:#ffd76b; padding:1px 5px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; }
+  .note ul { margin:6px 0 0; padding-left:18px; }
+  .note li { margin:4px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>✎ 과거 정산 기록 수정</h1>
+  <div class="sub">이미 기록한 정산을 열어서 <b style="color:#cdd6f4">날짜 · 방식 · 금액 · 메모</b>를 고치고,<br>재화 미지정으로 남은 옛 정산을 <b style="color:#7ec97e">🎯 재화 지정</b>으로 전환해 소수점을 없앱니다.</div>
+
+  <div class="real">
+    📌 아래는 <b>실제 데이터</b>입니다 — 광기 본계정 › <b>농도구</b> › 2026-07-31 「커포 마도서 분배금정산」 <b>29억 6,120만 8,200 메소</b><br>
+    이 정산이 재화 미지정이라 자동 차감되면서 <b>다조가 448.6679개</b> 정산된 것으로 잡혀 있습니다.
+  </div>
+
+  <!-- ① 이력에서 수정 -->
+  <h2><span class="num">1</span> 정산 이력에 <span style="color:#4a9eff">✎ 수정</span> 버튼 추가</h2>
+  <div class="card">
+    <div style="color:#8F96A3;font-size:11px;margin-bottom:4px;">📋 진행 중 (1건) — 표에서 <span class="mono">▶ 이력</span> 펼치면 나오는 영역</div>
+    <div class="entry">
+      <div class="entry-top">
+        <span class="e-date">2026-07-31</span>
+        <span class="e-tag meso" id="listTag">메소</span>
+        <span class="e-txt" id="listTxt">29억 6120만 8200 받음</span>
+        <span class="e-memo">— 커포 마도서 분배금정산</span>
+        <span class="e-btns">
+          <button class="e-btn edit" onclick="openEdit()">✎ 수정</button>
+          <button class="e-btn undo">↩ 되돌리기</button>
+        </span>
+      </div>
+      <div class="e-snap" id="listSnap"><span class="lock">🔒 박제</span><span>다조=660만</span><span>상주정=9만5000</span><span>우유=2750</span><span>이슬=5100</span><span>코젬=7만7000</span><span>달라심볼=78만</span><span>1억=1,700원</span></div>
+      <div class="warnline" id="listWarn">⚠ 재화 미지정 — 자동 차감으로 <strong>다조 448.6679개</strong>가 정산 처리됨 (소수점)</div>
+    </div>
+    <div style="color:#5c5f66;font-size:11px;margin-top:10px;">🔒 잠긴 이력의 정산도 같은 방식으로 수정 가능합니다.</div>
+  </div>
+
+  <!-- ② 편집 모달 -->
+  <h2><span class="num">2</span> 수정 모달 <span style="color:#5c5f66;font-size:12px;font-weight:400;">— 직접 만져보세요</span></h2>
+  <div class="modal-mock">
+    <div class="modal-title">✎ 정산 기록 수정 — 농도구</div>
+    <div class="modal-sub">기록한 정산의 날짜 · 방식 · 금액 · 메모를 고칩니다.</div>
+
+    <div class="orig-box">
+      원래 기록 &nbsp; <b>2026-07-31</b> · <b>메소</b> · <b>2,961,208,200</b> 메소 · "커포 마도서 분배금정산"<br>
+      시세 박제 &nbsp; 다조=660만 · 상주정=9만5000 · 우유=2750 · 이슬=5100 · 코젬=7만7000 · 달라심볼=78만 · 1억=1,700원
+      <span style="color:#5c5f66"> (수정해도 박제 시세는 그대로 유지)</span>
+    </div>
+
+    <div class="fix-banner" id="fixBanner">
+      ⚠ 이 정산은 <b>재화 미지정</b>이라 자동 차감됩니다 → <b>다조 448.6679개</b> 정산 (소수점)<br>
+      <span style="color:#8F96A3">실제로는 마도서 분배금을 메소로 받으셨다면, 다조는 손대지 않은 게 맞습니다.</span>
+      <button class="fix-btn" onclick="convert()">🎯 재화 지정으로 전환 (금액 그대로 매소에 배정)</button>
+    </div>
+
+    <div class="row"><label>날짜</label><input type="date" id="edDate" value="2026-07-31"></div>
+
+    <div class="row"><label>방식</label>
+      <div class="modes">
+        <button class="mode-btn" id="mCash" onclick="setMode('cash')">💵 현금</button>
+        <button class="mode-btn on meso" id="mMeso" onclick="setMode('meso')">💰 메소</button>
+        <button class="mode-btn" id="mItems" onclick="setMode('items')">🎯 재화 지정</button>
+        <button class="mode-btn" id="mAdv" onclick="setMode('advance')">🔵 선금</button>
+      </div>
+    </div>
+
+    <!-- 금액 입력 (현금/메소/선금) -->
+    <div id="amtWrap">
+      <div class="row"><label id="amtLabel">받은 메소</label><input type="text" id="edAmount" value="2961208200" oninput="recalc()"><span class="unit" id="amtUnit">메소</span></div>
+    </div>
+
+    <!-- 재화 지정 -->
+    <div id="itemsWrap" style="display:none">
+      <div style="overflow-x:auto"><table class="alloc"><thead><tr>
+        <th style="width:30px"></th><th class="l">재화</th><th>시세</th><th>잔여 누적</th>
+        <th style="text-align:right">이번 정산</th><th>= 메소</th><th>남는 분</th>
+      </tr></thead><tbody id="allocBody"></tbody></table></div>
+      <div class="match" id="matchBox"></div>
+    </div>
+
+    <div class="row"><label>메모</label><input type="text" id="edMemo" value="커포 마도서 분배금정산"></div>
+
+    <div class="modal-btns">
+      <button class="btn cancel">취소</button>
+      <button class="btn ok" onclick="save()">저장</button>
+    </div>
+  </div>
+
+  <!-- ③ 결과 -->
+  <h2><span class="num">3</span> 부주정산 표 반영 <span style="color:#5c5f66;font-size:12px;font-weight:400;">— 위에서 저장 누르면 갱신</span></h2>
+  <div class="card">
+    <div style="color:#8F96A3;font-size:11.5px;margin-bottom:8px;">보기 모드: <b style="color:#ffd76b">잔여만</b> · 위 = 받은 분 / 아래 = 남은 분</div>
+    <div style="overflow-x:auto">
+      <table class="result">
+        <thead><tr id="resHead"></tr></thead>
+        <tbody><tr id="resBody"></tr></tbody>
+      </table>
+    </div>
+    <div id="resNote" style="margin-top:10px;font-size:12px;"></div>
+  </div>
+
+  <!-- ④ 구현 -->
+  <h2><span class="num">4</span> 구현 요약</h2>
+  <div class="note">
+    <b>추가되는 것</b>
+    <ul>
+      <li>정산 이력 각 줄(활성 + 🔒잠긴 것 모두)에 <code>✎ 수정</code> 버튼</li>
+      <li>수정 모달에서 <b>날짜 · 방식 · 금액 · 메모</b> 변경. 방식은 현금 ↔ 메소 ↔ 재화 지정 ↔ 선금 자유 전환</li>
+      <li>재화 미지정 정산에는 <b>소수점 경고 + "재화 지정으로 전환" 원클릭 버튼</b> — 원래 금액을 매소에 그대로 배정해 잔여가 안 흔들리게</li>
+      <li>재화 지정 시 원래 금액과 차이가 나면 <b>차액을 표시</b>해서 실수로 잔여가 바뀌는 걸 막음 (의도한 거면 그대로 저장 가능)</li>
+    </ul>
+    <b style="display:block;margin-top:10px">지켜지는 것</b>
+    <ul>
+      <li><b>박제된 시세는 수정해도 유지</b> — 그때 시세로 계산된 값이 지금 시세로 바뀌지 않음</li>
+      <li>🔒 잠긴 정산을 수정해서 금액이 크게 달라지면 <b>자동 정리 상태를 다시 계산</b> (잠금이 안 맞으면 풀림)</li>
+      <li>entry의 <code>id</code>는 유지 — 이력 순서와 연결이 안 깨짐</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+// ===== 실데이터 =====
+const CASH_RATE = 1700;             // 1억 = 1,700원
+const RES = [
+  { name:'매소',     price:1,       fixed:true,  accum:8372516895 },
+  { name:'다조',     price:6600000, fixed:false, accum:1814 },
+  { name:'상주정',   price:95000,   fixed:false, accum:635 },
+  { name:'코젬',     price:77000,   fixed:false, accum:798 },
+  { name:'달라심볼', price:780000,  fixed:false, accum:29 },
+  { name:'우유',     price:2750,    fixed:true,  accum:25601 },
+  { name:'이슬',     price:5100,    fixed:true,  accum:25461 },
+];
+const GROSS = RES.reduce((s,r)=>s+r.accum*r.price,0);
+const ORIG_MESO = 2961208200;
+
+let mode = 'meso';
+let alloc = {};                      // 재화 지정 수량
+let saved = { mode:'meso', meso:ORIG_MESO, alloc:null };   // 표에 반영된 상태
+
+function fmtMeso(n){
+  n = Math.round(n);
+  if (n === 0) return '0';
+  const abs=Math.abs(n), sign=n<0?'-':'';
+  const eok=Math.floor(abs/100000000), man=Math.floor((abs%100000000)/10000), rest=abs%10000;
+  const p=[];
+  if(eok)p.push(eok+'억'); if(man)p.push(man.toLocaleString()+'만'); if(rest)p.push(String(rest));
+  return sign+(p.join(' ')||'0');
+}
+function fmtQty(name,v){
+  if(name==='매소') return fmtMeso(v);
+  const r=Math.round(v*10000)/10000;
+  return r%1===0 ? r.toLocaleString() : r.toFixed(4);
+}
+// 옛 방식 자동 차감 (변동가 → 고정가 → 매소)
+function autoAlloc(paid){
+  const out={}; RES.forEach(r=>out[r.name]={paid:0,rem:r.accum});
+  const variable=RES.filter(r=>!r.fixed);
+  const fixed=RES.filter(r=>r.fixed&&r.name!=='매소');
+  const order=[...variable,...fixed,RES.find(r=>r.name==='매소')];
+  let left=paid;
+  order.forEach(r=>{
+    if(left<=0) return;
+    const val=r.accum*r.price;
+    if(val<=0) return;
+    const used=Math.min(val,left);
+    out[r.name].paid=used/r.price;
+    out[r.name].rem=r.accum-out[r.name].paid;
+    left-=used;
+  });
+  return out;
+}
+
+function setMode(m){
+  mode=m;
+  ['cash','meso','items','advance'].forEach(k=>{
+    const el=document.getElementById('m'+k[0].toUpperCase()+k.slice(1));
+    el.className='mode-btn'+(k===m?' on'+(k==='meso'?' meso':''):'');
+  });
+  document.getElementById('amtWrap').style.display = m==='items'?'none':'';
+  document.getElementById('itemsWrap').style.display = m==='items'?'':'none';
+  document.getElementById('amtLabel').textContent = m==='cash'?'받은 금액':m==='advance'?'선지급 금액':'받은 메소';
+  document.getElementById('amtUnit').textContent = m==='cash'?'원':'메소';
+  if(m==='items') buildAlloc();
+  recalc();
+}
+
+function convert(){
+  // 원래 금액을 매소에 그대로 배정 → 잔여 변동 없음
+  alloc = {}; alloc['매소'] = ORIG_MESO;
+  setMode('items');
+}
+
+function buildAlloc(){
+  document.getElementById('allocBody').innerHTML = RES.map((r,i)=>{
+    const q=Number(alloc[r.name])||0;
+    return `<tr id="ar${i}" class="${q>0?'':'off'}">
+      <td><input type="checkbox" id="ac${i}" ${q>0?'checked':''} onchange="tog(${i})"></td>
+      <td class="l"><span class="aname">${r.name}</span><span class="abadge ${r.fixed?'fx':'vr'}">${r.fixed?'🔒고정':'📈변동'}</span></td>
+      <td style="color:#8F96A3;font-size:11.5px">${r.name==='매소'?'1':fmtMeso(r.price)}</td>
+      <td style="color:#cdd6f4">${fmtQty(r.name,r.accum)}</td>
+      <td style="white-space:nowrap"><input class="aqty${q>0?'':' zero'}" id="aq${i}" value="${Math.round(q*10000)/10000}" oninput="onQ(${i})"><button class="amini" onclick="full(${i})">전체</button></td>
+      <td class="aeq${q>0?'':' zero'}" id="ae${i}">${q>0?fmtMeso(q*r.price):'-'}</td>
+      <td class="arem" id="am${i}">${fmtQty(r.name,r.accum-q)}</td></tr>`;
+  }).join('');
+}
+function tog(i){ const r=RES[i]; const on=document.getElementById('ac'+i).checked; alloc[r.name]=on?r.accum:0; document.getElementById('aq'+i).value=Math.round((on?r.accum:0)*10000)/10000; recalc(); }
+function onQ(i){
+  const r=RES[i], el=document.getElementById('aq'+i);
+  let v=Number(String(el.value).replace(/[^0-9.]/g,''))||0;
+  if(v>r.accum){ v=r.accum; el.value=Math.round(v*10000)/10000; }
+  alloc[r.name]=v; document.getElementById('ac'+i).checked=v>0; recalc();
+}
+function full(i){ const r=RES[i]; alloc[r.name]=r.accum; document.getElementById('aq'+i).value=Math.round(r.accum*10000)/10000; document.getElementById('ac'+i).checked=true; recalc(); }
+
+function allocTotal(){ let t=0; RES.forEach(r=>t+=(Number(alloc[r.name])||0)*r.price); return Math.round(t); }
+
+function recalc(){
+  if(mode==='items'){
+    RES.forEach((r,i)=>{
+      const q=Number(alloc[r.name])||0;
+      const row=document.getElementById('ar'+i); if(!row) return;
+      row.className=q>0?'':'off';
+      document.getElementById('aq'+i).className='aqty'+(q>0?'':' zero');
+      const ae=document.getElementById('ae'+i);
+      ae.textContent=q>0?fmtMeso(q*r.price):'-'; ae.className='aeq'+(q>0?'':' zero');
+      document.getElementById('am'+i).textContent=fmtQty(r.name,r.accum-q);
+    });
+    const t=allocTotal(), diff=t-ORIG_MESO;
+    const box=document.getElementById('matchBox');
+    box.className='match '+(diff===0?'ok':'diff');
+    box.innerHTML = diff===0
+      ? `<span>✓ 지정 합계 ${fmtMeso(t)} — 원래 금액과 일치</span><span>잔여 변동 없음</span>`
+      : `<span>⚠ 지정 합계 ${fmtMeso(t)} · 원래 ${fmtMeso(ORIG_MESO)}</span><span>차액 ${diff>0?'+':''}${fmtMeso(diff)} → 잔여가 ${diff>0?'줄어듭니다':'늘어납니다'}</span>`;
+  }
+  const fb=document.getElementById('fixBanner');
+  fb.style.display = (mode==='items') ? 'none' : '';
+}
+
+function save(){
+  saved = mode==='items'
+    ? { mode:'items', meso:allocTotal(), alloc:{...alloc} }
+    : { mode, meso:Number(String(document.getElementById('edAmount').value).replace(/[^0-9.]/g,''))||0, alloc:null };
+  renderList(); renderResult();
+  const el=document.getElementById('resNote');
+  el.innerHTML = saved.alloc
+    ? `<span style="color:#7ec97e">✓ 저장됨 — 지정한 재화만 정산 처리됐습니다. 다조는 손대지 않아 <strong>1,814개 그대로</strong>입니다.</span>`
+    : `<span style="color:#ff8a65">⚠ 재화 미지정 상태 — 자동 차감이라 다조에 소수점이 남습니다.</span>`;
+}
+
+function renderList(){
+  const tag=document.getElementById('listTag'), txt=document.getElementById('listTxt');
+  const snap=document.getElementById('listSnap'), warn=document.getElementById('listWarn');
+  if(saved.alloc){
+    tag.className='e-tag items'; tag.textContent='🎯 재화지정';
+    txt.textContent=`${fmtMeso(saved.meso)} 상당 재화 수령`;
+    const items=Object.keys(saved.alloc).filter(k=>saved.alloc[k]>0)
+      .map(k=>`<span><span class="k">${k}</span> ${fmtQty(k,saved.alloc[k])}</span>`).join('');
+    snap.innerHTML=`<span class="lock" style="background:#0d2a1a;color:#7ec97e">🎯 지정</span>${items}<span class="lock">🔒 박제</span><span>1억=1,700원</span>`;
+    warn.style.display='none';
+  } else {
+    tag.className='e-tag meso'; tag.textContent='메소';
+    txt.textContent=`${fmtMeso(saved.meso)} 받음`;
+    warn.style.display='';
+    const a=autoAlloc(saved.meso);
+    const frac=RES.find(r=>a[r.name].paid>0 && Math.abs(a[r.name].paid-Math.round(a[r.name].paid))>1e-9 && r.name!=='매소');
+    warn.innerHTML = frac
+      ? `⚠ 재화 미지정 — 자동 차감으로 <strong>${frac.name} ${fmtQty(frac.name,a[frac.name].paid)}개</strong>가 정산 처리됨 (소수점)`
+      : `⚠ 재화 미지정 — 자동 차감으로 처리됨`;
+  }
+}
+
+function renderResult(){
+  document.getElementById('resHead').innerHTML =
+    ['캐릭터',...RES.map(r=>r.name),'합산 메소'].map(h=>`<th>${h}</th>`).join('');
+  const a = saved.alloc
+    ? (()=>{ const o={}; RES.forEach(r=>{ const q=Number(saved.alloc[r.name])||0; o[r.name]={paid:q,rem:r.accum-q}; }); return o; })()
+    : autoAlloc(saved.meso);
+  let cells='<td class="chname">농도구</td>', remTotal=0;
+  RES.forEach(r=>{
+    const {paid,rem}=a[r.name]; remTotal+=rem*r.price;
+    const isFrac = paid>0 && Math.abs(paid-Math.round(paid))>1e-9 && r.name!=='매소';
+    cells+=`<td><div class="split">`;
+    if(paid>0) cells+=`<span class="paid${isFrac?' frac':''}">${fmtQty(r.name,paid)}</span>`;
+    cells+=`<span class="open">${fmtQty(r.name,rem)}</span>`;
+    if(rem>0) cells+=`<div class="meso-sub">=${fmtMeso(rem*r.price)}</div>`;
+    cells+=`</div></td>`;
+  });
+  cells+=`<td><div class="split"><span class="open">${fmtMeso(remTotal)}</span></div></td>`;
+  document.getElementById('resBody').innerHTML=cells;
+}
+
+setMode('meso');
+renderList();
+renderResult();
+document.getElementById('resNote').innerHTML =
+  `<span style="color:#ff8a65">⚠ 현재 상태 — 다조 <strong>448.6679개</strong>가 정산된 것으로 잡혀 있습니다. 위에서 <strong>🎯 재화 지정으로 전환</strong> 후 저장해보세요.</span>`;
+</script>
+</body>
+</html>

@@ -639,8 +639,53 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 .jr-add { margin-top: 8px; }
 .jr-add input { width: 100%; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; color: var(--text); font: inherit; font-size: 13px; padding: 8px 10px; }
 
+/* 선택한 날 요약 */
+.today { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.tcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; min-width: 0; }
+.tcard .lbl { font-size: 12px; color: var(--text-2); margin-bottom: 6px; }
+.tcard .val { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tcard .sub { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+.tcard.net { border-color: rgba(52,211,153,.35); }
+
+/* 돈 흐름 */
+.money .jr-title h3 { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.mf-quick { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.mf-quick button, .mf-cat button { background: var(--bg); border: 1px solid var(--line); color: var(--text-2); font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 999px; cursor: pointer; }
+.mf-quick button.on, .mf-cat button.on { border-color: var(--accent); color: #fff; }
+.mf-cat { display: flex; gap: 4px; flex-wrap: wrap; }
+.mf-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; }
+.mf-amt { flex: 1; min-width: 200px; }
+.mf-memo { flex: 1.3; min-width: 160px; text-align: left !important; }
+.money .mzw { display: flex; flex-direction: column; }
+.money .live { font-size: 11px; color: #e8d26a; text-align: right; min-height: 14px; font-variant-numeric: tabular-nums; }
+.money .jr-in { padding: 7px 10px; }
+.money .btn-add { padding: 7px 18px; }
+.mf-list-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
+.mf-list { display: flex; flex-direction: column; border-top: 1px solid var(--line-soft); }
+.mf-item { display: grid; grid-template-columns: 52px 76px 22px 54px 1fr auto 24px; gap: 10px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--line-soft); font-size: 13px; }
+.mf-item.sel { background: rgba(59,130,246,.06); }
+.mf-item > span { cursor: pointer; min-width: 0; }
+.mf-item .d { color: var(--text-3); font-size: 12px; }
+.mf-item .c { font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.mf-item .cur img { width: 15px; height: 15px; vertical-align: middle; }
+.mf-item .ty { border: 0; border-radius: 4px; font: inherit; font-size: 11px; padding: 2px 6px; cursor: pointer; }
+.mf-item .ty.in { background: rgba(52,211,153,.15); color: #6ee7b7; }
+.mf-item .ty.out { background: rgba(251,113,133,.15); color: #fda4af; }
+.mf-item .m { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mf-item .a { font-weight: 700; text-align: right; white-space: nowrap; }
+.mf-item .x { color: var(--text-3); background: none; border: 0; cursor: pointer; }
+.mf-item .x:hover { color: var(--spend); }
+.bal-row { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.bal-title { font-size: 13px; font-weight: 600; padding-top: 6px; }
+.bal-in { width: 220px; } .bal-in.small { width: 110px; }
+.bal-diff { font-size: 12.5px; color: var(--text-2); padding: 6px 12px 0; }
+
 @media (max-width: 820px) {
   .dashboard { grid-template-columns: 1fr; }
+  .today { grid-template-columns: 1fr 1fr; }
+  .mf-item { grid-template-columns: 44px 1fr auto 20px; }
+  .mf-item .c, .mf-item .cur, .mf-item .ty { display: none; }
+  .bal-in, .bal-in.small { width: 100%; }
   .app { padding: 10px; }
   .cal2 { padding: 10px; }
   .cal2-grid { grid-template-columns: repeat(7, 1fr); gap: 3px; }
@@ -689,62 +734,17 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
   <div id="journal" class="panel active top-view-tracker">
     <input type="date" id="inputDate" style="display:none">
     <div id="assetCalendarWrap"></div>
+    <div class="today" id="todayCards"></div>
     <div id="inputTableSection" class="jr-section">
       <div class="jr-title"><h3>재획 기록</h3></div>
       <div class="jr-bar" id="jrBar"></div>
       <div class="jr-wrap" id="inputTableWrap"></div>
     </div>
-    <div id="balanceSection" style="margin-top:16px;padding:12px;background:#0f1320;border:1px solid #1f2937;border-radius:6px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-        <span style="color:#34d399;font-weight:700;font-size:14px;">📊 잔고 기록</span>
-        <span style="color:#5c5f66;font-size:11px;">끄기 전 총 잔고만 입력 → 전일 대비 자동 산출</span>
-      </div>
+    <div class="jr-section money" id="moneySection">
+      <div class="jr-title"><h3>돈 흐름 <span class="hint">재획 말고 들어오고 나간 것 — 보스 결정석, 장비 사고팔기, 강화비</span></h3></div>
+      <div id="mfForm"></div>
+      <div id="ledgerTableWrap"></div>
       <div id="balanceContent"></div>
-    </div>
-    <div class="journal-ledger" id="journalLedgerWrap" style="margin-top:16px;padding:12px;background:#0f1320;border:1px solid #1f2937;border-radius:6px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-        <span style="color:#60a5fa;font-weight:700;font-size:14px;">💰 보스/기타 수입지출</span>
-        <span style="color:#5c5f66;font-size:11px;">보스 결정석, 장비 매매, 강화 등</span>
-      </div>
-      <div class="ledger-form" style="display:flex;flex-direction:column;gap:8px;">
-        <div class="type-btns" id="ledgerCatBtns">
-          <button type="button" class="type-btn active" data-val="보스" onclick="setLedgerCat('보스')">🗡️보스</button>
-          <button type="button" class="type-btn" data-val="장비" onclick="setLedgerCat('장비')">⚔️장비</button>
-          <button type="button" class="type-btn" data-val="강화" onclick="setLedgerCat('강화')">💎강화</button>
-          <button type="button" class="type-btn" data-val="거래" onclick="setLedgerCat('거래')">🔄거래</button>
-          <button type="button" class="type-btn" data-val="기타" onclick="setLedgerCat('기타')">📌기타</button>
-        </div>
-        <input type="hidden" id="ledgerCategory" value="보스">
-        <div style="display:flex;gap:8px;align-items:stretch;">
-          <div style="flex:1;background:#131822;border:1px solid #373A40;border-radius:6px;padding:8px;">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-              <img src="meso.png" style="width:16px;height:16px">
-              <span style="color:#8F96A3;font-size:11px;font-weight:600;">메소</span>
-              <div class="type-btns" id="mesoTypeBtns">
-                <button type="button" class="type-btn active" data-val="income" onclick="setLedgerType('meso','income')" style="padding:2px 8px;font-size:10px;">수입</button>
-                <button type="button" class="type-btn" data-val="expense" onclick="setLedgerType('meso','expense')" style="padding:2px 8px;font-size:10px;">지출</button>
-              </div>
-            </div>
-            <input type="text" id="ledgerMesoAmt" placeholder="억 단위 (예: 5.43 = 5.43억)" style="width:100%;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;text-align:right;">
-          </div>
-          <div style="flex:1;background:#131822;border:1px solid #373A40;border-radius:6px;padding:8px;">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-              <img src="dajo.png" style="width:16px;height:16px">
-              <span style="color:#8F96A3;font-size:11px;font-weight:600;">다조</span>
-              <div class="type-btns" id="dajoTypeBtns">
-                <button type="button" class="type-btn active" data-val="income" onclick="setLedgerType('dajo','income')" style="padding:2px 8px;font-size:10px;">수입</button>
-                <button type="button" class="type-btn" data-val="expense" onclick="setLedgerType('dajo','expense')" style="padding:2px 8px;font-size:10px;">지출</button>
-              </div>
-            </div>
-            <input type="text" id="ledgerDajoAmt" placeholder="개수 (예: 20)" style="width:100%;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;text-align:right;">
-          </div>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <input type="text" id="ledgerMemo" placeholder="메모 (예: 보스 결정석, 장비 구매)" style="flex:1;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;">
-          <button class="btn-add" onclick="addLedger()" style="padding:6px 20px;font-size:13px;">추가</button>
-        </div>
-      </div>
-      <div class="sheet-wrap" id="ledgerTableWrap"></div>
     </div>
   </div>
 
@@ -1031,8 +1031,20 @@ const APP_VERSION = 4;
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-10-31b';
+const CHANGELOG_VERSION = '2026-10-31c';
 const CHANGELOG = [
+  {
+    version: '2026-10-31c',
+    title: '💸 잔고 기록 + 보스/기타 수입지출 → "돈 흐름" 한 곳으로',
+    items: [
+      '수입지출과 잔고 기록이 <strong>"돈 흐름"</strong> 한 칸으로 합쳐졌습니다 (기존 기록은 그대로)',
+      '<strong>빠른 버튼</strong> — 🗡️ 보스 결정석 · ⚔️ 장비 판매 · 💎 스타포스 · 🎲 큐브 · 🔄 거래 누르면 분류·들어옴/나감·메모가 자동으로',
+      '금액은 <strong>숫자 그대로</strong> (<code>1500000000</code>) 또는 <code>15억</code> · 예전처럼 <code>5.4</code> = 5.4억도 그대로 됩니다. 아래에 억·만으로 보여줌',
+      '목록은 <strong>이날 / 이번 달</strong> 전환, 칸 눌러서 바로 수정 (날짜·분류·메소/다조·들어옴/나감·메모·금액)',
+      '재획 기록 위에 <strong>그날 요약</strong> — 사냥 메소 · 다조 · 수입/지출 · 순증',
+      '들어온 돈은 <span style="color:#34d399">초록</span>, 나간 돈은 <span style="color:#fb7185">빨강</span>으로 통일',
+    ],
+  },
   {
     version: '2026-10-31b',
     title: '🎨 리뉴얼 — 일지가 캐릭터별 카드로 바뀌었어요',
@@ -1426,6 +1438,7 @@ function refreshAll() {
   renderDashboard();
   renderAssetCalendar();
   renderInputTable();
+  renderMoneyForm();
   renderLedger();
   renderBalanceSection();
   renderHistory();
@@ -2770,6 +2783,7 @@ function jrSetPrefAndRender(key, v) { jrSetPref(key, v); renderInputTable(); }
 
 function renderInputTable() {
   renderJrBar();
+  renderTodayCards();
   if (jrPref('layout', 'card') === 'table') {
     document.getElementById('inputTableWrap').className = 'sheet-wrap';
     renderInputSheet();
@@ -2946,7 +2960,7 @@ function jrRecalc() {
 let _jrRefreshTimer = null;
 function jrRefreshOthers() {
   clearTimeout(_jrRefreshTimer);
-  _jrRefreshTimer = setTimeout(() => { renderAssetCalendar(); renderDashboard(); }, 300);
+  _jrRefreshTimer = setTimeout(() => { renderAssetCalendar(); renderDashboard(); renderTodayCards(); }, 300);
 }
 
 function jrSetField(date, ch, r, field, val, rowMode) {
@@ -4648,7 +4662,7 @@ function saveBalance() {
   const mesoStr = document.getElementById('balanceMesoInput').value.trim();
   const dajoStr = document.getElementById('balanceDajoInput').value.trim();
   if (!mesoStr && !dajoStr) { toast('잔고를 입력하세요.', 'error'); return; }
-  const mesoVal = parseMeso(mesoStr);
+  const mesoVal = parseMesoAmount(mesoStr);
   const dajoVal = Math.round(Number(dajoStr.replace(/[^0-9.\-]/g, '')) || 0);
   const data = loadData();
   if (!data.balanceLog) data.balanceLog = {};
@@ -4672,73 +4686,176 @@ function deleteBalance() {
   toast('삭제됨');
 }
 
+
+// ===================== 돈 흐름 (수입지출 + 잔고 확인) — 2026-10 리뉴얼 =====================
+// 메소 금액: "5.4" 같은 작은 수는 예전처럼 억 단위, 큰 수·억/만 표기는 그대로 메소
+function parseMesoAmount(str) {
+  const s = String(str || '').trim();
+  if (!s) return 0;
+  if (/[억만]/.test(s)) return parseMesoText(s);
+  const n = parseFloat(s.replace(/[^0-9.\-]/g, ''));
+  if (isNaN(n)) return 0;
+  return Math.abs(n) < 10000 ? Math.round(n * 100000000) : Math.round(n);
+}
+function mesoAmountHint(str) {
+  const n = parseMesoAmount(str);
+  return n ? formatMeso(n) + ' 메소' : '';
+}
+const MF = { type: 'income', cur: 'meso', cat: '보스', scope: 'month' };
+const MF_QUICK = [
+  ['🗡️', '보스 결정석', '보스', 'income'],
+  ['⚔️', '장비 판매', '장비', 'income'],
+  ['💎', '스타포스', '강화', 'expense'],
+  ['🎲', '큐브', '강화', 'expense'],
+  ['🔄', '거래', '거래', 'income'],
+  ['📌', '기타', '기타', 'expense'],
+];
+const CAT_EMOJI = { '보스': '🗡️', '장비': '⚔️', '강화': '💎', '거래': '🔄', '기타': '📌' };
+
+function renderMoneyForm() {
+  const el = document.getElementById('mfForm');
+  if (!el) return;
+  const amt = document.getElementById('mfAmt')?.value || '';
+  const memo = document.getElementById('mfMemo')?.value || '';
+  el.innerHTML = `
+    <div class="mf-quick">${MF_QUICK.map(([ic, label, cat, type], i) => `<button class="${MF.cat === cat && (document.getElementById('mfMemo')?.value || '') === (label === '기타' ? '' : label) ? 'on' : ''}" onclick="mfQuick(${i})">${ic} ${label}</button>`).join('')}</div>
+    <div class="mf-row">
+      <div class="seg"><button class="${MF.type === 'income' ? 'on' : ''}" onclick="mfSet('type','income')">들어옴</button><button class="${MF.type === 'expense' ? 'on' : ''}" onclick="mfSet('type','expense')">나감</button></div>
+      <div class="seg"><button class="${MF.cur === 'meso' ? 'on' : ''}" onclick="mfSet('cur','meso')">메소</button><button class="${MF.cur === 'dajo' ? 'on' : ''}" onclick="mfSet('cur','dajo')">다조</button></div>
+      <div class="mf-cat">${Object.keys(CAT_EMOJI).map(c => `<button class="${MF.cat === c ? 'on' : ''}" onclick="mfSet('cat','${c}')">${CAT_EMOJI[c]} ${c}</button>`).join('')}</div>
+    </div>
+    <div class="mf-row">
+      <div class="mzw mf-amt"><input type="text" id="mfAmt" class="jr-in" inputmode="decimal" autocomplete="off" placeholder="${MF.cur === 'meso' ? '금액 (숫자 그대로 · 5.4 = 5.4억)' : '개수'}" value="${jrEsc(amt)}"><div class="live" id="mfAmtLive">${MF.cur === 'meso' ? jrEsc(mesoAmountHint(amt)) : ''}</div></div>
+      <input type="text" id="mfMemo" class="jr-in mf-memo" placeholder="메모 (선택)" value="${jrEsc(memo)}">
+      <button class="btn-add" onclick="addLedger()">추가</button>
+    </div>`;
+  const a = document.getElementById('mfAmt');
+  a.addEventListener('input', () => { document.getElementById('mfAmtLive').textContent = MF.cur === 'meso' ? mesoAmountHint(a.value) : ''; });
+  a.addEventListener('keydown', e => { if (e.key === 'Enter') addLedger(); });
+  document.getElementById('mfMemo').addEventListener('keydown', e => { if (e.key === 'Enter') addLedger(); });
+}
+function mfSet(k, v) { MF[k] = v; renderMoneyForm(); if (k !== 'cat') document.getElementById('mfAmt')?.focus(); }
+function mfQuick(i) {
+  const [, label, cat, type] = MF_QUICK[i];
+  MF.cat = cat; MF.type = type;
+  renderMoneyForm();
+  const memo = document.getElementById('mfMemo');
+  if (memo) memo.value = label === '기타' ? '' : label;
+  renderMoneyForm();
+  document.getElementById('mfAmt')?.focus();
+}
+
+function addLedger() {
+  const date = _selectedDate;
+  const amtStr = document.getElementById('mfAmt')?.value || '';
+  const memo = (document.getElementById('mfMemo')?.value || '').trim();
+  const amount = MF.cur === 'meso' ? parseMesoAmount(amtStr) : Math.round(Math.abs(Number(amtStr.replace(/[^0-9.\-]/g, ''))) || 0);
+  if (!date || !amount) { toast('금액을 입력하세요.', 'error'); return; }
+  const data = loadData();
+  if (!data.ledger) data.ledger = [];
+  data.ledger.push({ date, type: MF.type, currency: MF.cur, amount: Math.abs(amount), memo, category: MF.cat, id: Date.now() });
+  data.ledger.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  saveData(data);
+  document.getElementById('mfAmt').value = '';
+  document.getElementById('mfMemo').value = '';
+  renderMoneyForm();
+  renderLedger();
+  renderDashboard();
+  renderAssetCalendar();
+  toast('추가됨');
+}
+
+function renderLedger() {
+  const data = loadData();
+  const wrap = document.getElementById('ledgerTableWrap');
+  if (!wrap) return;
+  const ledger = data.ledger || [];
+  const sel = _selectedDate;
+  const ym = sel.slice(0, 7);
+  const list = MF.scope === 'day' ? ledger.filter(e => e.date === sel) : ledger.filter(e => e.date.slice(0, 7) === ym);
+  let h = `<div class="mf-list-head"><span class="hint">${MF.scope === 'day' ? `${sel.slice(5)} 기록` : `${Number(ym.slice(5))}월 기록`} ${list.length}건 · 칸 누르면 수정</span>
+    <div class="seg"><button class="${MF.scope === 'day' ? 'on' : ''}" onclick="MF.scope='day';renderLedger()">이날</button><button class="${MF.scope === 'month' ? 'on' : ''}" onclick="MF.scope='month';renderLedger()">이번 달</button></div></div>`;
+  if (!list.length) {
+    wrap.innerHTML = h + `<div class="no-data">${MF.scope === 'day' ? '이날' : Number(ym.slice(5)) + '월'} 수입/지출 기록이 없습니다.</div>`;
+    renderTodayCards();
+    return;
+  }
+  h += '<div class="mf-list">';
+  list.forEach(e => {
+    const inc = e.type === 'income', dajo = e.currency === 'dajo';
+    const cat = e.category || '기타';
+    const amt = dajo ? `${inc ? '+' : '-'}${Number(e.amount).toLocaleString()}개` : `${inc ? '+' : '-'}${formatMeso(Number(e.amount))}`;
+    h += `<div class="mf-item${e.date === sel ? ' sel' : ''}">
+      <span class="d num" onclick="editLedgerDate(${e.id},this)" title="${e.date}">${e.date.slice(5)}</span>
+      <span class="c" onclick="editLedgerCategory(${e.id})" title="눌러서 분류 바꾸기">${CAT_EMOJI[cat] || '📌'} ${jrEsc(cat)}</span>
+      <span class="cur" onclick="editLedgerCurrency(${e.id})" title="메소/다조 바꾸기"><img src="${dajo ? 'dajo.png' : 'meso.png'}" alt=""></span>
+      <button class="ty ${inc ? 'in' : 'out'}" onclick="editLedgerType(${e.id})">${inc ? '들어옴' : '나감'}</button>
+      <span class="m" onclick="editLedgerMemo(${e.id},this)">${e.memo ? jrEsc(e.memo) : '<span class="hint">메모 추가</span>'}</span>
+      <span class="a num ${inc ? 'c-good' : 'c-neg'}" onclick="editLedgerAmount(${e.id},this)">${amt}</span>
+      <button class="x" onclick="deleteLedger(${e.id})" title="삭제">✕</button>
+    </div>`;
+  });
+  wrap.innerHTML = h + '</div>';
+  renderTodayCards();
+}
+
+function renderTodayCards() {
+  const el = document.getElementById('todayCards');
+  if (!el) return;
+  const data = loadData();
+  const date = _selectedDate;
+  let farmM = 0, farmD = 0;
+  (data.characters || []).forEach(ch => {
+    const mr = data.records?.[date]?.[ch]?.['매소']; if (mr) farmM += getEarned(mr);
+    const dr = data.records?.[date]?.[ch]?.['다조']; if (dr) farmD += getEarned(dr);
+  });
+  const dp = getDajoPrice();
+  let inc = 0, out = 0, cnt = 0;
+  (data.ledger || []).forEach(e => {
+    if (e.date !== date) return;
+    cnt++;
+    const v = (Number(e.amount) || 0) * (e.currency === 'dajo' ? dp : 1);
+    if (e.type === 'income') inc += v; else out += v;
+  });
+  const net = farmM + farmD * dp + inc - out;
+  const sg = v => v < 0 ? '-' : '+';
+  const label = date === todayStr() ? '오늘' : `${Number(date.slice(5, 7))}/${Number(date.slice(8))}`;
+  el.innerHTML = `
+    <div class="tcard"><div class="lbl">${label} 사냥 메소</div><div class="val num c-meso" title="${formatMeso(farmM)}">${sg(farmM)}${formatMesoMan(Math.abs(farmM))}</div><div class="sub">재획 기록 합계</div></div>
+    <div class="tcard"><div class="lbl">다조</div><div class="val num c-dajo">${sg(farmD)}${Math.abs(farmD).toLocaleString()}개</div><div class="sub">≈ ${formatMesoMan(Math.abs(farmD * dp))} (${formatMeso(dp)}/개)</div></div>
+    <div class="tcard"><div class="lbl">수입 / 지출</div><div class="val num"><span class="c-good">+${formatMesoMan(inc)}</span> <span class="c-neg" style="font-size:14px">-${formatMesoMan(out)}</span></div><div class="sub">돈 흐름 ${cnt}건</div></div>
+    <div class="tcard net"><div class="lbl">${label} 순증</div><div class="val num ${net < 0 ? 'c-neg' : 'c-good'}" title="${formatMeso(net)}">${sg(net)}${formatMesoMan(Math.abs(net))}</div><div class="sub">사냥 + 다조 환산 + 들어옴 − 나감</div></div>`;
+}
+
 function renderBalanceSection() {
   const wrap = document.getElementById('balanceContent');
   if (!wrap) return;
   const data = loadData();
   const date = _selectedDate;
-  const current = (data.balanceLog || {})[date] || null;
   const log = data.balanceLog || {};
+  const current = log[date] || null;
   const prevDates = Object.keys(log).filter(d => d < date).sort().reverse();
   const prev = prevDates.length ? { date: prevDates[0], ...log[prevDates[0]] } : null;
-
-  let html = '';
-
-  // 이전 잔고 참조
-  if (prev) {
-    html += `<div style="display:flex;gap:12px;align-items:center;padding:6px 10px;background:#131822;border-radius:4px;margin-bottom:8px;font-size:12px;">`;
-    html += `<span style="color:#5c5f66;">이전 잔고 (${prev.date})</span>`;
-    html += `<span style="color:#8F96A3;"><img src="meso.png" style="width:12px;height:12px;vertical-align:middle;margin-right:2px">${formatMeso(prev.meso || 0)}</span>`;
-    html += `<span style="color:#a78bfa;"><img src="dajo.png" style="width:12px;height:12px;vertical-align:middle;margin-right:2px">${prev.dajo || 0}개</span>`;
-    html += `</div>`;
-  }
-
-  // 입력 필드
-  const mesoDisplay = current ? String((current.meso || 0) / 100000000) : '';
-  const dajoDisplay = current ? String(current.dajo || 0) : '';
-
-  html += `<div style="display:flex;gap:8px;align-items:stretch;">`;
-  html += `<div style="flex:1;background:#131822;border:1px solid #373A40;border-radius:6px;padding:8px;">`;
-  html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">`;
-  html += `<img src="meso.png" style="width:16px;height:16px">`;
-  html += `<span style="color:#8F96A3;font-size:11px;font-weight:600;">총 메소</span>`;
-  html += `</div>`;
-  html += `<input type="text" id="balanceMesoInput" placeholder="억 단위 (예: 152.3)" value="${mesoDisplay}" style="width:100%;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;text-align:right;">`;
-  html += `</div>`;
-  html += `<div style="flex:1;background:#131822;border:1px solid #373A40;border-radius:6px;padding:8px;">`;
-  html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">`;
-  html += `<img src="dajo.png" style="width:16px;height:16px">`;
-  html += `<span style="color:#8F96A3;font-size:11px;font-weight:600;">총 다조</span>`;
-  html += `</div>`;
-  html += `<input type="text" id="balanceDajoInput" placeholder="개수 (예: 350)" value="${dajoDisplay}" style="width:100%;padding:6px 8px;background:#1B2030;border:1px solid #373A40;border-radius:4px;color:#C1C2C5;font-family:inherit;font-size:13px;text-align:right;">`;
-  html += `</div>`;
-  html += `<div style="display:flex;flex-direction:column;gap:4px;justify-content:flex-end;">`;
-  html += `<button class="btn-add" onclick="saveBalance()" style="padding:6px 20px;font-size:13px;">기록</button>`;
-  if (current) html += `<button onclick="deleteBalance()" style="padding:4px 12px;font-size:11px;border:1px solid #373A40;background:#131822;color:#8F96A3;border-radius:4px;cursor:pointer;font-family:inherit;">삭제</button>`;
-  html += `</div>`;
-  html += `</div>`;
-
-  // 변동 표시
+  let h = `<div class="bal-row">
+    <span class="bal-title">🧾 잔고 기록 <span class="hint">(선택 · 끄기 전 총 보유량)</span></span>
+    <div class="mzw bal-in"><input type="text" id="balanceMesoInput" class="jr-in" inputmode="decimal" autocomplete="off" placeholder="총 메소 (숫자 그대로)" value="${current ? current.meso || 0 : ''}"><div class="live" id="balMesoLive">${current ? formatMeso(current.meso || 0) + ' 메소' : ''}</div></div>
+    <div class="mzw bal-in small"><input type="text" id="balanceDajoInput" class="jr-in" inputmode="decimal" autocomplete="off" placeholder="총 다조" value="${current ? current.dajo || 0 : ''}"><div class="live"></div></div>
+    <button class="btn-add" onclick="saveBalance()">기록</button>
+    ${current ? '<button class="mini-btn" onclick="deleteBalance()">삭제</button>' : ''}
+  </div>`;
   if (current && prev) {
-    const deltaMeso = (current.meso || 0) - (prev.meso || 0);
-    const deltaDajo = (current.dajo || 0) - (prev.dajo || 0);
-    const mesoColor = deltaMeso > 0 ? '#ef4444' : deltaMeso < 0 ? '#60a5fa' : '#5c5f66';
-    const dajoColor = deltaDajo > 0 ? '#ef4444' : deltaDajo < 0 ? '#60a5fa' : '#5c5f66';
-    const dajoPrice = getDajoPrice();
-    const totalMeso = deltaMeso + deltaDajo * dajoPrice;
-    const totalColor = totalMeso > 0 ? '#ef4444' : totalMeso < 0 ? '#60a5fa' : '#5c5f66';
-
-    html += `<div style="display:flex;gap:16px;align-items:center;padding:8px 10px;background:#0d1a2e;border:1px solid #1971c2;border-radius:4px;margin-top:8px;flex-wrap:wrap;">`;
-    html += `<span style="color:#1971c2;font-weight:700;font-size:13px;">전일 대비</span>`;
-    html += `<span style="color:${mesoColor};font-family:'MaplestoryOTFBold',Consolas,monospace;font-size:14px;"><img src="meso.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">${deltaMeso >= 0 ? '+' : ''}${formatMeso(deltaMeso)}</span>`;
-    html += `<span style="color:${dajoColor};font-family:'MaplestoryOTFBold',Consolas,monospace;font-size:14px;"><img src="dajo.png" style="width:14px;height:14px;vertical-align:middle;margin-right:2px">${deltaDajo >= 0 ? '+' : ''}${deltaDajo}개</span>`;
-    html += `<span style="color:${totalColor};font-size:12px;margin-left:auto;">환산 ${totalMeso >= 0 ? '+' : ''}${formatMeso(totalMeso)}</span>`;
-    html += `</div>`;
-  } else if (current && !prev) {
-    html += `<div style="padding:6px 10px;color:#5c5f66;font-size:12px;margin-top:6px;">첫 잔고 기록! 다음 기록부터 변동이 표시됩니다.</div>`;
+    const dm = (current.meso || 0) - (prev.meso || 0), dd = (current.dajo || 0) - (prev.dajo || 0);
+    const tot = dm + dd * getDajoPrice();
+    h += `<div class="bal-diff">${prev.date.slice(5)} 대비 <b class="num ${dm < 0 ? 'c-neg' : 'c-good'}">${dm < 0 ? '-' : '+'}${formatMeso(Math.abs(dm))}</b> · 다조 <b class="num c-dajo">${dd < 0 ? '-' : '+'}${Math.abs(dd)}개</b> <span class="hint">환산 ${tot < 0 ? '-' : '+'}${formatMesoMan(Math.abs(tot))}</span></div>`;
+  } else if (prev) {
+    h += `<div class="bal-diff hint">이전 잔고 ${prev.date.slice(5)}: ${formatMeso(prev.meso || 0)} · 다조 ${prev.dajo || 0}개</div>`;
+  } else if (current) {
+    h += `<div class="bal-diff hint">첫 잔고 기록 — 다음 기록부터 변동이 표시됩니다.</div>`;
   }
-
-  wrap.innerHTML = html;
+  wrap.innerHTML = h;
+  const mi = document.getElementById('balanceMesoInput');
+  mi.addEventListener('input', () => { document.getElementById('balMesoLive').textContent = mesoAmountHint(mi.value); });
+  mi.addEventListener('keydown', e => { if (e.key === 'Enter') saveBalance(); });
 }
 
 // --- 대시보드 ---
@@ -4870,46 +4987,6 @@ function parseMeso(str) {
   return Math.round(num * 100000000);
 }
 
-function setLedgerType(currency, type) {
-  const wrap = document.getElementById(currency === 'meso' ? 'mesoTypeBtns' : 'dajoTypeBtns');
-  wrap.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.val === type));
-}
-
-function getLedgerType(currency) {
-  const wrap = document.getElementById(currency === 'meso' ? 'mesoTypeBtns' : 'dajoTypeBtns');
-  const active = wrap.querySelector('.type-btn.active');
-  return active ? active.dataset.val : 'income';
-}
-
-function addLedger() {
-  const date = _selectedDate;
-  const mesoType = getLedgerType('meso');
-  const dajoType = getLedgerType('dajo');
-  const mesoStr = document.getElementById('ledgerMesoAmt').value;
-  const dajoStr = document.getElementById('ledgerDajoAmt').value;
-  const memo = document.getElementById('ledgerMemo').value.trim();
-  const mesoAmt = parseMeso(mesoStr);
-  const dajoAmt = Math.round(Number(dajoStr.replace(/[^0-9.\-]/g, '')) || 0);
-  if (!date || (!mesoAmt && !dajoAmt)) { toast('금액을 입력하세요.', 'error'); return; }
-  const data = loadData();
-  if (!data.ledger) data.ledger = [];
-  const category = document.getElementById('ledgerCategory').value;
-  if (mesoAmt) {
-    data.ledger.push({ date, type: mesoType, currency: 'meso', amount: mesoAmt, memo, category, id: Date.now() });
-  }
-  if (dajoAmt) {
-    data.ledger.push({ date, type: dajoType, currency: 'dajo', amount: dajoAmt, memo, category, id: Date.now() + 1 });
-  }
-  data.ledger.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
-  saveData(data);
-  document.getElementById('ledgerMesoAmt').value = '';
-  document.getElementById('ledgerDajoAmt').value = '';
-  document.getElementById('ledgerMemo').value = '';
-  renderLedger();
-  renderDashboard();
-  renderAssetCalendar();
-  toast('추가됨');
-}
 
 function editLedgerDate(id, td) {
   const data = loadData();
@@ -4966,13 +5043,6 @@ function editLedgerCurrency(id) {
   renderAssetCalendar();
 }
 
-function setLedgerCat(val) {
-  document.getElementById('ledgerCategory').value = val;
-  document.querySelectorAll('#ledgerCatBtns .type-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.val === val);
-  });
-}
-
 function editLedgerCategory(id) {
   const data = loadData();
   const entry = (data.ledger || []).find(e => e.id === id);
@@ -4992,16 +5062,15 @@ function editLedgerAmount(id, td) {
   const isDajo = entry.currency === 'dajo';
   const input = document.createElement('input');
   input.type = 'text';
-  input.value = isDajo ? entry.amount : (entry.amount / 100000000);
+  input.value = isDajo ? entry.amount : entry.amount;
   input.style.cssText = 'width:100%;background:#1B2030;border:1px solid #1971c2;color:#C1C2C5;padding:3px;font-size:12px;text-align:right;border-radius:3px;font-family:inherit;';
-  input.placeholder = isDajo ? '개수' : '억 단위';
+  input.placeholder = isDajo ? '개수' : '메소 (숫자 · 억/만 · 5.4=5.4억)';
   td.innerHTML = '';
   td.appendChild(input);
   input.focus();
   input.select();
   function save() {
-    const val = Number(input.value) || 0;
-    entry.amount = isDajo ? val : Math.round(val * 100000000);
+    entry.amount = isDajo ? (Number(String(input.value).replace(/[^0-9.]/g, '')) || 0) : parseMesoAmount(input.value);
     saveData(data);
     renderLedger();
     renderDashboard();
@@ -5042,54 +5111,6 @@ function deleteLedger(id) {
   toast('삭제됨');
 }
 
-function renderLedger() {
-  const data = loadData();
-  const wrap = document.getElementById('ledgerTableWrap');
-  const ledger = data.ledger || [];
-
-  // Show entries for selected month
-  const selYear = _acYear;
-  const selMonth = _acMonth;
-  const monthLedger = ledger.filter(e => {
-    const [y,m] = e.date.split('-').map(Number);
-    return y === selYear && m === selMonth + 1;
-  });
-
-  if (!monthLedger.length) {
-    wrap.innerHTML = `<div class="no-data">${selMonth+1}월 수입/지출 기록이 없습니다.</div>`;
-    return;
-  }
-
-  const catEmoji = {'보스':'🗡️','장비':'⚔️','강화':'💎','거래':'🔄','기타':'📌'};
-  let html = '<table class="sheet"><thead><tr>';
-  html += '<th style="width:90px">날짜</th><th style="width:55px">분류</th><th style="width:35px"></th><th style="width:42px">구분</th><th>금액</th><th>메모</th><th style="width:28px"></th>';
-  html += '</tr></thead><tbody>';
-
-  monthLedger.forEach(e => {
-    const isIncome = e.type === 'income';
-    const isDajo = e.currency === 'dajo';
-    const icon = isDajo ? '<img src="dajo.png" style="width:14px;height:14px;vertical-align:middle">' : '<img src="meso.png" style="width:14px;height:14px;vertical-align:middle">';
-    const amtDisplay = isDajo ? `${isIncome ? '+' : '-'}${e.amount}개` : `${isIncome ? '+' : '-'}${formatNum(e.amount)}`;
-    const typeBtnStyle = 'border:none;padding:2px 6px;font-size:10px;cursor:pointer;border-radius:3px;font-family:inherit;';
-    const cat = e.category || '기타';
-    const catIcon = catEmoji[cat] || '📌';
-    html += `<tr>`;
-    const shortDate = e.date.slice(5); // MM-DD
-    html += `<td class="row-header" style="cursor:pointer;text-align:center;font-size:12px;" onclick="editLedgerDate(${e.id},this)" title="${e.date}">${shortDate}</td>`;
-    html += `<td style="text-align:center;font-size:11px;cursor:pointer;color:#8F96A3" onclick="editLedgerCategory(${e.id})" title="클릭하여 변경">${catIcon} ${cat}</td>`;
-    html += `<td style="text-align:center;font-size:11px;cursor:pointer" onclick="editLedgerCurrency(${e.id})">${icon}</td>`;
-    html += `<td style="text-align:center;font-size:11px">`;
-    html += `<button onclick="editLedgerType(${e.id})" style="${typeBtnStyle}background:${isIncome ? '#ef4444' : '#60a5fa'};color:#fff;">${isIncome ? '수입' : '지출'}</button>`;
-    html += `</td>`;
-    html += `<td style="text-align:right;padding:4px 6px;font-family:'MaplestoryOTFBold',Consolas,monospace;font-size:12px;color:${isIncome ? '#ef4444' : '#60a5fa'};cursor:pointer" onclick="editLedgerAmount(${e.id},this)">${amtDisplay}</td>`;
-    html += `<td style="padding:4px 6px;color:#8F96A3;font-size:11px;cursor:pointer" onclick="editLedgerMemo(${e.id},this)">${e.memo || '<span style=color:#373A40>메모 추가</span>'}</td>`;
-    html += `<td style="text-align:center"><button onclick="deleteLedger(${e.id})" style="border:none;background:none;color:#5c5f66;cursor:pointer;font-size:14px">✕</button></td>`;
-    html += `</tr>`;
-  });
-
-  html += '</tbody></table>';
-  wrap.innerHTML = html;
-}
 
 // --- 최상단 네비게이션 (재화 관리 <-> 보스 분배) ---
 function setTopView(view) {

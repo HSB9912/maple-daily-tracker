@@ -462,7 +462,7 @@ body.top-bossdist #distribute { display: block !important; }
 }
 body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); letter-spacing: -0.2px; }
 .num, .dash-value, .split-cell, .cell-earned { font-variant-numeric: tabular-nums; }
-.app { max-width: 1280px; padding: 14px 16px; }
+.app { max-width: 100%; padding: 14px 16px; }
 
 /* 상단 */
 .header-bar { gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
@@ -563,20 +563,25 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 .cal2-grid { display: grid; grid-template-columns: repeat(7, 1fr) 1.3fr; gap: 4px; }
 .cal2-dow { font-size: 11px; color: var(--text-3); text-align: center; padding: 2px 0 4px; }
 .cal2-dow.sat { color: #7aa2f7; } .cal2-dow.sun { color: #f7768e; } .cal2-dow.wk { color: var(--text-2); }
-.cal2-day { background: var(--bg); border: 1px solid var(--line-soft); border-radius: 8px; min-height: 72px; padding: 6px 7px; cursor: pointer; display: flex; flex-direction: column; gap: 1px; font-size: 11px; min-width: 0; overflow: hidden; }
+.cal2-day { position: relative; --h: 0; background: linear-gradient(rgba(245,196,81, calc(var(--h) * .13)), rgba(245,196,81, calc(var(--h) * .13))), var(--bg); border: 1px solid var(--line-soft); border-radius: 8px; min-height: 76px; padding: 6px 8px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; font-size: 11px; min-width: 0; overflow: hidden; transition: border-color .12s; }
+.cal2-day::after { content: ''; position: absolute; left: 8px; bottom: 6px; height: 3px; border-radius: 2px; width: calc((100% - 16px) * var(--h)); background: rgba(245,196,81,.55); }
+.cal2-day .d img { width: 12px; height: 12px; vertical-align: -2px; margin-right: 2px; }
+.cal2-day.is-today { border-color: rgba(59,130,246,.6); }
 .cal2-day:hover { border-color: #33405a; }
 .cal2-day .dn { font-size: 12px; color: var(--text-2); font-weight: 600; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; }
-.cal2-day .dn .today-tag { font-size: 9px; background: var(--accent); color: #fff; border-radius: 3px; padding: 0 4px; }
+.cal2-day .dn .today-tag { font-size: 9.5px; background: var(--accent); color: #fff; border-radius: 4px; padding: 1px 5px; line-height: 1.3; white-space: nowrap; font-weight: 600; }
 .cal2-day.sat .dn { color: #7aa2f7; } .cal2-day.sun .dn { color: #f7768e; }
-.cal2-day .m { color: var(--meso); font-weight: 600; white-space: nowrap; }
+.cal2-day .m { color: var(--meso); font-weight: 700; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal2-day .m .short { display: none; }
 .cal2-day .d { color: var(--dajo); }
 .cal2-day .f { color: var(--text-3); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cal2-day.empty { opacity: .45; } .cal2-day.other { opacity: .35; } .cal2-day.future { opacity: .25; }
+.cal2-day.empty { opacity: .5; } .cal2-day.other { opacity: .35; } .cal2-day.future { opacity: .3; border-style: dashed; background: transparent; }
+.cal2-day.future::after { display: none; }
 .cal2-day.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; background: rgba(59,130,246,.06); opacity: 1; }
-.cal2-wk { border-radius: 8px; padding: 6px 9px; background: var(--surface-2); border: 1px solid var(--line); display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; }
+.cal2-wk { position: relative; --h: 0; border-radius: 8px; padding: 6px 10px 12px; background: var(--surface-2); border: 1px solid var(--line); display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; }
+.cal2-wk::after { content: ''; position: absolute; left: 10px; bottom: 6px; height: 3px; border-radius: 2px; width: calc((100% - 20px) * var(--h)); background: rgba(52,211,153,.6); }
 .cal2-wk .t { font-size: 10px; color: var(--text-3); }
-.cal2-wk b { font-size: 13.5px; color: var(--good); white-space: nowrap; }
+.cal2-wk b { font-size: 15px; color: var(--good); white-space: nowrap; }
 .cal2-wk .s { font-size: 10px; color: var(--text-3); }
 .cal2-wk.now { border-color: rgba(52,211,153,.4); }
 .cal2-grid.weekonly { grid-template-columns: 1fr; }
@@ -711,8 +716,13 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 /* 일일 기록 — 표 보기 */
 #inputTableWrap.sheet-wrap { overflow-x: auto; }
 #inputTableWrap .sheet { table-layout: auto; }
-#inputTableWrap .sheet td.row-header { min-width: 108px; vertical-align: top; padding: 6px 8px; }
-#inputTableWrap .sheet td.cell { min-width: 112px; }
+#inputTableWrap .sheet td.row-header { min-width: 100px; width: 1%; vertical-align: top; padding: 6px 8px; }
+#inputTableWrap .sheet { width: 100%; }
+#inputTableWrap .sheet td.cell { min-width: 86px; }
+#inputTableWrap .sheet td.cell.col-meso { min-width: 150px; }
+#inputTableWrap .sheet td.cell.col-exp { min-width: 116px; }
+#inputTableWrap .sheet td.cell input { width: 0; flex: 1 1 0; }
+#inputTableWrap .sheet td.cell.col-exp input[data-field$="Lv"] { flex: 0 0 34px; }
 .tbl-name { font-size: 13px; font-weight: 700; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
 .tbl-ctl { display: flex; gap: 4px; align-items: center; margin-top: 4px; }
 .tbl-ctl .mode-pill button { font-size: 10px; padding: 1px 5px; }
@@ -724,7 +734,7 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 .sheet td.cell input:focus { background: var(--surface-2); }
 
 /* 선택한 날 요약 */
-.today { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+#todayCards.today { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
 .tcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; min-width: 0; }
 .tcard .lbl { font-size: 12px; color: var(--text-2); margin-bottom: 6px; }
 .tcard .val { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -766,7 +776,7 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 
 @media (max-width: 820px) {
   .dashboard { grid-template-columns: 1fr; }
-  .today { grid-template-columns: 1fr 1fr; }
+  #todayCards.today { grid-template-columns: 1fr 1fr; }
   .mf-item { grid-template-columns: 44px 1fr auto 20px; }
   .mf-item .c, .mf-item .cur, .mf-item .ty { display: none; }
   .bal-in, .bal-in.small { width: 100%; }
@@ -2620,6 +2630,17 @@ function renderAssetCalendar() {
   const weekOnly = jrPref('cal', 'full') === 'week';
   const sgn = v => v < 0 ? '-' : '+';
   let monthM = 0, monthD = 0, grid = '', wk = 0;
+  const dayVal = s => Math.max(0, (dayMeso[s] || 0) + (dayDajo[s] || 0) * dp);
+  let maxWeek = 0;
+  const monthVals = [];
+  for (let c = new Date(start); c <= end; c.setDate(c.getDate() + 7)) {
+    let w = 0;
+    for (let i = 0; i < 7; i++) { const t = new Date(c); t.setDate(c.getDate() + i); const s = ds(t); w += dayVal(s); if (t.getMonth() === month && dayVal(s) > 0) monthVals.push(dayVal(s)); }
+    maxWeek = Math.max(maxWeek, w);
+  }
+  // 막대 기준 = 그 달 상위 10% 날 (한두 번 튄 날 때문에 나머지가 다 납작해지지 않게)
+  monthVals.sort((x, y) => x - y);
+  const maxDay = monthVals.length ? monthVals[Math.min(monthVals.length - 1, Math.floor(monthVals.length * 0.9))] : 0;
   const thisThu = (() => { const t = new Date(today + 'T00:00:00'); t.setDate(t.getDate() - (t.getDay() - 4 + 7) % 7); return ds(t); })();
   const DOW = ['목', '금', '토', '일', '월', '화', '수'];
   grid += DOW.map((d, i) => `<div class="cal2-dow${i === 2 ? ' sat' : i === 3 ? ' sun' : ''}">${d}</div>`).join('') + '<div class="cal2-dow wk">주간 합계</div>';
@@ -2633,17 +2654,18 @@ function renderAssetCalendar() {
       const m = dayMeso[s] || 0, d = dayDajo[s] || 0, li = ledIn[s] || 0, lo = ledOut[s] || 0, bm = balM[s] || 0, bdj = balD[s] || 0;
       wm += m; wd += d;
       if (inMonth) { monthM += m; monthD += d; }
-      const cls = ['cal2-day', i === 2 ? 'sat' : '', i === 3 ? 'sun' : '', inMonth ? '' : 'other', future ? 'future' : '', (!m && !d && !li && !lo && !bm && !bdj && !future) ? 'empty' : '', s === selected ? 'sel' : '', s === today ? 'today' : ''].filter(Boolean).join(' ');
-      grid += `<div class="${cls}" onclick="selectDate('${s}')"><div class="dn">${cur.getDate()}${s === today ? '<span class="today-tag">오늘</span>' : ''}</div>`
+      const cls = ['cal2-day', i === 2 ? 'sat' : '', i === 3 ? 'sun' : '', inMonth ? '' : 'other', future ? 'future' : '', (!m && !d && !li && !lo && !bm && !bdj && !future) ? 'empty' : '', s === selected ? 'sel' : '', s === today ? 'is-today' : ''].filter(Boolean).join(' ');
+      const heat = maxDay ? Math.min(1, dayVal(s) / maxDay) : 0;
+      grid += `<div class="${cls}" style="--h:${heat.toFixed(3)}" onclick="selectDate('${s}')"><div class="dn"><span>${cur.getDate()}</span>${s === today ? '<span class="today-tag">오늘</span>' : ''}</div>`
         + (m ? `<div class="m num"><span class="full">${sgn(m)}${formatMesoMan(Math.abs(m))}</span><span class="short">${m < 0 ? '-' : ''}${Math.floor(Math.abs(m) / 1e8)}억</span></div>` : '')
-        + (d ? `<div class="d num">${sgn(d)}${Math.abs(d).toLocaleString()}개</div>` : '')
+        + (d ? `<div class="d num"><img src="dajo.png" alt="">${sgn(d)}${Math.abs(d).toLocaleString()}</div>` : '')
         + (li || lo ? `<div class="f num">💸 ${[li ? '+' + formatMesoMan(li) : '', lo ? '-' + formatMesoMan(lo) : ''].filter(Boolean).join(' / ')}</div>` : '')
         + (bm || bdj ? `<div class="f num">📊 ${bm ? sgn(bm) + formatMesoMan(Math.abs(bm)) : ''}${bdj ? ' ' + sgn(bdj) + Math.abs(bdj) + '개' : ''}</div>` : '')
         + '</div>';
       cur.setDate(cur.getDate() + 1);
     }
     const tot = wm + wd * dp, now = wkStart === thisThu;
-    grid += `<div class="cal2-wk${now ? ' now' : ''}"><span class="t">${wk}주차${now ? ' · 이번 주' : ''}</span><b class="num ${tot < 0 ? 'c-neg' : ''}">${sgn(tot)}${formatMesoMan(Math.abs(tot))}</b><span class="s num">메소 ${formatMesoMan(wm)} + 다조 ${wd.toLocaleString()}개</span></div>`;
+    grid += `<div class="cal2-wk${now ? ' now' : ''}" style="--h:${maxWeek ? Math.min(1, Math.max(0, tot) / maxWeek).toFixed(3) : 0}"><span class="t">${wk}주차${now ? ' · 이번 주' : ''}</span><b class="num ${tot < 0 ? 'c-neg' : ''}">${sgn(tot)}${formatMesoMan(Math.abs(tot))}</b><span class="s num">메소 ${formatMesoMan(wm)} + 다조 ${wd.toLocaleString()}개</span></div>`;
   }
   const monthTot = monthM + monthD * dp;
   wrap.innerHTML = `<div class="cal2">
@@ -2729,7 +2751,7 @@ function renderInputSheet() {
     data.resources.forEach(r => {
       let rec = data.records?.[date]?.[ch]?.[r];
       const ro = isSettled ? ' readonly' : '';
-      html += `<td class="cell"><div class="cell-stack">`;
+      html += `<td class="cell${r === '매소' ? ' col-meso' : r === '경험치' ? ' col-exp' : ''}"><div class="cell-stack">`;
 
       if (r === '경험치') {
         if (typeof rec !== 'object' || rec === null) rec = {};

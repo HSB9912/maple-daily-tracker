@@ -526,6 +526,8 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 .setting-section { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; }
 .setting-section h3 { font-size: 15px; }
 .item-row { background: var(--bg); border-color: var(--line); border-radius: 8px; }
+.item-row .fav-star { color: #3a4252; font-size: 14px; padding: 2px 8px; }
+.item-row .fav-star.on { color: var(--meso); }
 
 .toast { border-radius: 8px; }
 .toast.success { background: #1f2a3d; border: 1px solid var(--line); }
@@ -1095,7 +1097,7 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 </style>
 
 <script>
-const APP_VERSION = 4;
+const APP_VERSION = 5;
 
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
@@ -4606,6 +4608,7 @@ function renderList(containerId, items, type) {
     const row = document.createElement('div');
     row.className = 'item-row';
     row.innerHTML = `
+      ${type === 'res' ? `<button class="btn-move fav-star${getFavRes(loadData()).includes(item) ? ' on' : ''}" onclick="toggleFavRes(${i})" title="★ = 일지 '자주 쓰는 재화'에 기본으로 보임">★</button>` : ''}
       <span class="item-name" data-type="${type}" data-index="${i}" title="클릭하여 수정">${item}</span>
       <button class="btn-move" onclick="moveItem('${type}',${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
       <button class="btn-move" onclick="moveItem('${type}',${i},1)" ${i === items.length - 1 ? 'disabled' : ''}>▼</button>
@@ -4613,6 +4616,17 @@ function renderList(containerId, items, type) {
     `;
     el.appendChild(row);
   });
+}
+
+function toggleFavRes(i) {
+  const data = loadData();
+  const name = data.resources[i];
+  const cur = getFavRes(data);
+  data.favResources = cur.includes(name) ? cur.filter(r => r !== name) : [...cur, name];
+  saveData(data);
+  renderSettings();
+  renderInputTable();
+  toast(data.favResources.includes(name) ? `${name} — 일지 기본 표시` : `${name} — 전체 보기에서만`);
 }
 
 function startRename(span) {
@@ -4653,6 +4667,7 @@ function startRename(span) {
       }
       renameCharMeta(data, oldName, newName);
     } else {
+      if (data.favResources) data.favResources = data.favResources.map(r => r === oldName ? newName : r);
       Object.keys(data.records).forEach(date => {
         Object.keys(data.records[date]).forEach(ch => {
           if (data.records[date][ch][oldName] !== undefined) {
@@ -4717,6 +4732,8 @@ function deleteItem(type, index) {
     Object.keys(data.records).forEach(date => { delete data.records[date]?.[name]; });
     if (data.settlements?.[name]) delete data.settlements[name];
     deleteCharMeta(data, name);
+  } else if (data.favResources) {
+    data.favResources = data.favResources.filter(r => r !== name);
   }
   saveData(data);
   renderSettings();

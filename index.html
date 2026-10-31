@@ -639,6 +639,73 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 .jr-add { margin-top: 8px; }
 .jr-add input { width: 100%; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; color: var(--text); font: inherit; font-size: 13px; padding: 8px 10px; }
 
+
+/* 부주 정산 — 캐릭터 줄 카드 */
+.settle-scope-bar { margin: 0 0 12px; }
+.st-head { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.st-head h2 { font-size: 16px; }
+.st-head .total { display: flex; gap: 22px; margin-left: auto; align-items: flex-end; }
+.st-head .total > div { text-align: right; }
+.st-head .lbl { font-size: 11px; color: var(--text-3); }
+.st-head .val { font-size: 19px; font-weight: 700; }
+.st-rows { display: flex; flex-direction: column; gap: 8px; }
+.st-row { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.st-row.drift { border-color: rgba(245,158,11,.45); }
+.st-main { display: grid; grid-template-columns: 160px 1fr 170px 180px 96px; align-items: center; gap: 16px; padding: 14px 16px; }
+.st-main .name { font-weight: 700; font-size: 15px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.st-main .meta { font-size: 11px; color: var(--text-3); margin: 3px 0 6px; }
+.st-main .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.st-main .chip img { width: 14px; height: 14px; align-self: center; }
+.st-main .chip .q { font-weight: 700; font-size: 13.5px; }
+.st-main .chip .eq { font-size: 11px; color: var(--text-3); }
+.st-main .chip.muted { opacity: .55; }
+.drift-note { margin-top: 8px; font-size: 11px; color: var(--warn); line-height: 1.5; }
+.drift-note s { color: var(--text-3); }
+.st-main .progress { font-size: 11px; color: var(--text-3); }
+.st-main .progress .bar { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; margin: 6px 0 4px; }
+.st-main .progress .bar i { display: block; height: 100%; background: linear-gradient(90deg, #2563eb, #3b82f6); }
+.st-main .progress .line { display: flex; justify-content: space-between; gap: 6px; }
+.st-main .amount { text-align: right; }
+.st-main .amount .m { font-size: 16px; font-weight: 700; color: var(--meso); }
+.st-main .amount .c { font-size: 13px; font-weight: 600; color: var(--cash); margin-top: 2px; }
+.st-main .act .btn-add { width: 100%; }
+.st-hist { border-top: 1px solid var(--line-soft); padding: 10px 16px 12px; background: var(--bg); border-radius: 0 0 var(--r) var(--r); }
+.st-hist-h { font-size: 11px; color: var(--text-2); font-weight: 600; margin: 4px 0 6px; }
+.st-hist-h.locked { color: #7ed4d4; margin-top: 10px; }
+.st-done { margin-top: 12px; font-size: 12.5px; color: var(--text-2); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.st-done-i { display: inline-flex; gap: 6px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+
+/* 정산 창 */
+#settleModal > div, #settleEditModal > div, #changelogModal > div { background: var(--surface) !important; border-color: var(--line) !important; border-radius: 12px !important; }
+.settle-mode-tab { border-radius: 6px 6px 0 0; }
+.settle-mode-tab.active { color: #fff; border-bottom-color: var(--accent); }
+.settle-live { font-size: 11.5px; color: #e8d26a; text-align: right; margin: -6px 0 8px; min-height: 14px; font-variant-numeric: tabular-nums; }
+.settle-cash-row { display: grid; grid-template-columns: 90px 140px 24px 1fr; gap: 8px; align-items: center; padding: 5px 10px; margin-bottom: 8px; border-radius: 4px; border: 1px solid rgba(255,155,115,.35); background: rgba(255,155,115,.06); font-size: 12px; color: var(--cash); font-weight: 600; }
+.settle-cash-row input { background: transparent; border: 0; color: var(--cash); font: inherit; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.settle-breakdown { margin-top: 10px; }
+.settle-breakdown:empty { display: none; }
+.settle-breakdown { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--bg); }
+.bd-title { font-size: 12.5px; font-weight: 600; margin-bottom: 4px; }
+.bd-row { display: grid; grid-template-columns: 1.4fr .8fr .8fr 1fr; gap: 8px; padding: 4px 0; border-top: 1px solid var(--line-soft); font-size: 12.5px; align-items: center; }
+.bd-row > span:not(:first-child) { text-align: right; }
+.bd-h { font-size: 11px; color: var(--text-3); border-top: 0; }
+.bd-foot { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 6px; font-size: 12.5px; }
+.pbadge { font-size: 9.5px; padding: 1px 5px; border-radius: 3px; font-weight: 600; }
+.pbadge.fx { background: rgba(52,211,153,.12); color: #6ee7b7; }
+.pbadge.vr { background: rgba(245,158,11,.12); color: var(--warn); }
+.settle-confirm { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(245,158,11,.45); background: var(--warn-soft); font-size: 12.5px; cursor: pointer; line-height: 1.5; }
+.settle-confirm.ok { border-color: rgba(52,211,153,.45); background: rgba(52,211,153,.07); }
+.settle-confirm input { margin-top: 3px; accent-color: var(--good); width: 15px; height: 15px; }
+
+@media (max-width: 820px) {
+  .st-main { grid-template-columns: 1fr auto; gap: 10px; }
+  .st-main .chips-wrap, .st-main .progress, .st-main .act { grid-column: 1 / -1; }
+  .st-head .total { margin-left: 0; width: 100%; justify-content: space-between; }
+  .settle-cash-row { grid-template-columns: 80px 1fr 24px; }
+  .settle-cash-row .hint { display: none; }
+  .bd-row { font-size: 11.5px; }
+}
+
 /* 선택한 날 요약 */
 .today { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
 .tcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; min-width: 0; }
@@ -754,11 +821,11 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
     <div class="settle-scope-bar">
       <span style="color:#8F96A3;font-size:12px;">보기:</span>
       <div class="scope-tab-group" id="settleScopeTabs">
-        <button data-scope="remaining" class="active" onclick="setSettleScope('remaining')">잔여만</button>
+        <button data-scope="remaining" class="active" onclick="setSettleScope('remaining')">남은 것</button>
         <button data-scope="all" onclick="setSettleScope('all')">전체 누적</button>
-        <button data-scope="paid" onclick="setSettleScope('paid')">정산된 분</button>
+        <button data-scope="paid" onclick="setSettleScope('paid')">정산된 것</button>
       </div>
-      <span style="color:#5c5f66;font-size:11px;">잔여만 = 받은 만큼 차감 (변동가 → 고정가 → 매소 순으로 떨굼)</span>
+      <span class="hint">남은 것 = 받은 만큼 뺀 나머지 (재화 지정은 그 재화에서, 금액 정산은 고른 순서대로)</span>
       <div id="settlePriceDriftBanner" style="margin-left:auto;"></div>
     </div>
     <div class="sheet-wrap" id="settlementWrap"></div>
@@ -930,9 +997,11 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
     <div id="settleModalHistory" style="display:none;"></div>
     <div id="settleModalTabs" style="display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid #1f2937;flex-wrap:wrap;"></div>
     <div id="settleModalBody"></div>
+    <div id="settleBreakdown" class="settle-breakdown"></div>
+    <div id="settleConfirm"></div>
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
       <button onclick="closeSettleModal()" style="padding:8px 18px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:#1f2937;color:#8F96A3;">취소</button>
-      <button onclick="recordSettlement()" style="padding:8px 18px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:#1971c2;color:#fff;">정산 기록</button>
+      <button id="settleSaveBtn" onclick="recordSettlement()" style="padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:#3b82f6;color:#fff;">정산 기록</button>
     </div>
   </div>
 </div>
@@ -1031,8 +1100,20 @@ const APP_VERSION = 4;
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-10-31c';
+const CHANGELOG_VERSION = '2026-10-31d';
 const CHANGELOG = [
+  {
+    version: '2026-10-31d',
+    title: '💰 부주 정산 화면 + 정산 창 정리',
+    items: [
+      '부주 정산이 <strong>캐릭터별 줄</strong>로 — 남은 재화는 칩으로(빈 열 없음), 받은 비율 막대, 남은 메소·현금, 시세가 바뀐 캐릭터는 그 줄에 직접 ⚠ 표시',
+      '정산 창에서 <strong>어떤 재화가 얼마에 정산되는지</strong> 표로 보여줍니다 (재화 · 수량 · 시세 · = 메소 + 받은 현금과 1억=○원)',
+      '<strong style="color:#f59e0b">📈 변동가 재화</strong>가 들어가면 "지금 시세로 박제" 확인에 체크해야 기록됩니다',
+      '현금/메소로 받을 때 <strong>어디서 뺄지</strong> 고를 수 있습니다 — 기본은 <strong>메소부터</strong> (예전 기록은 그대로 다조부터 계산)',
+      '정산 창 시세 표에 <strong>💵 메소 1억 = ○원</strong>도 같이 — 그 자리에서 고치기',
+      '<strong>받은 메소 칸에 <code>30억 5000만</code>을 쓰면 30만 5000으로 들어가던 문제 수정</strong> (재화 지정의 메소 칸도) — 이제 숫자·억/만 둘 다 됩니다',
+    ],
+  },
   {
     version: '2026-10-31c',
     title: '💸 잔고 기록 + 보스/기타 수입지출 → "돈 흐름" 한 곳으로',
@@ -1776,31 +1857,37 @@ function allocatePaidToResources(data, totals, paidMeso, entries) {
     });
   });
 
-  // ② 지정 없는 정산 금액만 우선순위 자동 차감 — 남은 수량 기준
+  // ② 지정 없는 정산 금액만 자동 차감 — 남은 수량 기준
+  //    order:'meso'로 기록된 정산(2026-10 이후 기본)은 메소부터, 그 외(옛 기록)는 변동가 → 고정가 → 매소
   let remainingPay = paidMeso - explicitMeso;
   if (remainingPay <= 0) return result;
+  const mesoFirstPay = Math.min(remainingPay, (entries || []).filter(e => e && !e.allocations && e.order === 'meso')
+    .reduce((s, e) => s + (Number(e.mesoEquiv) || 0), 0));
 
-  const variable = [], fixedNonMeso = [];
-  let mesoR = null;
-  (data.resources || []).forEach(r => {
-    if (!result[r].hasPrice || result[r].remainingQty <= 0) return;
-    if (r === '매소') mesoR = r;
-    else if (isPriceFixed(r)) fixedNonMeso.push(r);
-    else variable.push(r);
-  });
-  const order = [...variable, ...fixedNonMeso];
-  if (mesoR) order.push(mesoR);
-
-  order.forEach(r => {
-    if (remainingPay <= 0) return;
-    const price = getResourcePrice(r);
-    const availVal = result[r].remainingQty * price;
-    if (availVal <= 0) return;
-    const consumed = Math.min(availVal, remainingPay);
-    result[r].paidQty += consumed / price;
-    result[r].remainingQty -= consumed / price;
-    remainingPay -= consumed;
-  });
+  const drain = (pay, mesoFirst) => {
+    const variable = [], fixedNonMeso = [];
+    let mesoR = null;
+    (data.resources || []).forEach(r => {
+      if (!result[r].hasPrice || result[r].remainingQty <= 0) return;
+      if (r === '매소') mesoR = r;
+      else if (isPriceFixed(r)) fixedNonMeso.push(r);
+      else variable.push(r);
+    });
+    const order = mesoFirst ? [...(mesoR ? [mesoR] : []), ...variable, ...fixedNonMeso] : [...variable, ...fixedNonMeso, ...(mesoR ? [mesoR] : [])];
+    order.forEach(r => {
+      if (pay <= 0) return;
+      const price = getResourcePrice(r);
+      const availVal = result[r].remainingQty * price;
+      if (availVal <= 0) return;
+      const consumed = Math.min(availVal, pay);
+      result[r].paidQty += consumed / price;
+      result[r].remainingQty -= consumed / price;
+      pay -= consumed;
+    });
+    return pay;
+  };
+  drain(mesoFirstPay, true);
+  drain(remainingPay - mesoFirstPay, false);
   return result;
 }
 
@@ -2351,6 +2438,7 @@ function onResourcePriceInput(el) {
 let _modalPriceTimer = null;
 function onModalPriceInput(el) {
   const res = el.dataset.modalPrice;
+  _settleConfirmed = false;
   setResourcePrice(res, parseMesoText(el.value));
   // 잔여 박스/이력/모드별 미리보기 재계산
   if (_modalPriceTimer) clearTimeout(_modalPriceTimer);
@@ -3373,6 +3461,8 @@ let _currentSettleMode = 'cash'; // 'cash' | 'meso' | 'advance' | 'full'
 function openSettleModal(ch) {
   _currentSettleChar = ch;
   _currentSettleMode = 'cash';
+  _settleOrder = 'meso';
+  _settleConfirmed = false;
   _itemsAlloc = {};
   _allocResList = [];
   document.getElementById('settleModal').style.display = 'flex';
@@ -3384,6 +3474,7 @@ function closeSettleModal() {
 }
 function setSettleMode(mode) {
   _currentSettleMode = mode;
+  _settleConfirmed = false;
   renderSettleModal();
 }
 
@@ -3421,6 +3512,7 @@ function renderSettleModal() {
       p += `<span style="color:#8F96A3;font-weight:400;display:block;margin-top:3px;">기록된 정산은 박제되어 영향 없음. 미정산 잔여만 새 시세로 재계산됨.</span>`;
       p += `</div>`;
     }
+    p += `<div class="settle-cash-row"><span>💵 메소 1억</span><input type="text" value="${cashRate ? cashRate.toLocaleString() : ''}" placeholder="원" onchange="onModalCashRate(this)"><span>원</span><span class="hint">현금 정산에 쓰는 시세</span></div>`;
     p += `<div class="settle-price-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;">`;
     pricedRes.forEach(r => {
       const fixed = isPriceFixed(r);
@@ -3500,12 +3592,14 @@ function renderSettleModal() {
   if (mode === 'cash') {
     const presetCash = Math.max(0, st.remainingCash);
     body.innerHTML = `
-      <div class="settle-row"><label>받은 금액</label><input type="text" id="settleAmount" value="${presetCash}" placeholder="원" oninput="liveSettleInput()"><span class="settle-unit">원</span></div>
+      <div class="settle-row"><label>받은 현금</label><input type="text" id="settleAmount" value="${presetCash}" placeholder="원" inputmode="numeric" oninput="liveSettleInput()"><span class="settle-unit">원</span></div>
+      <div class="settle-live" id="settleAmtLive"></div>
       <div class="settle-quick">
         <button class="settle-quick-btn" onclick="setSettleAmountQuick('cash','full')">전체(${presetCash.toLocaleString()}원)</button>
         <button class="settle-quick-btn" onclick="setSettleAmountQuick('cash','half')">절반</button>
         <button class="settle-quick-btn" onclick="setSettleAmountQuick('cash','100m')">1억메소만큼</button>
       </div>
+      ${settleOrderSeg()}
       <div class="settle-row"><label>메모</label><input type="text" id="settleMemo" placeholder="예: 통장입금, 페이코"></div>
       ${!cashRate ? '<div style="color:#ef4444;font-size:12px;padding:8px;background:#1a0e0e;border-radius:4px;">⚠ 설정 탭에서 메소→현금 시세를 먼저 입력해주세요</div>' : ''}
       <div id="settlePreview" class="settle-preview"></div>
@@ -3513,12 +3607,14 @@ function renderSettleModal() {
   } else if (mode === 'meso') {
     const presetMeso = Math.max(0, st.remainingMeso);
     body.innerHTML = `
-      <div class="settle-row"><label>받은 메소</label><input type="text" id="settleAmount" value="${presetMeso}" placeholder="메소" oninput="liveSettleInput()"><span class="settle-unit">메소</span></div>
+      <div class="settle-row"><label>받은 메소</label><input type="text" id="settleAmount" value="${presetMeso}" placeholder="숫자 그대로 또는 30억 5000만" inputmode="decimal" oninput="liveSettleInput()"><span class="settle-unit">메소</span></div>
+      <div class="settle-live" id="settleAmtLive"></div>
       <div class="settle-quick">
         <button class="settle-quick-btn" onclick="setSettleAmountQuick('meso','full')">전체(${formatNum(presetMeso)})</button>
         <button class="settle-quick-btn" onclick="setSettleAmountQuick('meso','100m')">1억</button>
         <button class="settle-quick-btn" onclick="setSettleAmountQuick('meso','50m')">5천만</button>
       </div>
+      ${settleOrderSeg()}
       <div class="settle-row"><label>메모</label><input type="text" id="settleMemo" placeholder="예: 직거래"></div>
       <div id="settlePreview" class="settle-preview"></div>
     `;
@@ -3535,7 +3631,9 @@ function renderSettleModal() {
           <option value="meso">메소로 지급 (메소)</option>
         </select>
       </div>
-      <div class="settle-row"><label>지급 금액</label><input type="text" id="settleAmount" placeholder="0" oninput="liveSettleInput()"><span class="settle-unit" id="settleAdvanceUnit">원</span></div>
+      <div class="settle-row"><label>지급 금액</label><input type="text" id="settleAmount" placeholder="0" inputmode="decimal" oninput="liveSettleInput()"><span class="settle-unit" id="settleAdvanceUnit">원</span></div>
+      <div class="settle-live" id="settleAmtLive"></div>
+      ${settleOrderSeg()}
       <div class="settle-row"><label>메모</label><input type="text" id="settleMemo" placeholder="예: 다음주 부주값 선지급"></div>
       <div id="settlePreview" class="settle-preview"></div>
     `;
@@ -3552,7 +3650,7 @@ function renderSettleModal() {
         ✅ 잔여 누적 메소 <strong style="font-family:Consolas,monospace;">${formatNum(st.remainingMeso)}</strong> 전체를 정산 완료 처리합니다.
       </div>
       <div class="settle-row"><label>받은 방식</label>
-        <select id="settleFullType" style="flex:1;background:#1B2030;border:1px solid #373A40;color:#C1C2C5;border-radius:4px;padding:7px 10px;font-size:13px;font-family:inherit;">
+        <select id="settleFullType" onchange="liveSettleInput()" style="flex:1;background:#1B2030;border:1px solid #373A40;color:#C1C2C5;border-radius:4px;padding:7px 10px;font-size:13px;font-family:inherit;">
           <option value="cash">💵 현금 (${cashRate ? st.remainingCash.toLocaleString() + '원' : '시세 미설정'})</option>
           <option value="meso">💰 메소 (${formatNum(st.remainingMeso)})</option>
         </select>
@@ -3636,7 +3734,7 @@ function allocToggle(i) {
 function onAllocInput(i) {
   const r = _allocResList[i];
   const el = document.getElementById('allocQ' + i);
-  let v = Number(String(el.value).replace(/[^0-9.]/g, '')) || 0;
+  let v = r.name === '매소' ? parseMesoText(el.value) : (Number(String(el.value).replace(/[^0-9.]/g, '')) || 0);
   if (v > r.avail) { v = allocInputVal(r.avail); el.value = v; }  // 잔여 초과 클램프
   _itemsAlloc[r.name] = v;
   const ck = document.getElementById('allocCk' + i);
@@ -3679,6 +3777,9 @@ function updateAllocTotals() {
   });
   const total = calcAllocTotal();
   const cashRate = getCashRate();
+  const pickedSplit = {};
+  _allocResList.forEach(r => { const q = Number(_itemsAlloc[r.name]) || 0; if (q > 0) pickedSplit[r.name] = q; });
+  renderSettleBreakdown(pickedSplit, 0, '', false);
   const tm = document.getElementById('allocTotMeso');
   const tc = document.getElementById('allocTotCash');
   if (tm) tm.textContent = formatMeso(total) + ' 메소';
@@ -3698,46 +3799,106 @@ function updateAllocTotals() {
   `;
 }
 
+// ===== 정산 창: 금액 읽기 / 재화별 내역 / 변동 시세 확인 (2026-10) =====
+let _settleOrder = 'meso';        // 금액 정산을 어디서부터 뺄지 — 'meso' | 'var'
+let _settleConfirmed = false;     // 변동가 재화 박제 확인 체크
+let _settleNeedsConfirm = false;
+
+function readSettleAmount() {
+  const el = document.getElementById('settleAmount');
+  const mode = _currentSettleMode;
+  const isCash = mode === 'cash' || (mode === 'advance' && (document.getElementById('settleAdvanceType')?.value || 'cash') === 'cash');
+  if (!el) return { raw: 0, mesoEquiv: 0, isCash };
+  const raw = isCash ? (Number(el.value.replace(/[^0-9.]/g, '')) || 0) : parseMesoText(el.value);
+  const rate = getCashRate();
+  return { raw, mesoEquiv: isCash ? (rate ? Math.round(raw / rate * 100000000) : 0) : raw, isCash };
+}
+// 이번 금액이 표에서 어느 재화를 얼마나 지우는지 (기록 후 표와 똑같은 계산)
+function settleSplit(data, st, mesoEquiv, order) {
+  const base = allocatePaidToResources(data, st.totals, Math.max(0, st.paidMeso), st.entries);
+  const after = allocatePaidToResources(data, st.totals, Math.max(0, st.paidMeso + mesoEquiv), [...st.entries, { mesoEquiv, order }]);
+  const split = {};
+  let used = 0;
+  (data.resources || []).forEach(r => {
+    const d = (after[r]?.paidQty || 0) - (base[r]?.paidQty || 0);
+    if (d > 1e-9) { split[r] = d; used += d * getResourcePrice(r); }
+  });
+  return { split, left: Math.max(0, Math.round(mesoEquiv - used)) };
+}
+function renderSettleBreakdown(split, left, footHtml, showTable) {
+  const box = document.getElementById('settleBreakdown');
+  const conf = document.getElementById('settleConfirm');
+  const keys = Object.keys(split);
+  const varKeys = keys.filter(r => r !== '매소' && !isPriceFixed(r));
+  _settleNeedsConfirm = varKeys.length > 0;
+  if (box) {
+    const q = (r, v) => r === '매소' ? formatMeso(Math.round(v)) : (Math.round(v * 100) / 100).toLocaleString() + '개';
+    box.innerHTML = showTable && (keys.length || left) ? `
+      <div class="bd-title">📋 이번 정산 내역 <span class="hint">— 이 시세로 박제됨</span></div>
+      <div class="bd-row bd-h"><span>재화</span><span>수량</span><span>시세</span><span>= 메소</span></div>
+      ${keys.map(r => `<div class="bd-row"><span>${r === '매소' ? '메소' : jrEsc(r)}${r === '매소' ? '' : isPriceFixed(r) ? ' <span class="pbadge fx">🔒고정</span>' : ' <span class="pbadge vr">📈변동</span>'}</span><span class="num">${q(r, split[r])}</span><span class="num">${r === '매소' ? '—' : formatMeso(getResourcePrice(r))}</span><span class="num c-meso">${formatMeso(Math.round(split[r] * getResourcePrice(r)))}</span></div>`).join('')}
+      ${left ? `<div class="bd-row"><span>🔵 남는 돈 → 선금</span><span></span><span></span><span class="num" style="color:#7dd3fc">${formatMeso(left)}</span></div>` : ''}
+      ${footHtml ? `<div class="bd-foot">${footHtml}</div>` : ''}` : '';
+  }
+  if (conf) {
+    conf.innerHTML = _settleNeedsConfirm ? `<label class="settle-confirm${_settleConfirmed ? ' ok' : ''}"><input type="checkbox" ${_settleConfirmed ? 'checked' : ''} onchange="_settleConfirmed=this.checked;updateSettleSaveBtn()">
+      <span>📈 변동가 재화를 <b>지금 시세로 박제</b>해서 기록 — ${varKeys.map(r => `<b>${jrEsc(r)} ${formatMeso(getResourcePrice(r))}</b>`).join(' · ')} <span class="hint">맞으면 체크 (틀리면 위 시세 표에서 고치기)</span></span></label>` : '';
+  }
+  updateSettleSaveBtn();
+}
+function updateSettleSaveBtn() {
+  const b = document.getElementById('settleSaveBtn');
+  if (!b) return;
+  const blocked = _settleNeedsConfirm && !_settleConfirmed;
+  b.textContent = blocked ? '변동 시세 확인 체크 필요' : '정산 기록';
+  b.style.opacity = blocked ? 0.55 : 1;
+  const c = document.querySelector('.settle-confirm');
+  if (c) c.classList.toggle('ok', _settleConfirmed);
+}
+function setSettleOrder(o) { _settleOrder = o; _settleConfirmed = false; renderSettleModal(); }
+function onModalCashRate(el) {
+  const data = loadData();
+  data.cashRate = Number(el.value.replace(/[^0-9]/g, '')) || 0;
+  saveData(data);
+  renderSettleModal();
+  renderHistory();
+}
+const settleOrderSeg = () => `<div class="settle-row"><label>어디서 뺄지</label><div class="seg"><button class="${_settleOrder === 'meso' ? 'on' : ''}" onclick="setSettleOrder('meso')">메소부터</button><button class="${_settleOrder === 'var' ? 'on' : ''}" onclick="setSettleOrder('var')">변동가 재화(다조 등)부터</button></div></div>
+  <div class="hint" style="margin:-4px 0 8px 98px">정확히 어떤 재화를 줬는지 남기려면 🎯 재화 지정</div>`;
+
 function liveSettleInput() {
   if (_currentSettleMode === 'items') { updateAllocTotals(); return; }
-  const preview = document.getElementById('settlePreview');
-  if (!preview || !_currentSettleChar) return;
+  if (!_currentSettleChar) return;
   const data = loadData();
   const st = getSettlementState(data, _currentSettleChar);
   const cashRate = getCashRate();
   const mode = _currentSettleMode;
-  const amtInput = document.getElementById('settleAmount');
-  const raw = amtInput ? Number(amtInput.value.replace(/[^0-9.\-]/g, '')) || 0 : 0;
 
-  let mesoEquiv = 0, displayAmount = '';
-  if (mode === 'cash') {
-    if (cashRate) mesoEquiv = Math.round(raw / cashRate * 100000000);
-    displayAmount = `${raw.toLocaleString()} 원`;
-  } else if (mode === 'meso') {
-    mesoEquiv = raw;
-    displayAmount = `${formatNum(raw)} 메소`;
-  } else if (mode === 'advance') {
-    const sel = document.getElementById('settleAdvanceType');
-    const advType = sel ? sel.value : 'cash';
-    if (advType === 'cash') {
-      if (cashRate) mesoEquiv = Math.round(raw / cashRate * 100000000);
-      displayAmount = `${raw.toLocaleString()} 원`;
-    } else {
-      mesoEquiv = raw;
-      displayAmount = `${formatNum(raw)} 메소`;
-    }
+  if (mode === 'full') {
+    const alloc = allocatePaidToResources(data, st.totals, Math.max(0, st.paidMeso), st.entries);
+    const split = {};
+    (data.resources || []).forEach(r => { if (alloc[r]?.hasPrice && alloc[r].remainingQty > 1e-9) split[r] = alloc[r].remainingQty; });
+    const ft = document.getElementById('settleFullType')?.value || 'cash';
+    renderSettleBreakdown(split, 0, ft === 'cash' ? `💵 받을 현금 <b class="num">${st.remainingCash.toLocaleString()}원</b> <span class="hint">(메소 1억 = ${cashRate.toLocaleString()}원으로 거래)</span>` : `💰 메소 <b class="num">${formatMeso(st.remainingMeso)}</b> 받음`, true);
+    return;
   }
 
+  const { raw, mesoEquiv, isCash } = readSettleAmount();
+  const live = document.getElementById('settleAmtLive');
+  if (live) live.textContent = !raw ? '' : isCash ? `≈ ${formatMeso(mesoEquiv)} 메소 (1억=${cashRate.toLocaleString()}원)` : `${formatMeso(raw)} 메소`;
+
+  const { split, left } = settleSplit(data, st, mesoEquiv, _settleOrder);
+  const foot = isCash ? `💵 받은 현금 <b class="num">${raw.toLocaleString()}원</b> = 메소 <b class="num">${formatMeso(mesoEquiv)}</b> <span class="hint">(메소 1억 = ${cashRate.toLocaleString()}원으로 거래)</span>` : `💰 메소 <b class="num">${formatMeso(raw)}</b> 받음`;
+  renderSettleBreakdown(split, mode === 'advance' ? 0 : left, raw ? foot : '', !!raw);
+
+  const preview = document.getElementById('settlePreview');
+  if (!preview) return;
   const afterMeso = st.remainingMeso - mesoEquiv;
   const isNeg = afterMeso < 0;
   preview.innerHTML = `
-    <div class="settle-prev-line"><span>${mode === 'advance' ? '선지급' : '받은 금액'}</span><span class="val">${displayAmount}</span></div>
-    ${mode === 'cash' || (mode === 'advance' && document.getElementById('settleAdvanceType')?.value === 'cash')
-      ? `<div class="settle-prev-line"><span>→ 메소 환산</span><span class="val">${formatNum(mesoEquiv)} 메소</span></div>` : ''}
-    <div class="settle-prev-div"></div>
     <div class="settle-prev-line"><span>정산 전 잔여</span><span class="val">${formatNum(st.remainingMeso)} 메소</span></div>
-    <div class="settle-prev-line minus"><span>차감</span><span class="val">- ${formatNum(mesoEquiv)} 메소</span></div>
-    <div class="settle-prev-line ${isNeg ? 'neg-after' : 'highlight'}"><span>정산 후 잔여</span><span class="val">${formatNum(afterMeso)} 메소${isNeg ? ' (마이너스 = 빚)' : ''}</span></div>
+    <div class="settle-prev-line minus"><span>${mode === 'advance' ? '선지급' : '이번 정산'}</span><span class="val">- ${formatNum(mesoEquiv)} 메소</span></div>
+    <div class="settle-prev-line ${isNeg ? 'neg-after' : 'highlight'}"><span>정산 후 잔여</span><span class="val">${isNeg ? `선금 ${formatMeso(-afterMeso)} 남음 (다음 누적에서 차감)` : formatNum(afterMeso) + ' 메소'}</span></div>
   `;
 }
 
@@ -3767,6 +3928,7 @@ function recordSettlement() {
   if (!data.settlements[ch].entries) data.settlements[ch].entries = [];
 
   const mode = _currentSettleMode;
+  if (_settleNeedsConfirm && !_settleConfirmed) { toast('변동가 재화 시세 확인에 체크해 주세요', 'error'); return; }
   const memo = document.getElementById('settleMemo')?.value || '';
   const date = todayStr();
   const id = Date.now();
@@ -3828,8 +3990,7 @@ function recordSettlement() {
     return;
   }
 
-  const amtInput = document.getElementById('settleAmount');
-  const raw = amtInput ? Number(amtInput.value.replace(/[^0-9.\-]/g, '')) || 0 : 0;
+  const { raw } = readSettleAmount();
   if (raw <= 0) { toast('금액을 입력하세요.', 'error'); return; }
 
   let mesoEquiv = 0, amount = 0, type = '', subType = '';
@@ -3855,7 +4016,7 @@ function recordSettlement() {
     }
   }
 
-  data.settlements[ch].entries.push({ id, date, type, subType, amount, mesoEquiv, memo, cashRateAtTime: cashRate, priceSnapshot: capturePriceSnapshot(data) });
+  data.settlements[ch].entries.push({ id, date, type, subType, amount, mesoEquiv, order: _settleOrder, memo, cashRateAtTime: cashRate, priceSnapshot: capturePriceSnapshot(data) });
   // 사용자가 새 정산 entry를 추가하면 unlock 의도는 해소됨
   // (unlock은 옛 데이터에 대한 거고, 새 정산은 명시적 의도이므로 자동 정리 동작)
   delete data.settlements[ch]._unlockedDate;
@@ -4048,7 +4209,7 @@ function deleteSelectedEntries() {
 }
 
 function toggleSettleHistory(ch) {
-  const el = document.querySelector(`tr[data-settle-hist="${CSS.escape(ch)}"]`);
+  const el = document.querySelector(`[data-settle-hist="${CSS.escape(ch)}"]`);
   if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
   const btn = document.querySelector(`button[data-settle-arrow="${CSS.escape(ch)}"]`);
   if (btn) btn.textContent = btn.textContent.startsWith('▶') ? btn.textContent.replace('▶', '▼') : btn.textContent.replace('▼', '▶');
@@ -4134,121 +4295,86 @@ function renderHistory() {
   }
 
   const cashRate = getCashRate();
-  let sh = '<table class="sheet"><thead><tr><th class="corner">캐릭터</th>';
-  data.resources.forEach(r => sh += `<th>${r}</th>`);
-  sh += '<th style="min-width:110px;background:#1a2a1a;color:#ffd76b;">💰 합산 메소</th>';
-  sh += `<th style="min-width:100px;background:#2a1010;color:#ff8a65;">💵 정산 현금${cashRate ? `<div style="font-size:10px;color:#8F96A3;font-weight:400">1억=${cashRate.toLocaleString()}원</div>` : ''}</th>`;
-  sh += '<th style="min-width:100px">정산</th></tr></thead><tbody>';
-
-  const totalCols = data.resources.length + 4; // 캐릭터 + 재화들 + 합산메소 + 정산현금 + 정산버튼
-
-  const unsettled = [];
-  const settled = [];
-  const noRecord = [];
+  const unsettled = [], settled = [], noRecord = [];
   data.characters.forEach(ch => {
     const state = getSettlementState(data, ch);
     const totals = state.totals;
     const lastDate = data.settlements?.[ch]?.lastDate || '';
-    const lastAmounts = data.settlements?.[ch]?.history?.slice(-1)[0]?.amounts || null;
     const hasAny = data.resources.some(r => totals[r] !== 0);
     const hasEntries = !!(data.settlements?.[ch]?.entries?.length);
     const hasSettleHistory = !!(data.settlements?.[ch]?.history?.length);
-    if (hasAny || state.remainingMeso !== 0 || (hasEntries && state.entries.length)) {
-      unsettled.push({ ch, state, totals, lastDate, lastAmounts });
-    } else if (hasSettleHistory) {
-      settled.push({ ch, totals, lastDate, lastAmounts });
-    } else {
-      noRecord.push({ ch });
-    }
+    if (hasAny || state.remainingMeso !== 0 || (hasEntries && state.entries.length)) unsettled.push({ ch, state, totals, lastDate });
+    else if (hasSettleHistory) settled.push({ ch, lastDate });
+    else noRecord.push({ ch });
   });
 
-  if (unsettled.length) {
-    const scope = _settleScope;
-    const scopeLabel = scope === 'remaining' ? '잔여만 표시' : scope === 'paid' ? '정산된 분만 표시' : '전체 누적 표시';
-    sh += `<tr><td colspan="${totalCols}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#1971c2;background:#0d1a30;border:1px solid #373A40;">미정산 (${unsettled.length}) <span style="color:#8F96A3;font-weight:400;font-size:11px;margin-left:6px;">— ${scopeLabel}</span></td></tr>`;
-    let sumMeso = 0, sumCash = 0;
-    unsettled.forEach(({ ch, state, totals, lastDate }) => {
-      const remMeso = state.remainingMeso;
-      const remCash = state.remainingCash;
-      const isNeg = remMeso < 0;
-      const lockedEntries = (data.settlements?.[ch]?.history || [])
-        .flatMap(h => (h.entries || []).map(e => ({ ...e, _lockedAt: h.date })));
-      const totalHistCount = state.entries.length + lockedEntries.length;
-      const hasHist = totalHistCount > 0;
-      sh += `<tr><td class="row-header">`;
-      sh += `<div style="display:flex;align-items:center;gap:6px;">`;
-      sh += `<span>${ch}</span>`;
-      if (hasHist) {
-        const lockedSuffix = lockedEntries.length ? ` <span style="color:#7ed4d4;">(🔒${lockedEntries.length})</span>` : '';
-        sh += `<button data-settle-arrow="${ch}" onclick="toggleSettleHistory('${ch.replace(/'/g,"\\'")}')" style="background:#1a3a1a;border:1px solid #2a5a3a;color:#7ec97e;font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px;cursor:pointer;font-family:inherit;">▶ 이력 ${state.entries.length}건${lockedSuffix}</button>`;
-      }
-      sh += `</div></td>`;
-      const alloc = allocatePaidToResources(data, totals, Math.max(0, state.paidMeso), state.entries);
-      data.resources.forEach(r => {
-        sh += renderSettleCell(r, totals[r] || 0, alloc[r], scope);
-      });
-      sumMeso += remMeso; sumCash += remCash;
-      const mesoColor = isNeg ? '#ef4444' : '#ffd76b';
-      const cashColor = isNeg ? '#ef4444' : '#ff8a65';
-      const paidNote = state.paidValue > 0 ? `<div style="font-size:10px;color:#5c5f66;font-weight:400">기지급 ${formatMeso(state.paidValue)} 차감</div>` : '';
-      sh += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:13px;background:#0a1a10;color:${mesoColor};font-weight:700">${formatNum(remMeso)}<div style="font-size:10px;color:#8F96A3;font-weight:400">메소${isNeg ? ' (빚)' : ''}</div>${paidNote}</td>`;
-      sh += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:14px;background:#1a0e0e;color:${cashColor};font-weight:700">${cashRate ? remCash.toLocaleString() + '원' : '<span style="font-size:11px;color:#5c5f66">시세 미설정</span>'}</td>`;
-      sh += `<td style="text-align:center;padding:4px 6px;">`;
-      sh += `<button onclick="settleChar('${ch.replace(/'/g,"\\'")}')" style="padding:5px 14px;border:none;border-radius:4px;cursor:pointer;font-size:13px;background:#1971c2;color:#fff;font-weight:600;font-family:inherit;">정산하기</button>`;
-      if (lastDate) sh += `<div style="font-size:10px;color:#5c5f66;margin-top:3px">이전: ${lastDate}</div>`;
-      sh += `</td></tr>`;
-      // 펼침 행 - 정산 이력 (current + locked)
-      if (hasHist) {
-        sh += `<tr data-settle-hist="${ch}" style="display:none"><td colspan="${totalCols}" style="background:#0a0e15;padding:10px 16px 10px 36px;">`;
-        if (state.entries.length) {
-          sh += `<div style="font-size:11px;color:#8F96A3;margin-bottom:6px;font-weight:600;">📋 진행 중 (${state.entries.length}건)</div>`;
-          state.entries.slice().reverse().forEach(e => { sh += renderEntryLine(ch, e, false); });
-        }
-        if (lockedEntries.length) {
-          if (state.entries.length) sh += `<div style="border-top:1px dashed #1f2937;margin:8px 0;"></div>`;
-          sh += `<div style="font-size:11px;color:#7ed4d4;margin-bottom:6px;font-weight:600;">🔒 잠긴 이력 (${lockedEntries.length}건) — ${data.settlements[ch].lastDate}까지 정산 완료</div>`;
-          lockedEntries.slice().reverse().forEach(e => { sh += renderEntryLine(ch, e, true); });
-        }
-        sh += `</td></tr>`;
-      }
+  const scope = _settleScope;
+  const q = (r, v) => r === '경험치' ? `${v > 0 ? '+' : ''}${(Math.round(v * 1000) / 1000)}%` : r === '매소' ? formatMeso(Math.round(v)) : (Math.round(v * 100) / 100).toLocaleString() + '개';
+  let sumMeso = 0, sumCash = 0;
+  unsettled.forEach(({ state }) => { if (state.remainingMeso > 0) { sumMeso += state.remainingMeso; sumCash += state.remainingCash; } });
+
+  let sh = `<div class="st-head">
+    <h2>미정산 ${unsettled.length}명</h2>
+    <div class="total">
+      <div><div class="lbl">남은 메소 합계</div><div class="val c-meso num">${formatMeso(Math.round(sumMeso))}</div></div>
+      <div><div class="lbl">정산할 현금 ${cashRate ? `(1억=${cashRate.toLocaleString()}원)` : ''}</div><div class="val num" style="color:var(--cash)">${cashRate ? sumCash.toLocaleString() + '원' : '시세 미설정'}</div></div>
+    </div></div><div class="st-rows">`;
+
+  unsettled.forEach(({ ch, state, totals, lastDate }) => {
+    const remMeso = state.remainingMeso, isNeg = remMeso < 0;
+    const lockedEntries = (data.settlements?.[ch]?.history || []).flatMap(hh => (hh.entries || []).map(e => ({ ...e, _lockedAt: hh.date })));
+    const hasHist = state.entries.length + lockedEntries.length > 0;
+    const alloc = allocatePaidToResources(data, totals, Math.max(0, state.paidMeso), state.entries);
+    const drift = detectPriceDrift(data, ch);
+    const a = jrEsc(ch);
+    let chips = '';
+    data.resources.forEach(r => {
+      const al = alloc[r];
+      const priced = al && al.hasPrice;
+      const v = !priced ? (scope === 'paid' ? 0 : totals[r] || 0) : scope === 'remaining' ? al.remainingQty : scope === 'paid' ? al.paidQty : totals[r] || 0;
+      if (!v || Math.abs(v) < 1e-9) return;
+      const icon = r === '매소' ? '<img src="meso.png" alt="">' : r === '다조' ? '<img src="dajo.png" alt="">' : `<span class="rk">${jrEsc(r)}</span>`;
+      const cls = r === '매소' ? 'c-meso' : r === '다조' ? 'c-dajo' : '';
+      const eq = priced && r !== '매소' ? `<span class="eq num">≈ ${formatMesoMan(Math.round(v * getResourcePrice(r)))}</span>` : '';
+      chips += `<span class="chip${priced ? '' : ' muted'}" title="${priced ? '' : '시세 없음 — 합산 제외'}">${icon}<span class="q num ${cls}">${q(r, v)}</span>${eq}</span>`;
     });
-    if (unsettled.length > 1) {
-      sh += `<tr style="background:#0d1418"><td style="text-align:right;color:#8F96A3;font-weight:600;padding:6px 8px" colspan="${data.resources.length + 1}">미정산 합계 (잔여)</td>`;
-      sh += `<td style="text-align:right;padding:6px 8px;font-family:Consolas,monospace;font-size:13px;background:#0a1a10;color:${sumMeso < 0 ? '#ef4444' : '#ffd76b'};font-weight:700">${formatNum(sumMeso)}<div style="font-size:10px;color:#8F96A3;font-weight:400">메소</div></td>`;
-      sh += `<td style="text-align:right;padding:6px 8px;font-family:Consolas,monospace;font-size:14px;background:#1a0e0e;color:${sumCash < 0 ? '#ef4444' : '#ff8a65'};font-weight:700">${cashRate ? sumCash.toLocaleString() + '원' : '-'}</td>`;
-      sh += `<td></td></tr>`;
+    const pct = state.grossMeso > 0 ? Math.max(0, Math.min(100, Math.round(state.paidValue / state.grossMeso * 100))) : 0;
+    sh += `<div class="st-row${drift.length ? ' drift' : ''}">
+      <div class="st-main">
+        <div class="who">
+          <div class="name">${a}${data.mainChar === ch ? ' <span class="badge-main">본주</span>' : ''}${isHiddenChar(data, ch) ? ' <span class="badge-hidden">일지에서 숨김</span>' : ''}</div>
+          <div class="meta">${lastDate ? '이전 전체 정산 ' + lastDate : '전체 정산한 적 없음'}</div>
+          ${hasHist ? `<button class="mini-btn" data-settle-arrow="${a}" onclick="toggleSettleHistory(this.dataset.settleArrow)">▶ 이력 ${state.entries.length}건${lockedEntries.length ? ` · 🔒${lockedEntries.length}` : ''}</button>` : ''}
+        </div>
+        <div class="chips-wrap"><div class="chips">${chips || '<span class="hint">없음</span>'}</div>
+          ${drift.length ? `<div class="drift-note">⚠ 직전 정산 이후 시세 바뀜: ${drift.map(d => `${jrEsc(d.res)} <s>${formatMeso(d.from)}</s> → ${formatMeso(d.to)}`).join(' · ')} — 박제된 정산은 그대로, 남은 것만 새 시세로</div>` : ''}</div>
+        <div class="progress"><div class="line"><span>받은 것 ${formatMesoMan(Math.round(state.paidValue))}</span><span>${pct}%</span></div><div class="bar"><i style="width:${pct}%"></i></div><div class="line"><span>누적 ${formatMesoMan(Math.round(state.grossMeso))}</span></div></div>
+        <div class="amount">${isNeg
+          ? `<div class="m num" style="color:#7dd3fc">선금 ${formatMesoMan(-remMeso)} 남음</div><div class="c hint">다음 누적에서 차감</div>`
+          : `<div class="m num" title="${formatMeso(Math.round(remMeso))}">${formatMeso(Math.round(remMeso))}</div><div class="c num">${cashRate ? state.remainingCash.toLocaleString() + '원' : '<span class="hint">시세 미설정</span>'}</div>`}</div>
+        <div class="act"><button class="btn-add" data-ch="${a}" onclick="settleChar(this.dataset.ch)">정산하기</button></div>
+      </div>`;
+    if (hasHist) {
+      sh += `<div class="st-hist" data-settle-hist="${a}" style="display:none">`;
+      if (state.entries.length) {
+        sh += `<div class="st-hist-h">📋 진행 중 (${state.entries.length}건)</div>`;
+        state.entries.slice().reverse().forEach(e => { sh += renderEntryLine(ch, e, false); });
+      }
+      if (lockedEntries.length) {
+        sh += `<div class="st-hist-h locked">🔒 잠긴 이력 (${lockedEntries.length}건) — ${data.settlements[ch].lastDate}까지 정산 완료</div>`;
+        lockedEntries.slice().reverse().forEach(e => { sh += renderEntryLine(ch, e, true); });
+      }
+      sh += `</div>`;
     }
-  }
+    sh += `</div>`;
+  });
+  if (!unsettled.length) sh += `<div class="no-data">미정산 없음 🎉</div>`;
+  sh += `</div>`;
 
   if (settled.length) {
-    sh += `<tr><td colspan="${totalCols}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#ef4444;background:#0a1a10;border:1px solid #373A40;">정산 완료 (${settled.length})</td></tr>`;
-    settled.forEach(({ ch, totals, lastDate, lastAmounts }) => {
-      sh += `<tr style="opacity:0.5"><td class="row-header" style="color:#ef4444">${ch}</td>`;
-      data.resources.forEach(r => {
-        sh += `<td style="text-align:right;padding:4px 6px;font-family:Consolas,monospace;font-size:12px;color:#ef4444;text-decoration:line-through">${formatNum((lastAmounts?.[r]) || 0)}</td>`;
-      });
-      const lastMeso = calcSettlementMeso(lastAmounts || {});
-      const lastCash = calcSettlementCash(lastMeso);
-      sh += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:12px;color:#ef4444;text-decoration:line-through">${formatNum(lastMeso)}</td>`;
-      sh += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:12px;color:#ef4444;text-decoration:line-through">${cashRate ? lastCash.toLocaleString() + '원' : '-'}</td>`;
-      sh += `<td style="text-align:center;padding:4px 6px;">`;
-      sh += `<div style="font-size:11px;color:#ef4444">${lastDate} 정산완료</div>`;
-      sh += `<button onclick="rollbackSettle('${ch}')" style="margin-top:3px;padding:3px 10px;border:1px solid #373A40;border-radius:4px;cursor:pointer;font-size:11px;background:#131822;color:#c0392b;font-family:inherit;">되돌리기</button>`;
-      sh += `</td></tr>`;
-    });
+    sh += `<div class="st-done">✅ 정산 끝 (${settled.length}) — ${settled.map(({ ch, lastDate }) => `<span class="st-done-i">${jrEsc(ch)} <span class="hint">${lastDate.slice(5)}</span> <button class="mini-btn" data-ch="${jrEsc(ch)}" onclick="rollbackSettle(this.dataset.ch)">되돌리기</button></span>`).join('')}</div>`;
   }
-
-  if (noRecord.length) {
-    sh += `<tr><td colspan="${totalCols}" style="padding:6px 10px;font-size:12px;font-weight:700;color:#5c5f66;background:#0C1019;border:1px solid #373A40;">기록 없음 (${noRecord.length})</td></tr>`;
-    noRecord.forEach(({ ch }) => {
-      sh += `<tr><td class="row-header" style="color:#5c5f66">${ch}</td>`;
-      data.resources.forEach(() => sh += `<td></td>`);
-      sh += `<td></td><td></td>`;
-      sh += `<td style="text-align:center;color:#373A40;font-size:12px">-</td></tr>`;
-    });
-  }
-
-  sh += '</tbody></table>';
+  if (noRecord.length) sh += `<div class="st-done hint">기록 없음: ${noRecord.map(({ ch }) => jrEsc(ch)).join(' · ')}</div>`;
   settleWrap.innerHTML = sh;
 
   renderAllEntries();

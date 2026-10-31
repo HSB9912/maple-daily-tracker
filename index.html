@@ -2877,6 +2877,8 @@ function getCharMode(data, ch) {
 }
 // 이미 적힌 칸은 그 기록 모양대로 보여줌 (방식을 바꿔도 지난 기록이 엉뚱하게 보이지 않게)
 function recRowMode(rec, charMode) {
+  // 잔고형 캐릭터는 항상 시작 칸을 열어둠 (획득형으로 적었던 칸도 시작을 고칠 수 있게)
+  if (charMode === 'bal') return 'bal';
   if (rec && typeof rec === 'object') {
     if (rec.g) return 'gain';
     // 시작 0은 창고형 기록일 수도, 잔고형인데 진짜 0이었을 수도 — 캐릭터 방식 따라감
@@ -2993,7 +2995,7 @@ function jrCard(data, ch, date, fav, used) {
   const more = view === 'all' ? data.resources.length - list.length : 0;
   const a = jrEsc(ch);
   const phase = jrPref('phase', 'both');
-  const hdrCols = mode === 'gain' ? [phase === 'start' ? '시작' : '먹은 양'] : phase === 'start' ? ['시작 (회색 = 어제 끝)'] : phase === 'end' ? ['끝'] : ['시작 (회색 = 어제 끝)', '끝'];
+  const hdrCols = mode === 'gain' ? [phase === 'start' ? '시작' : '먹은 양 (시작을 적으려면 이름 옆에서 잔고형으로)'] :phase === 'start' ? ['시작 (회색 = 어제 끝)'] : phase === 'end' ? ['끝'] : ['시작 (회색 = 어제 끝)', '끝'];
   let h = `<div class="jr-card${locked ? ' locked' : ''}${hidden ? ' is-hidden' : ''}${collapsed ? ' collapsed' : ''}">
     <div class="jr-head">
       <button class="jr-tog" data-act="toggle" data-ch="${a}">${collapsed ? '▸' : '▾'}</button>

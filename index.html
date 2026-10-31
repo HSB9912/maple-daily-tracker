@@ -2090,7 +2090,7 @@ function onModalPriceInput(el) {
         </div>
       </div>
       <div style="margin-top:8px;padding-top:8px;border-top:1px solid #1f2937;font-size:11px;color:#5c5f66;">
-        누적 메소 ${formatNum(st.grossMeso)} − 기지급 ${formatNum(st.paidMeso)} = 잔여 ${formatNum(st.remainingMeso)}
+        누적 메소 ${formatNum(st.grossMeso)} − 기지급 ${formatNum(st.paidValue)} = 잔여 ${formatNum(st.remainingMeso)}
       </div>
     `;
     liveSettleInput();
@@ -2828,9 +2828,22 @@ function getSettlementState(data, ch) {
     ? allEntries.filter(e => e.date > lastDate)
     : allEntries;
   const paidMeso = entries.reduce((s, e) => s + (Number(e.mesoEquiv) || 0), 0);
-  const remainingMeso = grossMeso - paidMeso;
+  // 재화 지정 정산은 그 수량을 지운 것 → 기록 당시 시세 말고 현재 시세로 빼야 재화별 잔여 합과 일치
+  let paidValue = 0;
+  const left = { ...totals };
+  entries.forEach(e => {
+    if (!e.allocations) { paidValue += Number(e.mesoEquiv) || 0; return; }
+    Object.keys(e.allocations).forEach(r => {
+      const price = r === '경험치' ? 0 : getResourcePrice(r);
+      if (!price) return;
+      const take = Math.max(0, Math.min(Number(e.allocations[r]) || 0, left[r] || 0));
+      left[r] = (left[r] || 0) - take;
+      paidValue += take * price;
+    });
+  });
+  const remainingMeso = grossMeso - paidValue;
   const remainingCash = calcSettlementCash(remainingMeso);
-  return { totals, grossMeso, paidMeso, remainingMeso, remainingCash, entries };
+  return { totals, grossMeso, paidMeso, paidValue, remainingMeso, remainingCash, entries };
 }
 
 // 캐릭터별 마지막 정산일 이후 누적 계산
@@ -2969,7 +2982,7 @@ function renderSettleModal() {
       </div>
     </div>
     <div style="margin-top:8px;padding-top:8px;border-top:1px solid #1f2937;font-size:11px;color:#5c5f66;">
-      누적 메소 ${formatNum(st.grossMeso)} − 기지급 ${formatNum(st.paidMeso)} = 잔여 ${formatNum(st.remainingMeso)}
+      누적 메소 ${formatNum(st.grossMeso)} − 기지급 ${formatNum(st.paidValue)} = 잔여 ${formatNum(st.remainingMeso)}
     </div>
   `;
 
@@ -3680,7 +3693,7 @@ function renderHistory() {
       sumMeso += remMeso; sumCash += remCash;
       const mesoColor = isNeg ? '#ef4444' : '#ffd76b';
       const cashColor = isNeg ? '#ef4444' : '#ff8a65';
-      const paidNote = state.paidMeso > 0 ? `<div style="font-size:10px;color:#5c5f66;font-weight:400">기지급 ${formatMeso(state.paidMeso)} 차감</div>` : '';
+      const paidNote = state.paidValue > 0 ? `<div style="font-size:10px;color:#5c5f66;font-weight:400">기지급 ${formatMeso(state.paidValue)} 차감</div>` : '';
       sh += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:13px;background:#0a1a10;color:${mesoColor};font-weight:700">${formatNum(remMeso)}<div style="font-size:10px;color:#8F96A3;font-weight:400">메소${isNeg ? ' (빚)' : ''}</div>${paidNote}</td>`;
       sh += `<td style="text-align:right;padding:4px 8px;font-family:Consolas,monospace;font-size:14px;background:#1a0e0e;color:${cashColor};font-weight:700">${cashRate ? remCash.toLocaleString() + '원' : '<span style="font-size:11px;color:#5c5f66">시세 미설정</span>'}</td>`;
       sh += `<td style="text-align:center;padding:4px 6px;">`;

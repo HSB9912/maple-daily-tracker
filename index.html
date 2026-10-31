@@ -2788,7 +2788,7 @@ function renderInputSheet() {
         let bv = rowMode === 'gain' ? 0 : (rec.before ?? '');
         let isAutoB = false;
         // 자동 복사: 시작 전 비어있으면 최근 데이터에서 가져옴 (after → before 순)
-        if (bv === '') {
+        if (bv === '' && rowMode !== 'gain') {
           const prev = findPrevValue(data.records, ch, r, date);
           if (prev) { bv = prev.val; isAutoB = true; }
         }
@@ -2799,12 +2799,12 @@ function renderInputSheet() {
         const earnedColor = earned > 0 ? '#34d399' : earned < 0 ? '#fb7185' : '';
         const autoS = isAutoB ? ' style="color:#4a6a8a"' : '';
         if (rowMode === 'gain') {
-          html += `<div class="cell-input-row before-row gain-zero" title="획득형 — 시작 0 고정"><span class="cell-label before">전</span><span class="zero-fixed">0 고정</span></div>`;
+          html += `<div class="cell-input-row before-row" title="획득형 — 비워두면 시작 0"><span class="cell-label before">전</span><input type="text" value="" data-raw="" data-date="${date}" data-char="${a}" data-res="${r}" data-field="before" data-mode="gain" placeholder="0"${ro}></div>`;
         } else {
           html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bvDisp}" data-raw="${bv}" data-date="${date}" data-char="${a}" data-res="${r}" data-field="before" placeholder="시작 전"${autoS}${ro}></div>`;
         }
         html += `<div class="cell-divider"></div>`;
-        html += `<div class="cell-input-row after-row"><span class="cell-label after">${rowMode === 'gain' ? '먹' : '후'}</span><input type="text" value="${avDisp}" data-raw="${av}" data-date="${date}" data-char="${a}" data-res="${r}" data-field="after" data-mode="${rowMode}" placeholder="${rowMode === 'gain' ? '먹은 양' : '종료 후'}"${ro}></div>`;
+        html += `<div class="cell-input-row after-row"><span class="cell-label after">후</span><input type="text" value="${avDisp}" data-raw="${av}" data-date="${date}" data-char="${a}" data-res="${r}" data-field="after" data-mode="${rowMode}" placeholder="${rowMode === 'gain' ? '끝 (=먹은 양)' : '종료 후'}"${ro}></div>`;
         html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}" style="${earnedColor ? 'color:' + earnedColor : ''}">${earned !== '' ? formatNum(earned) : ''}</div>`;
       }
 
@@ -2887,6 +2887,15 @@ function recRowMode(rec, charMode) {
   }
   return charMode;
 }
+// 획득형 칸 저장 규칙: 시작은 비우면 0(g 표시), 시작을 직접 적으면 그 칸은 일반 잔고형 기록
+function applyGainEdit(rec, field) {
+  const empty = v => v === '' || v === undefined || v === null;
+  if (field === 'before') {
+    if (empty(rec.before)) { rec.before = 0; rec.g = 1; } else delete rec.g;
+  } else if (empty(rec.before) || rec.g) { rec.before = 0; rec.g = 1; }
+  if (empty(rec.after) && (rec.g || rec.before === 0)) return null;
+  return rec;
+}
 // 캐릭터 이름 바뀌거나 지워질 때 새 설정들도 같이
 function renameCharMeta(data, oldName, newName) {
   if (data.charModes?.[oldName] !== undefined) { data.charModes[newName] = data.charModes[oldName]; delete data.charModes[oldName]; }
@@ -2965,8 +2974,10 @@ function jrRow(data, ch, r, date, charMode, locked, idx) {
     rowMode = recRowMode(rec, charMode);
     const meso = r === '매소';
     if (rowMode === 'gain') {
-      io = phase === 'start' ? `<div class="f"><div class="zero">0 고정</div></div>` : `<div class="f">${jrInput(idx, 'after', o.after, meso ? '먹은 메소' : '먹은 개수', { meso, ro: locked })}</div>`;
-      single = true;
+      const s = `<div class="f">${jrInput(idx, 'before', '', '0', { meso, ro: locked })}</div>`;
+      const e = `<div class="f">${jrInput(idx, 'after', o.after, meso ? '끝 메소 (= 먹은 양)' : '끝 (= 먹은 양)', { meso, ro: locked })}</div>`;
+      io = phase === 'start' ? s : phase === 'end' ? e : s + e;
+      single = phase !== 'both';
     } else {
       const prev = locked ? null : findPrevValue(data.records, ch, r, date);
       const bStored = o.before !== '' && o.before !== undefined && o.before !== null;
@@ -2995,7 +3006,7 @@ function jrCard(data, ch, date, fav, used) {
   const more = view === 'all' ? data.resources.length - list.length : 0;
   const a = jrEsc(ch);
   const phase = jrPref('phase', 'both');
-  const hdrCols = mode === 'gain' ? [phase === 'start' ? '시작' : '먹은 양 (시작을 적으려면 이름 옆에서 잔고형으로)'] :phase === 'start' ? ['시작 (회색 = 어제 끝)'] : phase === 'end' ? ['끝'] : ['시작 (회색 = 어제 끝)', '끝'];
+  const hdrCols = mode === 'gain' ? (phase === 'start' ? ['시작 (회색 0 = 비워두면 0)'] : phase === 'end' ? ['끝 (= 먹은 양)'] : ['시작 (회색 0 = 비워두면 0)', '끝 (= 먹은 양)']) :phase === 'start' ? ['시작 (회색 = 어제 끝)'] : phase === 'end' ? ['끝'] : ['시작 (회색 = 어제 끝)', '끝'];
   let h = `<div class="jr-card${locked ? ' locked' : ''}${hidden ? ' is-hidden' : ''}${collapsed ? ' collapsed' : ''}">
     <div class="jr-head">
       <button class="jr-tog" data-act="toggle" data-ch="${a}">${collapsed ? '▸' : '▾'}</button>
@@ -3126,8 +3137,7 @@ function jrSetField(date, ch, r, field, val, rowMode) {
     if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
     rec[field] = val;
     if (rowMode === 'gain') {
-      rec.before = 0; rec.g = 1;
-      if (rec.after === '') rec = null;
+      rec = applyGainEdit(rec, field);
     } else {
       delete rec.g;
       if (field === 'after' && (rec.before === '' || rec.before === undefined)) {
@@ -3236,8 +3246,7 @@ function updateValue(el) {
     if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
     rec[field] = val;
     if (el.dataset.mode === 'gain') {
-      rec.before = 0; rec.g = 1;
-      if (rec.after === '' || rec.after === undefined) rec = null;
+      rec = applyGainEdit(rec, field);
     } else {
       delete rec.g;
       // 자동 복사: before 비어있고 after 입력 시 최근 데이터에서 가져옴

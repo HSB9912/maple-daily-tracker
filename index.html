@@ -816,7 +816,7 @@ body.top-bossdist #distribute { display: block !important; }
 </style>
 
 <script>
-const APP_VERSION = 2;
+const APP_VERSION = 3;
 
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
@@ -956,8 +956,21 @@ function getEmptyCloud() {
 }
 
 // --- Supabase 저장/로드 ---
+// 배포 전에 열어둔 옛 탭이 새 데이터 형식을 덮어쓰지 않게: 서버에 더 높은 버전이 보이면 저장을 막고 새로고침 안내
+let _outdated = false;
+function markOutdated() {
+  if (_outdated) return;
+  _outdated = true;
+  const b = document.createElement('div');
+  b.id = 'outdatedBanner';
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2000;background:#7c2d12;color:#fff;padding:10px 16px;font-size:14px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;';
+  b.innerHTML = '새 버전이 올라왔어요 — 이 화면에서는 저장이 막혀 있습니다. 새로고침 후 다시 입력해 주세요. <button onclick="location.reload()" style="background:#fff;color:#7c2d12;border:none;border-radius:4px;padding:5px 14px;font-weight:700;cursor:pointer;font-family:inherit;">새로고침</button>';
+  document.body.prepend(b);
+}
+
 async function cloudSave() {
   if (!CLOUD_ENABLED) { markSaved(); toast('로컬 환경 — 클라우드 저장 차단 (로컬에만 저장됨)'); return; }
+  if (_outdated) { toast('새 버전이 있어 저장이 막혔습니다 — 새로고침 해주세요', 'error'); return; }
   if (_saving) { _saveQueued = true; return; }
   if (!_cloudData) return;
   _saving = true;
@@ -974,8 +987,16 @@ async function cloudSave() {
       if (!error && data) latest = data.data;
     } catch (e) { console.warn('최신 데이터 로드 실패, 전체 덮어쓰기:', e); }
 
+    if (latest && (latest._minVersion || 0) > APP_VERSION) {
+      markOutdated();
+      _saving = false;
+      _saveQueued = false;
+      return;
+    }
+
     // 2. 병합: 로컬 기반 + 원격 다른 유저 프로필 갱신
     let merged = _cloudData;
+    merged._minVersion = Math.max(APP_VERSION, merged._minVersion || 0, latest?._minVersion || 0);
     if (latest && latest.profiles) {
       merged.users.forEach(u => {
         if (u !== username && latest.profiles[u]) {
@@ -1016,6 +1037,7 @@ function startPolling() {
     try {
       const cloud = await cloudLoad();
       if (!cloud || !cloud.profiles) return;
+      if ((cloud._minVersion || 0) > APP_VERSION) { markOutdated(); return; }
       const myUser = getCurrentUser();
       let updated = false;
       // 다른 유저 프로필만 갱신
@@ -1239,8 +1261,9 @@ async function manualCloudSave() {
   const btn = document.getElementById('cloudSaveBtn');
   if (btn) { btn.textContent = '저장 중...'; btn.disabled = true; }
   await cloudSave();
-  markSaved();
   if (btn) btn.disabled = false;
+  if (_outdated) { if (btn) btn.textContent = '저장 막힘'; return; }
+  markSaved();
   toast('클라우드 저장 완료');
 }
 

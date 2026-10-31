@@ -708,6 +708,21 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
   .bd-row { font-size: 11.5px; }
 }
 
+/* 일일 기록 — 표 보기 */
+#inputTableWrap.sheet-wrap { overflow-x: auto; }
+#inputTableWrap .sheet { table-layout: auto; }
+#inputTableWrap .sheet td.row-header { min-width: 108px; vertical-align: top; padding: 6px 8px; }
+#inputTableWrap .sheet td.cell { min-width: 112px; }
+.tbl-name { font-size: 13px; font-weight: 700; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.tbl-ctl { display: flex; gap: 4px; align-items: center; margin-top: 4px; }
+.tbl-ctl .mode-pill button { font-size: 10px; padding: 1px 5px; }
+.gain-zero { height: 26px; }
+.gain-zero .zero-fixed { flex: 1; text-align: right; padding: 0 6px; font-size: 11px; color: #4b5563; }
+.sheet td.cell .cell-label.after { color: #f59e0b; }
+.sheet td.cell .cell-earned { background: var(--bg); color: var(--text-3); }
+.sheet tr.sum-row td { background: var(--surface-2); }
+.sheet td.cell input:focus { background: var(--surface-2); }
+
 /* 선택한 날 요약 */
 .today { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
 .tcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; min-width: 0; }
@@ -2691,8 +2706,9 @@ function renderInputSheet() {
     return;
   }
 
-  let html = `<div style="margin-bottom:8px;color:#8F96A3;font-size:13px;">선택된 날짜: <strong style="color:#FFFFFF">${date}</strong></div>`;
+  let html = '';
   const resIcons = { '매소': 'meso.png', '다조': 'dajo.png' };
+  const hiddenList = data.characters.filter(c => isHiddenChar(data, c));
   html += '<table class="sheet"><thead><tr><th class="corner"></th>';
   data.resources.forEach(r => {
     const icon = resIcons[r] ? `<img src="${resIcons[r]}" style="width:18px;height:18px;vertical-align:middle;margin-right:3px;">` : '';
@@ -2700,13 +2716,16 @@ function renderInputSheet() {
   });
   html += '</tr></thead><tbody>';
 
-  data.characters.forEach(ch => {
+  data.characters.filter(ch => !isHiddenChar(data, ch) || JR.showHidden).forEach(ch => {
     const settledDate = data.settlements?.[ch]?.lastDate || '';
     const isSettled = settledDate && date <= settledDate;
+    const charMode = getCharMode(data, ch);
+    const a = jrEsc(ch);
 
-    // findPrevValue는 전역 함수로 이동됨
-
-    html += `<tr${isSettled ? ' class="settled-row"' : ''}><td class="row-header" style="position:relative;cursor:pointer" data-charname="${ch}" ondblclick="renameCharInline(this)">${ch}${isSettled ? '<div class="settled-overlay"><span>정 산 완 료</span></div>' : ''}</td>`;
+    html += `<tr${isSettled ? ' class="settled-row"' : ''}><td class="row-header" style="position:relative;cursor:pointer" data-charname="${a}" ondblclick="renameCharInline(this)" title="더블클릭 = 이름 바꾸기">
+      <div class="tbl-name">${a}${isHiddenChar(data, ch) ? ' <span class="badge-hidden">숨김</span>' : ''}</div>
+      <div class="tbl-ctl"><div class="mode-pill"><button class="b${charMode === 'bal' ? ' on' : ''}" data-act="mode" data-ch="${a}" data-v="bal" title="시작·끝 보유량">잔고</button><button class="g${charMode === 'gain' ? ' on' : ''}" data-act="mode" data-ch="${a}" data-v="gain" title="시작 0, 먹은 양만">획득</button></div><button class="jr-hide" data-act="hide" data-ch="${a}" title="${isHiddenChar(data, ch) ? '다시 보이기' : '숨기기 (기록 유지)'}">${isHiddenChar(data, ch) ? '👁' : '🙈'}</button></div>
+      ${isSettled ? '<div class="settled-overlay"><span>정 산 완 료</span></div>' : ''}</td>`;
     data.resources.forEach(r => {
       let rec = data.records?.[date]?.[ch]?.[r];
       const ro = isSettled ? ' readonly' : '';
@@ -2738,12 +2757,13 @@ function renderInputSheet() {
         html += `<div class="cell-divider"></div>`;
         html += `<div class="cell-input-row after-row"><span class="cell-label after">후</span><input type="text" value="${aLv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterLv" placeholder="Lv" style="width:36px;text-align:center"${ro}><input type="text" value="${aPct}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="afterPct" placeholder="%" style="flex:1"${ro}></div>`;
         const expNum = getExpEarnedNum(dispRec);
-        const expColor = expNum > 0 ? '#ef4444' : expNum < 0 ? '#60a5fa' : '';
+        const expColor = expNum > 0 ? '#34d399' : expNum < 0 ? '#fb7185' : '';
         html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}" style="${expColor ? 'color:' + expColor : ''}">${earned}</div>`;
       } else {
         if (typeof rec === 'number') rec = { before: 0, after: rec };
+        const rowMode = recRowMode(rec, charMode);
         if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
-        let bv = rec.before ?? '';
+        let bv = rowMode === 'gain' ? 0 : (rec.before ?? '');
         let isAutoB = false;
         // 자동 복사: 시작 전 비어있으면 최근 데이터에서 가져옴 (after → before 순)
         if (bv === '') {
@@ -2754,11 +2774,15 @@ function renderInputSheet() {
         const earned = (bv !== '' && av !== '') ? (Number(av) || 0) - (Number(bv) || 0) : '';
         const bvDisp = bv !== '' ? formatMeso(Number(bv)) : '';
         const avDisp = av !== '' ? formatMeso(Number(av)) : '';
-        const earnedColor = earned > 0 ? '#ef4444' : earned < 0 ? '#60a5fa' : '';
+        const earnedColor = earned > 0 ? '#34d399' : earned < 0 ? '#fb7185' : '';
         const autoS = isAutoB ? ' style="color:#4a6a8a"' : '';
-        html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bvDisp}" data-raw="${bv}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="before" placeholder="시작 전"${autoS}${ro}></div>`;
+        if (rowMode === 'gain') {
+          html += `<div class="cell-input-row before-row gain-zero" title="획득형 — 시작 0 고정"><span class="cell-label before">전</span><span class="zero-fixed">0 고정</span></div>`;
+        } else {
+          html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bvDisp}" data-raw="${bv}" data-date="${date}" data-char="${a}" data-res="${r}" data-field="before" placeholder="시작 전"${autoS}${ro}></div>`;
+        }
         html += `<div class="cell-divider"></div>`;
-        html += `<div class="cell-input-row after-row"><span class="cell-label after">후</span><input type="text" value="${avDisp}" data-raw="${av}" data-date="${date}" data-char="${ch}" data-res="${r}" data-field="after" placeholder="종료 후"${ro}></div>`;
+        html += `<div class="cell-input-row after-row"><span class="cell-label after">${rowMode === 'gain' ? '먹' : '후'}</span><input type="text" value="${avDisp}" data-raw="${av}" data-date="${date}" data-char="${a}" data-res="${r}" data-field="after" data-mode="${rowMode}" placeholder="${rowMode === 'gain' ? '먹은 양' : '종료 후'}"${ro}></div>`;
         html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}" style="${earnedColor ? 'color:' + earnedColor : ''}">${earned !== '' ? formatNum(earned) : ''}</div>`;
       }
 
@@ -2772,7 +2796,7 @@ function renderInputSheet() {
   data.resources.forEach(r => {
     let sum = 0;
     data.characters.forEach(ch => { sum += getEarned(data.records?.[date]?.[ch]?.[r]); });
-    const sc = sum > 0 ? 'color:#ef4444' : sum < 0 ? 'color:#60a5fa' : '';
+    const sc = sum > 0 ? 'color:#34d399' : sum < 0 ? 'color:#fb7185' : '';
     html += `<td data-sum-res="${r}" style="${sc}">${formatNum(sum)}</td>`;
   });
   html += '</tr>';
@@ -2784,6 +2808,7 @@ function renderInputSheet() {
   html += '</td></tr>';
 
   html += '</tbody></table>';
+  if (hiddenList.length) html += `<div class="jr-hidden">🙈 숨긴 캐릭터 ${hiddenList.length}명 (${hiddenList.map(jrEsc).join(' · ')}) — 기록·정산은 그대로 <button class="mini-btn" data-act="showhidden">${JR.showHidden ? '다시 접기' : '펼쳐 보기'}</button></div>`;
   wrap.innerHTML = html;
 
   document.getElementById('inlineAddChar').addEventListener('keydown', function(e) {
@@ -2803,8 +2828,12 @@ function renderInputSheet() {
 
 // ===================== 일지: 캐릭터별 카드 입력 (2026-10 리뉴얼) =====================
 function jrEsc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-function jrPref(key, def) { try { return localStorage.getItem('maple_jr_' + key) || def; } catch (e) { return def; } }
-function jrSetPref(key, v) { try { localStorage.setItem('maple_jr_' + key, v); } catch (e) { /* 저장 안 돼도 화면은 동작 */ } }
+function jrKey(key) { return 'maple_jr_' + key + (key === 'layout' ? '_' + getCurrentUser() : ''); }
+function jrPref(key, def) {
+  if (key === 'layout' && def === undefined) def = (loadData().characters || []).length >= 6 ? 'table' : 'card';
+  try { return localStorage.getItem(jrKey(key)) || def; } catch (e) { return def; }
+}
+function jrSetPref(key, v) { try { localStorage.setItem(jrKey(key), v); } catch (e) { /* 저장 안 돼도 화면은 동작 */ } }
 const JR = { showHidden: false, collapsed: {}, expandRes: {}, rows: [] };
 
 const DEFAULT_FAV_RES = ['매소', '다조', '경험치'];
@@ -2827,7 +2856,9 @@ function getCharMode(data, ch) {
 // 이미 적힌 칸은 그 기록 모양대로 보여줌 (방식을 바꿔도 지난 기록이 엉뚱하게 보이지 않게)
 function recRowMode(rec, charMode) {
   if (rec && typeof rec === 'object') {
-    if (rec.g || rec.before === 0 || rec.before === '0') return 'gain';
+    if (rec.g) return 'gain';
+    // 시작 0은 창고형 기록일 수도, 잔고형인데 진짜 0이었을 수도 — 캐릭터 방식 따라감
+    if (rec.before === 0 || rec.before === '0') return charMode;
     if (rec.before !== '' && rec.before !== undefined && rec.before !== null) return 'bal';
   }
   return charMode;
@@ -2859,7 +2890,7 @@ function renderJrBar() {
   const data = loadData();
   const d = new Date(_selectedDate + 'T00:00:00');
   const isToday = _selectedDate === todayStr();
-  const layout = jrPref('layout', 'card'), view = jrPref('view', 'main'), phase = jrPref('phase', 'both');
+  const layout = jrPref('layout'), view = jrPref('view', 'main'), phase = jrPref('phase', 'both');
   const seg = (key, cur, opts) => `<div class="seg">${opts.map(([v, l]) => `<button class="${cur === v ? 'on' : ''}" onclick="jrSetPrefAndRender('${key}','${v}')">${l}</button>`).join('')}</div>`;
   bar.innerHTML = `
     <div class="jr-date">${d.getMonth() + 1}월 ${d.getDate()}일 <small>${['일', '월', '화', '수', '목', '금', '토'][d.getDay()]}${isToday ? ' · 오늘' : ' · 지난 기록'}</small>${isToday ? '' : ' <button class="navbtn" onclick="acToday()">오늘로</button>'}</div>
@@ -2874,7 +2905,7 @@ function jrSetPrefAndRender(key, v) { jrSetPref(key, v); renderInputTable(); }
 function renderInputTable() {
   renderJrBar();
   renderTodayCards();
-  if (jrPref('layout', 'card') === 'table') {
+  if (jrPref('layout') === 'table') {
     document.getElementById('inputTableWrap').className = 'sheet-wrap';
     renderInputSheet();
   } else {
@@ -3127,19 +3158,19 @@ function jrSetField(date, ch, r, field, val, rowMode) {
       data.charModes[ch] = el.dataset.v;
       saveData(data);
       toast(`${ch} → ${el.dataset.v === 'gain' ? '획득형 (시작 0, 먹은 양만)' : '잔고형 (시작·끝 보유량)'} · 이미 적힌 칸은 그대로`);
-      renderInputCards();
+      renderInputTable();
     } else if (act === 'hide') {
       const list = data.hiddenChars || [];
       data.hiddenChars = list.includes(ch) ? list.filter(c => c !== ch) : [...list, ch];
       saveData(data);
       toast(data.hiddenChars.includes(ch) ? `${ch} 숨김 — 기록·정산은 그대로` : `${ch} 다시 보임`);
-      renderInputCards();
+      renderInputTable();
     } else if (act === 'more') {
       JR.expandRes[ch] = !JR.expandRes[ch];
       renderInputCards();
     } else if (act === 'showhidden') {
       JR.showHidden = !JR.showHidden;
-      renderInputCards();
+      renderInputTable();
     }
   });
   wrap.addEventListener('dblclick', e => {
@@ -3180,13 +3211,19 @@ function updateValue(el) {
     if (typeof rec === 'number') rec = { before: 0, after: rec };
     if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
     rec[field] = val;
-    // 자동 복사: before 비어있고 after 입력 시 최근 데이터에서 가져옴
-    if (field === 'after' && (rec.before === '' || rec.before === undefined)) {
-      const prev = findPrevValue(data.records, ch, res, date);
-      if (prev) rec.before = prev.val;
+    if (el.dataset.mode === 'gain') {
+      rec.before = 0; rec.g = 1;
+      if (rec.after === '' || rec.after === undefined) rec = null;
+    } else {
+      delete rec.g;
+      // 자동 복사: before 비어있고 after 입력 시 최근 데이터에서 가져옴
+      if (field === 'after' && (rec.before === '' || rec.before === undefined)) {
+        const prev = findPrevValue(data.records, ch, res, date);
+        if (prev) rec.before = prev.val;
+      }
+      if (rec.before === '' && rec.after === '') rec = null;
     }
-    data.records[date][ch][res] = rec;
-    if (rec.before === '' && rec.after === '') delete data.records[date][ch][res];
+    if (rec) data.records[date][ch][res] = rec; else delete data.records[date][ch][res];
   }
 
   if (data.records[date][ch] && !Object.keys(data.records[date][ch]).length) delete data.records[date][ch];
@@ -3206,13 +3243,13 @@ function updateSums() {
     if (r === '경험치') {
       el.textContent = getExpEarned(rec);
       const expVal = getExpEarnedNum(rec);
-      el.style.color = expVal > 0 ? '#ef4444' : expVal < 0 ? '#60a5fa' : '';
+      el.style.color = expVal > 0 ? '#34d399' : expVal < 0 ? '#fb7185' : '';
     } else if (typeof rec === 'object' && rec !== null) {
       const bEmpty = rec.before === '' || rec.before === undefined;
       const aEmpty = rec.after === '' || rec.after === undefined;
       const val = (!bEmpty && !aEmpty) ? (Number(rec.after)||0) - (Number(rec.before)||0) : '';
       el.textContent = val !== '' ? formatNum(val) : '';
-      el.style.color = val > 0 ? '#ef4444' : val < 0 ? '#60a5fa' : '';
+      el.style.color = val > 0 ? '#34d399' : val < 0 ? '#fb7185' : '';
     } else {
       el.textContent = '';
       el.style.color = '';
@@ -3226,12 +3263,12 @@ function updateSums() {
       let totalPct = 0;
       data.characters.forEach(ch => { totalPct += getExpEarnedNum(data.records?.[date]?.[ch]?.[r]); });
       el.textContent = totalPct ? `+${totalPct.toFixed(3)}%` : '';
-      el.style.color = totalPct > 0 ? '#ef4444' : totalPct < 0 ? '#60a5fa' : '';
+      el.style.color = totalPct > 0 ? '#34d399' : totalPct < 0 ? '#fb7185' : '';
     } else {
       let sum = 0;
       data.characters.forEach(ch => { sum += getEarned(data.records?.[date]?.[ch]?.[r]); });
       el.textContent = formatNum(sum);
-      el.style.color = sum > 0 ? '#ef4444' : sum < 0 ? '#60a5fa' : '';
+      el.style.color = sum > 0 ? '#34d399' : sum < 0 ? '#fb7185' : '';
     }
   });
 }

@@ -821,8 +821,17 @@ const APP_VERSION = 2;
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-08-06c';
+const CHANGELOG_VERSION = '2026-10-31';
 const CHANGELOG = [
+  {
+    version: '2026-10-31',
+    title: '🐞 시세 입력·합산 메소 계산 오류 수정',
+    items: [
+      '<strong style="color:#ff8a65">시세 칸에 <code>630만</code>을 쓰면 630메소로 저장되던 문제</strong> — "만"을 지워버리고 숫자만 읽었습니다. 이제 <code>630만</code> · <code>49만 9999</code> · <code>1억 2000만</code> · <code>6300000</code> 전부 제대로 들어갑니다 (설정 탭 · 정산 창 둘 다)',
+      '혹시 최근에 시세를 고쳤다면 <strong>설정 탭에서 값이 맞는지 한 번 확인</strong>해 주세요 (예: 다조가 <code>630</code>으로 되어 있으면 다시 입력)',
+      '<strong>부주정산 합산 메소가 부풀던 문제</strong> — 재화 지정으로 정산한 뒤 그 재화 시세가 바뀌면, 정산된 수량은 옛 시세로 빼고 누적은 새 시세로 계산해서 합산이 재화별 칸 합과 안 맞았습니다. 이제 둘이 항상 일치합니다',
+    ],
+  },
   {
     version: '2026-08-06c',
     title: '📱 폰·좁은 창에서 글자 깨지던 문제 수정',
@@ -1289,6 +1298,15 @@ function formatMeso(n) {
   if (man) parts.push(man + '만');
   if (rest) parts.push(String(rest));
   return sign + (parts.length ? parts.join(' ') : '0');
+}
+
+// formatMeso 표기("630만", "49만 9999", "1억 2000만")와 숫자("6300000") 둘 다 메소로
+function parseMesoText(str) {
+  const s = String(str || '').replace(/[,\s]/g, '');
+  if (!/[억만]/.test(s)) return Number(s.replace(/[^0-9]/g, '')) || 0;
+  const m = s.match(/^(?:([\d.]+)억)?(?:([\d.]+)만)?(\d+)?/);
+  if (!m) return 0;
+  return Math.round((parseFloat(m[1]) || 0) * 1e8 + (parseFloat(m[2]) || 0) * 1e4 + (Number(m[3]) || 0));
 }
 
 // 다조 시세 관리 (호환)
@@ -2057,8 +2075,7 @@ function renderResourcePriceList() {
 }
 function onResourcePriceInput(el) {
   const res = el.dataset.resPrice;
-  const raw = el.value.replace(/[^0-9]/g, '');
-  setResourcePrice(res, raw);
+  setResourcePrice(res, parseMesoText(el.value));
   renderHistory();
 }
 
@@ -2066,8 +2083,7 @@ function onResourcePriceInput(el) {
 let _modalPriceTimer = null;
 function onModalPriceInput(el) {
   const res = el.dataset.modalPrice;
-  const raw = Number(el.value.replace(/[^0-9]/g, '')) || 0;
-  setResourcePrice(res, raw);
+  setResourcePrice(res, parseMesoText(el.value));
   // 잔여 박스/이력/모드별 미리보기 재계산
   if (_modalPriceTimer) clearTimeout(_modalPriceTimer);
   _modalPriceTimer = setTimeout(() => {

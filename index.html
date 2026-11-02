@@ -2801,7 +2801,7 @@ function renderInputSheet() {
         if (rowMode === 'gain') {
           html += `<div class="cell-input-row before-row" title="획득형 — 비워두면 시작 0"><span class="cell-label before">전</span><input type="text" value="" data-raw="" data-date="${date}" data-char="${a}" data-res="${r}" data-field="before" data-mode="gain" placeholder="0"${ro}></div>`;
         } else {
-          html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bvDisp}" data-raw="${bv}" data-date="${date}" data-char="${a}" data-res="${r}" data-field="before" placeholder="시작 전"${autoS}${ro}></div>`;
+          html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bvDisp}" data-raw="${bv}" data-date="${date}" data-char="${a}" data-res="${r}" data-field="before" placeholder="0"${autoS}${ro}></div>`;
         }
         html += `<div class="cell-divider"></div>`;
         html += `<div class="cell-input-row after-row"><span class="cell-label after">후</span><input type="text" value="${avDisp}" data-raw="${av}" data-date="${date}" data-char="${a}" data-res="${r}" data-field="after" data-mode="${rowMode}" placeholder="${rowMode === 'gain' ? '끝 (=먹은 양)' : '종료 후'}"${ro}></div>`;
@@ -2935,7 +2935,28 @@ function renderJrBar() {
 }
 function jrSetPrefAndRender(key, v) { jrSetPref(key, v); renderInputTable(); }
 
+function jrFixMissingStart() {
+  const data = loadData();
+  const date = dateInput.value;
+  const day = data.records?.[date];
+  if (!day) return;
+  let changed = 0;
+  Object.keys(day).forEach(ch => {
+    const lastDate = data.settlements?.[ch]?.lastDate || '';
+    if (lastDate && date <= lastDate) return;
+    Object.keys(day[ch] || {}).forEach(r => {
+      const rec = day[ch][r];
+      if (r === '경험치' || !rec || typeof rec !== 'object') return;
+      const noStart = rec.before === '' || rec.before === undefined || rec.before === null;
+      const hasEnd = rec.after !== '' && rec.after !== undefined && rec.after !== null;
+      if (noStart && hasEnd && !findPrevValue(data.records, ch, r, date)) { rec.before = 0; changed++; }
+    });
+  });
+  if (changed) saveData(data);
+}
+
 function renderInputTable() {
+  jrFixMissingStart();
   renderJrBar();
   renderTodayCards();
   if (jrPref('layout') === 'table') {
@@ -2982,7 +3003,7 @@ function jrRow(data, ch, r, date, charMode, locked, idx) {
       const prev = locked ? null : findPrevValue(data.records, ch, r, date);
       const bStored = o.before !== '' && o.before !== undefined && o.before !== null;
       const auto = bStored && prev && Number(o.before) === Number(prev.val);
-      const s = `<div class="f">${jrInput(idx, 'before', bStored ? o.before : '', prev ? jrFmtVal(r, prev.val) : '시작', { meso, ro: locked, cls: auto ? 'auto' : '' })}</div>`;
+      const s = `<div class="f">${jrInput(idx, 'before', bStored ? o.before : '', prev ? jrFmtVal(r, prev.val) : '0', { meso, ro: locked, cls: auto ? 'auto' : '' })}</div>`;
       const e = `<div class="f">${jrInput(idx, 'after', o.after, meso ? '끝 메소' : '끝', { meso, ro: locked })}</div>`;
       io = phase === 'start' ? s : phase === 'end' ? e : s + e;
       single = phase !== 'both';
@@ -3006,7 +3027,7 @@ function jrCard(data, ch, date, fav, used) {
   const more = view === 'all' ? data.resources.length - list.length : 0;
   const a = jrEsc(ch);
   const phase = jrPref('phase', 'both');
-  const hdrCols = mode === 'gain' ? (phase === 'start' ? ['시작 (회색 0 = 비워두면 0)'] : phase === 'end' ? ['끝 (= 먹은 양)'] : ['시작 (회색 0 = 비워두면 0)', '끝 (= 먹은 양)']) :phase === 'start' ? ['시작 (회색 = 어제 끝)'] : phase === 'end' ? ['끝'] : ['시작 (회색 = 어제 끝)', '끝'];
+  const hdrCols = mode === 'gain' ? (phase === 'start' ? ['시작 (회색 0 = 비워두면 0)'] : phase === 'end' ? ['끝 (= 먹은 양)'] : ['시작 (회색 0 = 비워두면 0)', '끝 (= 먹은 양)']) :phase === 'start' ? ['시작 (회색 = 어제 끝, 없으면 0)'] : phase === 'end' ? ['끝'] : ['시작 (회색 = 어제 끝, 없으면 0)', '끝'];
   let h = `<div class="jr-card${locked ? ' locked' : ''}${hidden ? ' is-hidden' : ''}${collapsed ? ' collapsed' : ''}">
     <div class="jr-head">
       <button class="jr-tog" data-act="toggle" data-ch="${a}">${collapsed ? '▸' : '▾'}</button>
@@ -3142,9 +3163,10 @@ function jrSetField(date, ch, r, field, val, rowMode) {
       delete rec.g;
       if (field === 'after' && (rec.before === '' || rec.before === undefined)) {
         const prev = findPrevValue(data.records, ch, r, date);
-        if (prev) rec.before = prev.val;
+        rec.before = prev ? prev.val : 0;
       }
-      if ((rec.before === '' || rec.before === undefined) && (rec.after === '' || rec.after === undefined)) rec = null;
+      if (field === 'after' && (rec.after === '' || rec.after === undefined) && Number(rec.before) === 0) rec = null;
+      else if ((rec.before === '' || rec.before === undefined) && (rec.after === '' || rec.after === undefined)) rec = null;
     }
     if (rec) data.records[date][ch][r] = rec; else delete data.records[date][ch][r];
   }
@@ -3252,9 +3274,10 @@ function updateValue(el) {
       // 자동 복사: before 비어있고 after 입력 시 최근 데이터에서 가져옴
       if (field === 'after' && (rec.before === '' || rec.before === undefined)) {
         const prev = findPrevValue(data.records, ch, res, date);
-        if (prev) rec.before = prev.val;
+        rec.before = prev ? prev.val : 0;
       }
-      if (rec.before === '' && rec.after === '') rec = null;
+      if (field === 'after' && (rec.after === '' || rec.after === undefined) && Number(rec.before) === 0) rec = null;
+      else if (rec.before === '' && rec.after === '') rec = null;
     }
     if (rec) data.records[date][ch][res] = rec; else delete data.records[date][ch][res];
   }

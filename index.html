@@ -700,6 +700,8 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 .pbadge { font-size: 9.5px; padding: 1px 5px; border-radius: 3px; font-weight: 600; }
 .pbadge.fx { background: rgba(52,211,153,.12); color: #6ee7b7; }
 .pbadge.vr { background: rgba(245,158,11,.12); color: var(--warn); }
+.settle-note { font-size: 12px; color: var(--text-2); background: var(--accent-soft); border: 1px solid rgba(59,130,246,.25); border-radius: 8px; padding: 7px 12px; margin: 4px 0 10px; }
+.settle-note b { color: #fff; }
 .settle-confirm { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(245,158,11,.45); background: var(--warn-soft); font-size: 12.5px; cursor: pointer; line-height: 1.5; }
 .settle-confirm.ok { border-color: rgba(52,211,153,.45); background: rgba(52,211,153,.07); }
 .settle-confirm input { margin-top: 3px; accent-color: var(--good); width: 15px; height: 15px; }
@@ -852,7 +854,7 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
         <button data-scope="all" onclick="setSettleScope('all')">전체 누적</button>
         <button data-scope="paid" onclick="setSettleScope('paid')">정산된 것</button>
       </div>
-      <span class="hint">남은 것 = 받은 만큼 뺀 나머지 (재화 지정은 그 재화에서, 금액 정산은 고른 순서대로)</span>
+      <span class="hint">남은 것 = 받은 만큼 뺀 나머지 (현금·메소 정산은 메소에서만, 재화는 재화 지정으로)</span>
       <div id="settlePriceDriftBanner" style="margin-left:auto;"></div>
     </div>
     <div class="sheet-wrap" id="settlementWrap"></div>
@@ -1122,13 +1124,23 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 </style>
 
 <script>
-const APP_VERSION = 6;
+const APP_VERSION = 7;
 
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-10-31d';
+const CHANGELOG_VERSION = '2026-11-02';
 const CHANGELOG = [
+  {
+    version: '2026-11-02',
+    title: '💰 현금·메소 정산은 메소에서만 빠지게',
+    items: [
+      '현금·메소·선금으로 받은 정산은 이제 <strong>메소에서만</strong> 빠집니다 — 예전 기록도 같은 규칙으로 다시 계산 (남은 총액은 그대로)',
+      '그래서 <strong>다조가 68.57개처럼 소수점으로 깨지던 것</strong>이 사라지고, 다조 시세가 바뀌어도 이미 받은 돈이 흔들리지 않습니다',
+      '다조 등 재화는 <strong>🎯 재화 지정</strong>으로 개수만큼만 정산 (변동가는 시세 확인 체크 후 박제)',
+      '남은 메소보다 더 받은 돈은 재화를 깎지 않고 <strong>"💸 메소 넘게 받은 것"</strong>으로 따로 표시',
+    ],
+  },
   {
     version: '2026-10-31d',
     title: '💰 부주 정산 화면 + 정산 창 정리',
@@ -1852,7 +1864,7 @@ function detectPriceDrift(data, ch) {
 
 // 정산받은 분을 재화별로 배분
 //  1순위) 재화 지정 정산(type:'items', allocations) — 지정한 재화에서 정확히 그 수량만 차감
-//  2순위) 지정 없는 기존 정산(현금/메소/선금) — 종전대로 변동가 → 고정가 → 매소 순 자동 차감
+//  2순위) 지정 없는 정산(현금/메소/선금) — 메소에서만 차감, 넘치는 건 _excess
 // 자동 차감 순서 이유: 변동가 재화를 정산 시점 가치로 먼저 잠가야 이후 시세가 흔들려도 잔여가 안정적.
 // entries를 넘기지 않으면 100% 종전 동작 (옛 기록 호환).
 function allocatePaidToResources(data, totals, paidMeso, entries) {
@@ -1884,37 +1896,19 @@ function allocatePaidToResources(data, totals, paidMeso, entries) {
     });
   });
 
-  // ② 지정 없는 정산 금액만 자동 차감 — 남은 수량 기준
-  //    order:'meso'로 기록된 정산(2026-10 이후 기본)은 메소부터, 그 외(옛 기록)는 변동가 → 고정가 → 매소
+  // ② 지정 없는 정산(현금·메소·선금·옛 기록 전부)은 메소에서만 뺌.
+  //    다조 같은 재화를 자동으로 깎으면 소수점이 생기고 시세가 바뀔 때 정산이 흔들려서 — 재화는 🎯재화 지정으로만.
+  //    메소보다 더 받은 돈은 재화를 깎지 않고 _excess(초과로 받은 것)로 따로 둠. 남은 총액 계산은 그대로.
   let remainingPay = paidMeso - explicitMeso;
   if (remainingPay <= 0) return result;
-  const mesoFirstPay = Math.min(remainingPay, (entries || []).filter(e => e && !e.allocations && e.order === 'meso')
-    .reduce((s, e) => s + (Number(e.mesoEquiv) || 0), 0));
-
-  const drain = (pay, mesoFirst) => {
-    const variable = [], fixedNonMeso = [];
-    let mesoR = null;
-    (data.resources || []).forEach(r => {
-      if (!result[r].hasPrice || result[r].remainingQty <= 0) return;
-      if (r === '매소') mesoR = r;
-      else if (isPriceFixed(r)) fixedNonMeso.push(r);
-      else variable.push(r);
-    });
-    const order = mesoFirst ? [...(mesoR ? [mesoR] : []), ...variable, ...fixedNonMeso] : [...variable, ...fixedNonMeso, ...(mesoR ? [mesoR] : [])];
-    order.forEach(r => {
-      if (pay <= 0) return;
-      const price = getResourcePrice(r);
-      const availVal = result[r].remainingQty * price;
-      if (availVal <= 0) return;
-      const consumed = Math.min(availVal, pay);
-      result[r].paidQty += consumed / price;
-      result[r].remainingQty -= consumed / price;
-      pay -= consumed;
-    });
-    return pay;
-  };
-  drain(mesoFirstPay, true);
-  drain(remainingPay - mesoFirstPay, false);
+  const m = result['매소'];
+  if (m && m.hasPrice && m.remainingQty > 0) {
+    const take = Math.min(m.remainingQty, remainingPay);
+    m.paidQty += take;
+    m.remainingQty -= take;
+    remainingPay -= take;
+  }
+  Object.defineProperty(result, '_excess', { value: Math.max(0, Math.round(remainingPay)), enumerable: false });
   return result;
 }
 
@@ -2357,7 +2351,7 @@ function renderEntryLine(ch, e, locked) {
   }
   h += `</span></div>`;
   if (!e.allocations && e.type !== 'full') {
-    h += `<div class="entry-noalloc">재화 미지정 — 자동 차감 (✎수정에서 🎯재화 지정으로 바꾸면 소수점이 사라집니다)</div>`;
+    h += `<div class="entry-noalloc">재화 미지정 — 메소에서 차감</div>`;
   }
   h += renderEntryAlloc(e);
   h += renderEntrySnapshot(e);
@@ -3932,7 +3926,7 @@ function renderSettleBreakdown(split, left, footHtml, showTable) {
       <div class="bd-title">📋 이번 정산 내역 <span class="hint">— 이 시세로 박제됨</span></div>
       <div class="bd-row bd-h"><span>재화</span><span>수량</span><span>시세</span><span>= 메소</span></div>
       ${keys.map(r => `<div class="bd-row"><span>${r === '매소' ? '메소' : jrEsc(r)}${r === '매소' ? '' : isPriceFixed(r) ? ' <span class="pbadge fx">🔒고정</span>' : ' <span class="pbadge vr">📈변동</span>'}</span><span class="num">${q(r, split[r])}</span><span class="num">${r === '매소' ? '—' : formatMeso(getResourcePrice(r))}</span><span class="num c-meso">${formatMeso(Math.round(split[r] * getResourcePrice(r)))}</span></div>`).join('')}
-      ${left ? `<div class="bd-row"><span>🔵 남는 돈 → 선금</span><span></span><span></span><span class="num" style="color:#7dd3fc">${formatMeso(left)}</span></div>` : ''}
+      ${left ? `<div class="bd-row"><span>💸 남은 메소보다 더 받은 돈</span><span></span><span></span><span class="num" style="color:#7dd3fc">${formatMeso(left)}</span></div><div class="hint" style="padding:2px 0 4px;color:var(--warn)">⚠ 남은 메소보다 많이 받음 — 재화는 안 깎이고 금액으로만 빠집니다. 다조 등을 실제로 넘긴 거면 🎯 재화 지정, 다 끝낸 거면 ✅ 전체 정산으로 (시세 박제)</div>` : ''}
       ${footHtml ? `<div class="bd-foot">${footHtml}</div>` : ''}` : '';
   }
   if (conf) {
@@ -3958,8 +3952,7 @@ function onModalCashRate(el) {
   renderSettleModal();
   renderHistory();
 }
-const settleOrderSeg = () => `<div class="settle-row"><label>어디서 뺄지</label><div class="seg"><button class="${_settleOrder === 'meso' ? 'on' : ''}" onclick="setSettleOrder('meso')">메소부터</button><button class="${_settleOrder === 'var' ? 'on' : ''}" onclick="setSettleOrder('var')">변동가 재화(다조 등)부터</button></div></div>
-  <div class="hint" style="margin:-4px 0 8px 98px">정확히 어떤 재화를 줬는지 남기려면 🎯 재화 지정</div>`;
+const settleOrderSeg = () => `<div class="settle-note">💡 현금·메소로 받으면 <b>메소에서만</b> 빠집니다. 다조 등 재화는 <b>🎯 재화 지정</b>으로 개수만큼 정산하세요 (시세 확인 후 박제).</div>`;
 
 function liveSettleInput() {
   if (_currentSettleMode === 'items') { updateAllocTotals(); return; }
@@ -4433,6 +4426,7 @@ function renderHistory() {
       const eq = priced && r !== '매소' ? `<span class="eq num">≈ ${formatMesoMan(Math.round(v * getResourcePrice(r)))}</span>` : '';
       chips += `<span class="chip${priced ? '' : ' muted'}" title="${priced ? '' : '시세 없음 — 합산 제외'}">${icon}<span class="q num ${cls}">${q(r, v)}</span>${eq}</span>`;
     });
+    if (alloc._excess && scope !== 'all') chips += `<span class="chip excess" title="메소보다 더 받은 돈 — 재화는 깎지 않고 남은 재화 몫에서 빠짐"><span class="rk">💸 메소 넘게 받은 것</span><span class="q num" style="color:#7dd3fc">${scope === 'paid' ? '+' : '-'}${formatMesoMan(alloc._excess)}</span></span>`;
     const pct = state.grossMeso > 0 ? Math.max(0, Math.min(100, Math.round(state.paidValue / state.grossMeso * 100))) : 0;
     sh += `<div class="st-row${drift.length ? ' drift' : ''}">
       <div class="st-main">

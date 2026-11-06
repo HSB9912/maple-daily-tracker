@@ -613,6 +613,9 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 .jr-row:first-child { border-top: 0; }
 .jr-row .rn { font-size: 12.5px; color: var(--text-2); display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .jr-row .rn img { width: 14px; height: 14px; }
+.rm-tog { margin-left: auto; border: 0; border-radius: 4px; font: inherit; font-size: 9.5px; padding: 1px 5px; cursor: pointer; flex-shrink: 0; }
+.rm-tog.bal { background: rgba(59,130,246,.15); color: #93c5fd; }
+.rm-tog.gain { background: rgba(52,211,153,.13); color: #6ee7b7; }
 .jr-row .in { display: grid; grid-template-columns: 1fr 120px; column-gap: 10px; align-items: center; min-width: 0; }
 .jr-row .io { grid-row: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; min-width: 0; }
 .jr-row .io.one { grid-template-columns: 1fr; }
@@ -1124,13 +1127,22 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 </style>
 
 <script>
-const APP_VERSION = 7;
+const APP_VERSION = 8;
 
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-11-02';
+const CHANGELOG_VERSION = '2026-11-06';
 const CHANGELOG = [
+  {
+    version: '2026-11-06',
+    title: '🔁 재화마다 "이어서 / 0부터" 따로',
+    items: [
+      '입력 방식을 <strong>재화마다</strong> 정합니다 — 메소는 매일 <strong>0부터</strong>, 다조·우유 등은 <strong>전날 끝 이어받기</strong>처럼 섞어 쓸 수 있어요 (최근 기록 보고 자동으로 맞춰둠)',
+      '재화 이름 옆 <code>이어서</code> / <code>0부터</code> 를 누르면 그 재화만 바뀝니다. 캐릭터 이름 옆 버튼은 전부 한 번에',
+      '전날 끝 값을 찾는 범위가 7일 → <strong>45일</strong> — 며칠 쉬어도 마지막 끝 값을 끌어옵니다',
+    ],
+  },
   {
     version: '2026-11-02',
     title: '💰 현금·메소 정산은 메소에서만 빠지게',
@@ -2503,7 +2515,7 @@ function formatMesoShort(n) {
 // 최근 데이터 역추적 (최대 7일, after → before 순)
 function findPrevValue(records, ch, res, fromDate, maxDays) {
   const d = new Date(fromDate + 'T00:00:00');
-  for (let i = 1; i <= (maxDays || 7); i++) {
+  for (let i = 1; i <= (maxDays || 45); i++) {
     d.setDate(d.getDate() - 1);
     const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     const rec = records?.[ds]?.[ch]?.[res];
@@ -2735,12 +2747,12 @@ function renderInputSheet() {
   data.characters.filter(ch => !isHiddenChar(data, ch) || JR.showHidden).forEach(ch => {
     const settledDate = data.settlements?.[ch]?.lastDate || '';
     const isSettled = settledDate && date <= settledDate;
-    const charMode = getCharMode(data, ch);
+    const charMode = getCharModeShown(data, ch);
     const a = jrEsc(ch);
 
     html += `<tr${isSettled ? ' class="settled-row"' : ''}><td class="row-header" style="position:relative;cursor:pointer" data-charname="${a}" ondblclick="renameCharInline(this)" title="더블클릭 = 이름 바꾸기">
       <div class="tbl-name">${a}${isHiddenChar(data, ch) ? ' <span class="badge-hidden">숨김</span>' : ''}</div>
-      <div class="tbl-ctl"><div class="mode-pill"><button class="b${charMode === 'bal' ? ' on' : ''}" data-act="mode" data-ch="${a}" data-v="bal" title="시작·끝 보유량">잔고</button><button class="g${charMode === 'gain' ? ' on' : ''}" data-act="mode" data-ch="${a}" data-v="gain" title="시작 0, 먹은 양만">획득</button></div><button class="jr-hide" data-act="hide" data-ch="${a}" title="${isHiddenChar(data, ch) ? '다시 보이기' : '숨기기 (기록 유지)'}">${isHiddenChar(data, ch) ? '👁' : '🙈'}</button></div>
+      <div class="tbl-ctl"><div class="mode-pill"><button class="b${charMode === 'bal' ? ' on' : ''}" data-act="mode" data-ch="${a}" data-v="bal" title="전부 전날 끝 이어받기">이어서</button><button class="g${charMode === 'gain' ? ' on' : ''}" data-act="mode" data-ch="${a}" data-v="gain" title="전부 매일 0부터">0부터</button></div><button class="jr-hide" data-act="hide" data-ch="${a}" title="${isHiddenChar(data, ch) ? '다시 보이기' : '숨기기 (기록 유지)'}">${isHiddenChar(data, ch) ? '👁' : '🙈'}</button></div>
       ${isSettled ? '<div class="settled-overlay"><span>정 산 완 료</span></div>' : ''}</td>`;
     data.resources.forEach(r => {
       let rec = data.records?.[date]?.[ch]?.[r];
@@ -2777,9 +2789,10 @@ function renderInputSheet() {
         html += `<div class="cell-earned" data-earned-char="${ch}" data-earned-res="${r}" style="${expColor ? 'color:' + expColor : ''}">${earned}</div>`;
       } else {
         if (typeof rec === 'number') rec = { before: 0, after: rec };
-        const rowMode = recRowMode(rec, charMode);
+        const rowMode = getResMode(data, ch, r);
         if (typeof rec !== 'object' || rec === null) rec = { before: '', after: '' };
-        let bv = rowMode === 'gain' ? 0 : (rec.before ?? '');
+        const typedGainStart = rowMode === 'gain' && !rec.g && rec.before !== '' && rec.before !== undefined && Number(rec.before) !== 0 ? rec.before : '';
+        let bv = rowMode === 'gain' ? (typedGainStart === '' ? 0 : typedGainStart) : (rec.before ?? '');
         let isAutoB = false;
         // 자동 복사: 시작 전 비어있으면 최근 데이터에서 가져옴 (after → before 순)
         if (bv === '' && rowMode !== 'gain') {
@@ -2793,7 +2806,7 @@ function renderInputSheet() {
         const earnedColor = earned > 0 ? '#34d399' : earned < 0 ? '#fb7185' : '';
         const autoS = isAutoB ? ' style="color:#4a6a8a"' : '';
         if (rowMode === 'gain') {
-          html += `<div class="cell-input-row before-row" title="획득형 — 비워두면 시작 0"><span class="cell-label before">전</span><input type="text" value="" data-raw="" data-date="${date}" data-char="${a}" data-res="${r}" data-field="before" data-mode="gain" placeholder="0"${ro}></div>`;
+          html += `<div class="cell-input-row before-row" title="0부터 — 비워두면 시작 0"><span class="cell-label before">전</span><input type="text" value="${typedGainStart === '' ? '' : formatMeso(Number(typedGainStart))}" data-raw="${typedGainStart}" data-date="${date}" data-char="${a}" data-res="${r}" data-field="before" data-mode="gain" placeholder="0"${ro}></div>`;
         } else {
           html += `<div class="cell-input-row before-row"><span class="cell-label before">전</span><input type="text" value="${bvDisp}" data-raw="${bv}" data-date="${date}" data-char="${a}" data-res="${r}" data-field="before" placeholder="0"${autoS}${ro}></div>`;
         }
@@ -2869,6 +2882,26 @@ function getCharMode(data, ch) {
   const zero = dates.filter(d => { const r = recs[d][ch]['매소']; return r && (r.before === 0 || r.before === '0'); }).length;
   return zero / dates.length >= 0.7 ? 'gain' : 'bal';
 }
+// 재화별 입력 방식: 직접 고른 값 > 그 재화 최근 기록(시작 0이 70% 이상이면 0부터) > 캐릭터 방식
+// (메소는 매일 창고에 넣고 0부터, 다조·우유는 전날 끝을 이어서 — 같은 캐릭터 안에서도 다름)
+function getResMode(data, ch, r) {
+  const m = data.resModes?.[ch]?.[r];
+  if (m === 'gain' || m === 'bal') return m;
+  const recs = data.records || {};
+  const rows = [];
+  const dates = Object.keys(recs).sort();
+  for (let i = dates.length - 1; i >= 0 && rows.length < 20; i--) {
+    const v = recs[dates[i]]?.[ch]?.[r];
+    if (v && typeof v === 'object' && v.after !== '' && v.after !== undefined && v.after !== null) rows.push(v);
+  }
+  if (rows.length >= 3) return rows.filter(v => v.g || v.before === 0 || v.before === '0').length / rows.length >= 0.7 ? 'gain' : 'bal';
+  return getCharMode(data, ch);
+}
+// 캐릭터 머리글 표시용: 재화들이 섞여 있으면 'mix'
+function getCharModeShown(data, ch) {
+  const ms = new Set((data.resources || []).filter(r => r !== '경험치').map(r => getResMode(data, ch, r)));
+  return ms.size === 1 ? [...ms][0] : 'mix';
+}
 // 이미 적힌 칸은 그 기록 모양대로 보여줌 (방식을 바꿔도 지난 기록이 엉뚱하게 보이지 않게)
 function recRowMode(rec, charMode) {
   // 잔고형 캐릭터는 항상 시작 칸을 열어둠 (획득형으로 적었던 칸도 시작을 고칠 수 있게)
@@ -2893,11 +2926,13 @@ function applyGainEdit(rec, field) {
 // 캐릭터 이름 바뀌거나 지워질 때 새 설정들도 같이
 function renameCharMeta(data, oldName, newName) {
   if (data.charModes?.[oldName] !== undefined) { data.charModes[newName] = data.charModes[oldName]; delete data.charModes[oldName]; }
+  if (data.resModes?.[oldName] !== undefined) { data.resModes[newName] = data.resModes[oldName]; delete data.resModes[oldName]; }
   if (data.hiddenChars) data.hiddenChars = data.hiddenChars.map(c => c === oldName ? newName : c);
   if (data.mainChar === oldName) data.mainChar = newName;
 }
 function deleteCharMeta(data, name) {
   if (data.charModes) delete data.charModes[name];
+  if (data.resModes) delete data.resModes[name];
   if (data.hiddenChars) data.hiddenChars = data.hiddenChars.filter(c => c !== name);
   if (data.mainChar === name) delete data.mainChar;
 }
@@ -2986,10 +3021,11 @@ function jrRow(data, ch, r, date, charMode, locked, idx) {
     io = phase === 'start' ? s : phase === 'end' ? e : s + e;
     single = phase !== 'both';
   } else {
-    rowMode = recRowMode(rec, charMode);
+    rowMode = getResMode(data, ch, r);
     const meso = r === '매소';
     if (rowMode === 'gain') {
-      const s = `<div class="f">${jrInput(idx, 'before', '', '0', { meso, ro: locked })}</div>`;
+      const typedStart = o.before !== '' && o.before !== undefined && o.before !== null && !o.g && Number(o.before) !== 0 ? o.before : '';
+      const s = `<div class="f">${jrInput(idx, 'before', typedStart, '0', { meso, ro: locked })}</div>`;
       const e = `<div class="f">${jrInput(idx, 'after', o.after, meso ? '끝 메소 (= 먹은 양)' : '끝 (= 먹은 양)', { meso, ro: locked })}</div>`;
       io = phase === 'start' ? s : phase === 'end' ? e : s + e;
       single = phase !== 'both';
@@ -3004,11 +3040,12 @@ function jrRow(data, ch, r, date, charMode, locked, idx) {
     }
   }
   JR.rows[idx] = { ch, r, rowMode };
-  return `<div class="jr-row"><span class="rn">${icon}${label}</span><div class="in"><div class="io${single ? ' one' : ''}">${io}</div><div class="res num" data-jres="${idx}"></div><div class="spent num" data-jout="${idx}"></div></div></div>`;
+  const tog = r === '경험치' ? '' : `<button class="rm-tog ${rowMode}" data-act="resmode" data-ch="${jrEsc(ch)}" data-r="${jrEsc(r)}" title="${rowMode === 'gain' ? '매일 0부터 (먹은 양) — 눌러서 전날 끝 이어받기로' : '전날 끝 이어받기 — 눌러서 매일 0부터로'}">${rowMode === 'gain' ? '0부터' : '이어서'}</button>`;
+  return `<div class="jr-row"><span class="rn">${icon}${label}${tog}</span><div class="in"><div class="io${single ? ' one' : ''}">${io}</div><div class="res num" data-jres="${idx}"></div><div class="spent num" data-jout="${idx}"></div></div></div>`;
 }
 
 function jrCard(data, ch, date, fav, used) {
-  const mode = getCharMode(data, ch);
+  const mode = getCharModeShown(data, ch);
   const settledDate = data.settlements?.[ch]?.lastDate || '';
   const locked = !!settledDate && date <= settledDate;
   const hidden = isHiddenChar(data, ch);
@@ -3021,7 +3058,7 @@ function jrCard(data, ch, date, fav, used) {
   const more = view === 'all' ? data.resources.length - list.length : 0;
   const a = jrEsc(ch);
   const phase = jrPref('phase', 'both');
-  const hdrCols = mode === 'gain' ? (phase === 'start' ? ['시작 (회색 0 = 비워두면 0)'] : phase === 'end' ? ['끝 (= 먹은 양)'] : ['시작 (회색 0 = 비워두면 0)', '끝 (= 먹은 양)']) :phase === 'start' ? ['시작 (회색 = 어제 끝, 없으면 0)'] : phase === 'end' ? ['끝'] : ['시작 (회색 = 어제 끝, 없으면 0)', '끝'];
+  const hdrCols = phase === 'start' ? ['시작 (회색 = 비우면 쓰는 값)'] : phase === 'end' ? ['끝'] : ['시작 (회색 = 비우면 쓰는 값)', '끝'];
   let h = `<div class="jr-card${locked ? ' locked' : ''}${hidden ? ' is-hidden' : ''}${collapsed ? ' collapsed' : ''}">
     <div class="jr-head">
       <button class="jr-tog" data-act="toggle" data-ch="${a}">${collapsed ? '▸' : '▾'}</button>
@@ -3029,7 +3066,7 @@ function jrCard(data, ch, date, fav, used) {
       ${data.mainChar === ch ? '<span class="badge-main">본주</span>' : ''}
       ${locked ? `<span class="badge-lock">🔒 ${settledDate.slice(5)}까지 정산 완료</span>` : ''}
       ${hidden ? '<span class="badge-hidden">숨김</span>' : ''}
-      <div class="mode-pill"><button class="b${mode === 'bal' ? ' on' : ''}" data-act="mode" data-ch="${a}" data-v="bal" title="시작·끝 보유량을 적음 (끝−시작 = 번 것)">잔고형</button><button class="g${mode === 'gain' ? ' on' : ''}" data-act="mode" data-ch="${a}" data-v="gain" title="시작 0 고정, 먹은 양만 적음">획득형</button></div>
+      <div class="mode-pill" title="전부 한 번에 바꾸기 — 재화마다는 이름 옆 이어서/0부터"><button class="b${mode === 'bal' ? ' on' : ''}" data-act="mode" data-ch="${a}" data-v="bal">전부 이어서</button><button class="g${mode === 'gain' ? ' on' : ''}" data-act="mode" data-ch="${a}" data-v="gain">전부 0부터</button></div>${mode === 'mix' ? '<span class="hint">재화마다 다름</span>' : ''}
       <button class="jr-hide" data-act="hide" data-ch="${a}" title="${hidden ? '다시 보이기' : '숨기기 (기록은 유지)'}">${hidden ? '👁 꺼내기' : '🙈'}</button>
       <span class="jr-csum num" data-jsum="${a}"></span>
     </div>`;
@@ -3206,8 +3243,19 @@ function jrSetField(date, ch, r, field, val, rowMode) {
     } else if (act === 'mode') {
       data.charModes = data.charModes || {};
       data.charModes[ch] = el.dataset.v;
+      data.resModes = data.resModes || {};
+      data.resModes[ch] = {};
+      (data.resources || []).forEach(r => { if (r !== '경험치') data.resModes[ch][r] = el.dataset.v; });
       saveData(data);
-      toast(`${ch} → ${el.dataset.v === 'gain' ? '획득형 (시작 0, 먹은 양만)' : '잔고형 (시작·끝 보유량)'} · 이미 적힌 칸은 그대로`);
+      toast(`${ch} 재화 전부 → ${el.dataset.v === 'gain' ? '매일 0부터' : '전날 끝 이어받기'} · 이미 적힌 칸은 그대로`);
+      renderInputTable();
+    } else if (act === 'resmode') {
+      const r = el.dataset.r;
+      const next = getResMode(data, ch, r) === 'gain' ? 'bal' : 'gain';
+      data.resModes = data.resModes || {};
+      data.resModes[ch] = { ...(data.resModes[ch] || {}), [r]: next };
+      saveData(data);
+      toast(`${ch} ${r === '매소' ? '메소' : r} → ${next === 'gain' ? '매일 0부터' : '전날 끝 이어받기'}`);
       renderInputTable();
     } else if (act === 'hide') {
       const list = data.hiddenChars || [];
@@ -4755,6 +4803,7 @@ function startRename(span) {
       renameCharMeta(data, oldName, newName);
     } else {
       if (data.favResources) data.favResources = data.favResources.map(r => r === oldName ? newName : r);
+      Object.values(data.resModes || {}).forEach(m => { if (m[oldName] !== undefined) { m[newName] = m[oldName]; delete m[oldName]; } });
       Object.keys(data.records).forEach(date => {
         Object.keys(data.records[date]).forEach(ch => {
           if (data.records[date][ch][oldName] !== undefined) {

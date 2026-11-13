@@ -1140,6 +1140,8 @@ const CHANGELOG = [
     items: [
       '다른 사람 기록 확인을 <strong>바뀐 게 있을 때만</strong> 내려받습니다 — 전엔 30초마다 전체 데이터를 통째로 받았어요',
       '안 보고 있는 탭(최소화·다른 탭)은 서버를 부르지 않고, 돌아오면 바로 한 번 확인합니다',
+      '<strong>동시 저장 보호</strong> — 두 사람이 거의 같은 순간에 저장해도 한쪽 기록이 사라지지 않습니다 (서버가 먼저 확인 후 합쳐서 저장)',
+      '같은 사람이 <strong>다른 기기·탭</strong>에서 먼저 저장했으면 덮어쓸지 물어봅니다. 저장 실패 시엔 "저장 완료" 대신 실패 안내가 떠요',
       '이전 버전 창은 저장이 막히니 열려 있던 탭은 <strong>새로고침</strong> 해주세요',
     ],
   },
@@ -1321,6 +1323,12 @@ let _saving = false;
 let _saveQueued = false;
 // 사용량 절감: 서버 데이터(~300KB)를 매번 받지 않고, 바뀌었는지만 _rev(작은 값)로 확인
 let _lastRev = null;
+// 마지막으로 서버와 맞춘 시점의 프로필별 JSON — "다른 곳에서 바뀌었나" 판단용
+let _base = null;
+function snapBase(d) {
+  _base = {};
+  Object.entries(d?.profiles || {}).forEach(([k, v]) => { _base[k] = JSON.stringify(v); });
+}
 const newRev = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 async function cloudPeek() {
   const { data, error } = await _supabase.from('maple_state')
@@ -1355,59 +1363,86 @@ function markOutdated() {
   document.body.prepend(b);
 }
 
+// 저장 = "내가 마지막으로 본 버전(_rev)일 때만 덮어쓰기" (DB가 조건 검사 → 동시 저장해도 한쪽이 안 날아감)
+// 실패(누가 먼저 저장)하면 최신을 다시 받아 합치고 재시도. 반환: true 성공 / false 실패 / null 서버 내용으로 되돌림
 async function cloudSave() {
-  if (!CLOUD_ENABLED) { markSaved(); toast('로컬 환경 — 클라우드 저장 차단 (로컬에만 저장됨)'); return; }
-  if (_outdated) { toast('새 버전이 있어 저장이 막혔습니다 — 새로고침 해주세요', 'error'); return; }
-  if (_saving) { _saveQueued = true; return; }
-  if (!_cloudData) return;
+  if (!CLOUD_ENABLED) { markSaved(); toast('로컬 환경 — 클라우드 저장 차단 (로컬에만 저장됨)'); return true; }
+  if (_outdated) { toast('새 버전이 있어 저장이 막혔습니다 — 새로고침 해주세요', 'error'); return false; }
+  if (_saving) { _saveQueued = true; return true; }
+  if (!_cloudData) return false;
   _saving = true;
+  let result = false;
   try {
     const username = getCurrentUser();
-    // 1. 최신 데이터를 Supabase에서 불러오기 (다른 유저 변경사항 보존)
-    let latest = null;
-    let peek = null;
-    try { peek = await cloudPeek(); } catch (e) { /* 실패 시 아래에서 전체 로드 */ }
-    if (peek && peek.rev && peek.rev === _lastRev) {
-      latest = { _minVersion: peek.mv }; // 마지막 동기화 이후 아무도 안 바꿈 → 전체 다운로드 생략
-    } else try {
-      const { data, error } = await _supabase
-        .from('maple_state')
-        .select('data')
-        .eq('id', STATE_ROW_ID)
-        .single();
-      if (!error && data) latest = data.data;
-    } catch (e) { console.warn('최신 데이터 로드 실패, 전체 덮어쓰기:', e); }
+    for (let attempt = 0; attempt < 4 && result === false; attempt++) {
+      // 1. 서버가 마지막 동기화 이후 바뀌었는지 확인 → 바뀌었을 때만 전체 로드
+      let peek = null, peekErr = null;
+      try { peek = await cloudPeek(); } catch (e) { peekErr = e; }
+      if (peekErr && peekErr.code !== 'PGRST116') throw peekErr; // 네트워크 등 → 덮어쓰지 말고 실패 처리
+      const rowMissing = !!peekErr; // 서버에 아직 행이 없음(첫 저장)
+      if ((peek?.mv || 0) > APP_VERSION) { markOutdated(); break; }
 
-    if (latest && (latest._minVersion || 0) > APP_VERSION) {
-      markOutdated();
-      _saving = false;
-      _saveQueued = false;
-      return;
-    }
-
-    // 2. 병합: 로컬 기반 + 원격 다른 유저 프로필 갱신
-    let merged = _cloudData;
-    merged._minVersion = Math.max(APP_VERSION, merged._minVersion || 0, latest?._minVersion || 0);
-    if (latest && latest.profiles) {
-      merged.users.forEach(u => {
-        if (u !== username && latest.profiles[u]) {
-          merged.profiles[u] = latest.profiles[u];
+      const merged = _cloudData;
+      let baseRev = peek?.rev ?? null;
+      if (peek && !(peek.rev && peek.rev === _lastRev)) {
+        const latest = await cloudLoad({ keepBase: true });
+        if (!latest) throw new Error('최신 데이터 로드 실패');
+        baseRev = latest._rev ?? null;
+        // 2-a. 내 프로필이 다른 곳(다른 기기·탭)에서 먼저 저장됐나?
+        const remoteMine = JSON.stringify(latest.profiles?.[username] ?? null);
+        const baseMine = _base ? (_base[username] ?? 'null') : remoteMine;
+        if (remoteMine !== baseMine && remoteMine !== JSON.stringify(merged.profiles[username] ?? null)) {
+          if (!confirm(`다른 곳(다른 기기·탭)에서 "${username}" 기록이 먼저 저장됐어요.\n\n확인 = 지금 이 화면 내용으로 저장 (다른 곳에서 넣은 건 사라짐)\n취소 = 서버 내용 불러오기 (이 화면에서 방금 입력한 건 사라짐)`)) {
+            _cloudData = latest;
+            snapBase(latest);
+            localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
+            renderUserSelect();
+            refreshAll();
+            markSaved();
+            toast('서버 내용으로 불러옴');
+            result = null;
+            break;
+          }
+          if (_base) _base[username] = remoteMine; // 덮어쓰기 선택 → 재시도 때 또 묻지 않게
         }
-      });
-    }
+        // 2-b. 다른 유저 프로필은 서버 최신으로, 다른 곳에서 새로 추가된 유저도 반영
+        merged.users.forEach(u => { if (u !== username && latest.profiles?.[u]) merged.profiles[u] = latest.profiles[u]; });
+        (latest.users || []).forEach(u => {
+          if (!merged.users.includes(u) && _base && !(u in _base)) { merged.users.push(u); merged.profiles[u] = latest.profiles[u]; }
+        });
+      }
+      _lastRev = baseRev;
+      merged._minVersion = Math.max(APP_VERSION, merged._minVersion || 0, peek?.mv || 0);
+      const prevRev = merged._rev;
+      merged._rev = newRev();
 
-    merged._rev = newRev();
-    localStorage.setItem('maple_cloud_cache', JSON.stringify(merged));
-    const { error: upsertError } = await _supabase
-      .from('maple_state')
-      .upsert({ id: STATE_ROW_ID, data: merged }, { onConflict: 'id' });
-    if (upsertError) console.error('Supabase 저장 실패:', upsertError);
-    else _lastRev = merged._rev;
+      // 3. 조건부 저장: 서버 _rev가 baseRev 그대로일 때만
+      let rows, error;
+      if (rowMissing) {
+        ({ data: rows, error } = await _supabase.from('maple_state').insert({ id: STATE_ROW_ID, data: merged }).select('id'));
+      } else {
+        let q = _supabase.from('maple_state').update({ data: merged }).eq('id', STATE_ROW_ID);
+        q = baseRev ? q.eq('data->>_rev', baseRev) : q.is('data->>_rev', null);
+        ({ data: rows, error } = await q.select('id'));
+      }
+      if (error) { merged._rev = prevRev; throw error; }
+      if (rows && rows.length) {
+        _lastRev = merged._rev;
+        snapBase(merged);
+        localStorage.setItem('maple_cloud_cache', JSON.stringify(merged));
+        result = true;
+      } else {
+        merged._rev = prevRev; // 누가 사이에 저장함 → 다시 받아서 재시도
+        _lastRev = null;
+      }
+    }
   } catch (e) {
     console.error('Supabase 저장 실패:', e);
   }
   _saving = false;
-  if (_saveQueued) { _saveQueued = false; cloudSave(); }
+  if (result === false && !_outdated) toast('클라우드 저장 실패 — 잠시 후 다시 저장해 주세요', 'error');
+  if (_saveQueued) { _saveQueued = false; return cloudSave(); }
+  return result;
 }
 
 // 자동 저장 디바운스 (5초)
@@ -1452,6 +1487,12 @@ async function pollOnce() {
           }
         }
       });
+      // 다른 기기·탭에서 바뀐 내 기록 (이 화면에 저장 안 한 입력이 없을 때만)
+      let mineChanged = false;
+      if (!_unsaved && cloud.profiles[myUser] && JSON.stringify(cloud.profiles[myUser]) !== JSON.stringify(_cloudData.profiles[myUser] || {})) {
+        _cloudData.profiles[myUser] = cloud.profiles[myUser];
+        updated = mineChanged = true;
+      }
       // 새 유저 추가된 경우
       cloud.users.forEach(u => {
         if (!_cloudData.users.includes(u)) {
@@ -1463,11 +1504,12 @@ async function pollOnce() {
       if (updated) {
         localStorage.setItem('maple_cloud_cache', JSON.stringify(_cloudData));
         renderUserSelect();
+        if (mineChanged) refreshAll();
       }
     } catch (e) { /* 폴링 실패는 무시 */ }
 }
 
-async function cloudLoad() {
+async function cloudLoad({ keepBase = false } = {}) {
   if (!CLOUD_ENABLED) return null;
   try {
     const { data, error } = await _supabase
@@ -1476,7 +1518,7 @@ async function cloudLoad() {
       .eq('id', STATE_ROW_ID)
       .single();
     if (error) { console.error('Supabase 로드 실패:', error); return null; }
-    _lastRev = data?.data?._rev ?? null;
+    if (!keepBase) { _lastRev = data?.data?._rev ?? null; snapBase(data?.data); }
     return data?.data ?? null;
   } catch (e) {
     console.error('Supabase 로드 실패:', e);
@@ -1662,9 +1704,11 @@ async function manualCloudSave() {
   if (!CLOUD_ENABLED) { markSaved(); toast('로컬 환경 — 클라우드 저장 차단 (로컬에만 저장됨)', 'error'); return; }
   const btn = document.getElementById('cloudSaveBtn');
   if (btn) { btn.textContent = '저장 중...'; btn.disabled = true; }
-  await cloudSave();
+  const ok = await cloudSave();
   if (btn) btn.disabled = false;
   if (_outdated) { if (btn) btn.textContent = '저장 막힘'; return; }
+  if (ok === null) return; // 서버 내용으로 되돌림 (안내는 cloudSave에서)
+  if (!ok) { markUnsaved(); return; } // 실패 시 '저장 안 됨' 유지 → 폴링이 내 입력을 덮지 않게
   markSaved();
   toast('클라우드 저장 완료');
 }

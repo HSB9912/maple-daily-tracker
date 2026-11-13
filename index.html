@@ -1127,13 +1127,22 @@ body { font-family: 'Pretendard Variable', Pretendard, 'Noto Sans KR', sans-seri
 </style>
 
 <script>
-const APP_VERSION = 8;
+const APP_VERSION = 9; // 9: _rev 도입 — 옛 탭(전체 폴링·_rev 미기록) 저장 차단
 
 // === 업데이트 내역 ===
 // 새 항목은 배열 맨 위에 추가하고 version을 올리세요.
 // CHANGELOG_VERSION이 localStorage 저장값보다 크면 모달 자동 표시.
-const CHANGELOG_VERSION = '2026-11-06';
+const CHANGELOG_VERSION = '2026-11-13';
 const CHANGELOG = [
+  {
+    version: '2026-11-13',
+    title: '📉 서버 사용량 줄이기',
+    items: [
+      '다른 사람 기록 확인을 <strong>바뀐 게 있을 때만</strong> 내려받습니다 — 전엔 30초마다 전체 데이터를 통째로 받았어요',
+      '안 보고 있는 탭(최소화·다른 탭)은 서버를 부르지 않고, 돌아오면 바로 한 번 확인합니다',
+      '이전 버전 창은 저장이 막히니 열려 있던 탭은 <strong>새로고침</strong> 해주세요',
+    ],
+  },
   {
     version: '2026-11-06',
     title: '🔁 재화마다 "이어서 / 0부터" 따로',
@@ -1310,6 +1319,15 @@ const CLOUD_ENABLED = /(^|\.)github\.io$/.test(location.hostname);
 let _cloudData = null;
 let _saving = false;
 let _saveQueued = false;
+// 사용량 절감: 서버 데이터(~300KB)를 매번 받지 않고, 바뀌었는지만 _rev(작은 값)로 확인
+let _lastRev = null;
+const newRev = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+async function cloudPeek() {
+  const { data, error } = await _supabase.from('maple_state')
+    .select('rev:data->>_rev,mv:data->_minVersion').eq('id', STATE_ROW_ID).single();
+  if (error) throw error;
+  return data;
+}
 
 const DEFAULT_RESOURCES = ['매소', '다조', '경험치', '기운', '상주정', '우유', '이슬', '코젬', '달라심볼'];
 
@@ -1347,7 +1365,11 @@ async function cloudSave() {
     const username = getCurrentUser();
     // 1. 최신 데이터를 Supabase에서 불러오기 (다른 유저 변경사항 보존)
     let latest = null;
-    try {
+    let peek = null;
+    try { peek = await cloudPeek(); } catch (e) { /* 실패 시 아래에서 전체 로드 */ }
+    if (peek && peek.rev && peek.rev === _lastRev) {
+      latest = { _minVersion: peek.mv }; // 마지막 동기화 이후 아무도 안 바꿈 → 전체 다운로드 생략
+    } else try {
       const { data, error } = await _supabase
         .from('maple_state')
         .select('data')
@@ -1374,11 +1396,13 @@ async function cloudSave() {
       });
     }
 
+    merged._rev = newRev();
     localStorage.setItem('maple_cloud_cache', JSON.stringify(merged));
     const { error: upsertError } = await _supabase
       .from('maple_state')
       .upsert({ id: STATE_ROW_ID, data: merged }, { onConflict: 'id' });
     if (upsertError) console.error('Supabase 저장 실패:', upsertError);
+    else _lastRev = merged._rev;
   } catch (e) {
     console.error('Supabase 저장 실패:', e);
   }
@@ -1401,9 +1425,17 @@ function scheduleAutoSave() {
 let _pollTimer = null;
 function startPolling() {
   if (_pollTimer) clearInterval(_pollTimer);
-  _pollTimer = setInterval(async () => {
+  _pollTimer = setInterval(pollOnce, 30000);
+}
+// 탭으로 돌아오면 바로 한 번 확인
+document.addEventListener('visibilitychange', () => { if (!document.hidden && _pollTimer) pollOnce(); });
+async function pollOnce() {
+    if (document.hidden) return; // 안 보는 탭은 서버 안 부름
     if (_saving || _autoSaveTimer) return; // 저장 중이거나 수정 중이면 스킵
     try {
+      const peek = await cloudPeek();
+      if ((peek.mv || 0) > APP_VERSION) { markOutdated(); return; }
+      if (peek.rev && peek.rev === _lastRev) return; // 변경 없음
       const cloud = await cloudLoad();
       if (!cloud || !cloud.profiles) return;
       if ((cloud._minVersion || 0) > APP_VERSION) { markOutdated(); return; }
@@ -1433,7 +1465,6 @@ function startPolling() {
         renderUserSelect();
       }
     } catch (e) { /* 폴링 실패는 무시 */ }
-  }, 30000);
 }
 
 async function cloudLoad() {
@@ -1445,6 +1476,7 @@ async function cloudLoad() {
       .eq('id', STATE_ROW_ID)
       .single();
     if (error) { console.error('Supabase 로드 실패:', error); return null; }
+    _lastRev = data?.data?._rev ?? null;
     return data?.data ?? null;
   } catch (e) {
     console.error('Supabase 로드 실패:', e);
